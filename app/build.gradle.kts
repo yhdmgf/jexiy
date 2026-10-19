@@ -34,12 +34,12 @@ plugins {
 // 缺任意一项（本地开发、ci.yml 的编译校验）⇒ release 的 signingConfig 为 null，
 // 产物是 app-release-unsigned.apk，本地不需要任何配置就能 `assembleRelease`；
 // 想在本地出正式签名包，自己导出这四个变量再构建即可（证书别提交进仓库，.gitignore 已挡 *.jks）。
-val releaseKeystorePath: String? = System.getenv("YUNX_KEYSTORE_FILE")?.takeIf { it.isNotBlank() }
+val releaseKeystorePath: String? = System.getenv("JIEXIY_KEYSTORE_FILE")?.takeIf { it.isNotBlank() }
 val releaseSigningReady: Boolean = releaseKeystorePath != null &&
     file(releaseKeystorePath).isFile &&
-    !System.getenv("YUNX_KEYSTORE_PASSWORD").isNullOrBlank() &&
-    !System.getenv("YUNX_KEY_ALIAS").isNullOrBlank() &&
-    !System.getenv("YUNX_KEY_PASSWORD").isNullOrBlank()
+    !System.getenv("JIEXIY_KEYSTORE_PASSWORD").isNullOrBlank() &&
+    !System.getenv("JIEXIY_KEY_ALIAS").isNullOrBlank() &&
+    !System.getenv("JIEXIY_KEY_PASSWORD").isNullOrBlank()
 
 android {
     namespace = "com.jiexiy.app"

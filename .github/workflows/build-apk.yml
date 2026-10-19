@@ -126,16 +126,16 @@ jobs:
 
       - name: Build release APK
         if: env.SKIP_BUILD != '1'
-        # 项目 settings.gradle.kts 按 YUNX_USE_MIRROR 切换仓库：CI 上阿里云镜像不可达，必须走官方源。
+        # 项目 settings.gradle.kts 按 JIEXIY_USE_MIRROR 切换仓库：CI 上阿里云镜像不可达，必须走官方源。
         # runner 镜像预装 Android SDK（licenses 已接受），AGP 会自动补装缺失的 SDK 组件。
         # release 变体开启 R8 混淆 + 资源压缩，产物显著小于 debug。
-        # 签名口令/别名只注入到这一步；证书路径 YUNX_KEYSTORE_FILE 已由上一步写进 GITHUB_ENV。
+        # 签名口令/别名只注入到这一步；证书路径 JIEXIY_KEYSTORE_FILE 已由上一步写进 GITHUB_ENV。
         env:
-          YUNX_USE_MIRROR: 'false'
-          YUNX_KEYSTORE_FILE: ${{ env.YUNX_KEYSTORE_FILE }}
-          YUNX_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          YUNX_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          YUNX_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          JIEXIY_USE_MIRROR: 'false'
+          JIEXIY_KEYSTORE_FILE: ${{ env.JIEXIY_KEYSTORE_FILE }}
+          JIEXIY_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          JIEXIY_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          JIEXIY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           ./gradlew assembleRelease --no-daemon
 
