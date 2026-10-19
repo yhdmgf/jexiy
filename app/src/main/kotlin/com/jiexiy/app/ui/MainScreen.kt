@@ -1096,8 +1096,6 @@ fun MainScreen(
                     rememberSharedContentState(OVERLAY_KEY_ABOUT),
                     animatedVisibilityScope = sourceScope
                 )
-                    animatedVisibilityScope = sourceScope
-                )
                 // 「下载引擎」行 → 下载引擎页：和上面三行同样走容器变换（整行长成整页）
                 val engineRowModifier = Modifier.sharedBounds(
                     rememberSharedContentState(OVERLAY_KEY_GOPEED),
