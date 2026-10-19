@@ -1628,6 +1628,7 @@ fun SettingsScreen(
             }
         )
     }
+}
 
 /** 导出网盘认证弹窗：AES 加密密码 + 导出范围（仅已登录 / 全部绑定） */
 @Composable
