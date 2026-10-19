@@ -10,8 +10,14 @@ on:
   # UTC 16:00 = 北京时间 00:00
   schedule:
     - cron: '0 16 * * *'
-  # 支持在 Actions 页手动触发
+  # 支持在 Actions 页手动触发，需输入版本号（格式：x.y.z）
   workflow_dispatch:
+    inputs:
+      version_name:
+        description: '版本号（格式：x.y.z，例如 1.1.1）'
+        required: true
+        default: '1.3.0'
+        type: string
 
 # 只上传 Artifacts，不写 Release/tag：读权限即可（最小权限原则）
 permissions:
@@ -74,7 +80,33 @@ jobs:
             echo "SKIP_BUILD=1" >> "$GITHUB_ENV"
           fi
 
-      # 从 Secrets 还原正式签名证书：KEYSTORE_BASE64 解码到 runner 临时目录
+      # 根据 versionName 计算 versionCode：1.1.1 -> 101010
+      - name: Calculate versionCode
+        if: env.SKIP_BUILD != '1'
+        run: |
+          set -e
+          VERSION_NAME="${{ github.event.inputs.version_name }}"
+          if [[ ! "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::版本号格式错误，应为 x.y.z（例如 1.1.1）"
+            exit 1
+          fi
+          IFS='.' read -r major minor patch <<< "$VERSION_NAME"
+          # 规则：major + "0" + minor + "0" + patch + "0"
+          VERSION_CODE="${major}0${minor}0${patch}0"
+          echo "versionName: $VERSION_NAME"
+          echo "versionCode: $VERSION_CODE"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+      - name: Inject version into build.gradle.kts
+        if: env.SKIP_BUILD != '1'
+        run: |
+          set -e
+          sed -i "s/versionCode = [0-9]*/versionCode = ${VERSION_CODE}/" app/build.gradle.kts
+          sed -i 's/versionName = "[^"]*"/versionName = "${VERSION_NAME}"/' app/build.gradle.kts
+          echo "已更新版本：$VERSION_NAME ($VERSION_CODE)"
+
+            # 从 Secrets 还原正式签名证书：KEYSTORE_BASE64 解码到 runner 临时目录
       # （不落仓库、不进 Artifacts，runner 销毁即消失）。四项 Secrets 缺一即报错退出，
       # 避免 nightly 悄悄产出未签名包（本地构建不经过这里 ⇒ release 仍是未签名包）。
       # 用 printf 而不是 echo 解码，防止个别 shell 对长字符串加换行/截断。
