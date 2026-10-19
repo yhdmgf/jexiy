@@ -34,6 +34,7 @@ class jihexiyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        android.util.Log.d("jihexiy", "Application.onCreate started")  // 调试日志
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
         // 移除防篡改检测：不再检查 ArchiveProbe 或类名匹配
         

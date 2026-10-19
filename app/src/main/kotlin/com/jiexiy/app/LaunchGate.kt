@@ -26,6 +26,7 @@ import android.net.Uri
 class LaunchGate : ContentProvider() {
 
     override fun onCreate(): Boolean {
+        android.util.Log.d("jihexiy", "LaunchGate.onCreate started")  // 调试日志
         // 防篡改检测已移除：不再检查 ArchiveProbe 或类名匹配
         return true
     }
