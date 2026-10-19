@@ -39,7 +39,7 @@ import org.json.JSONObject
 object UpdateChecker {
 
     /** 本应用自己的仓库（更新检测默认走它） */
-    const val APP_REPO = "CYQawa/解析云"
+    const val APP_REPO = "yhdmgf/jiexiy"
 
     private fun latestUrl(repo: String) = "https://api.github.com/repos/$repo/releases/latest"
 
