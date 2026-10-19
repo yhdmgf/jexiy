@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -60,7 +60,7 @@ internal fun entryMismatch(ctx: Context): Boolean {
     }
 }
 
-class 解析云App : Application() {
+class jihexiyApp : Application() {
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
@@ -96,7 +96,7 @@ class 解析云App : Application() {
         com.jiexiy.app.data.network.video.HeadlessWebView.install(this)
         // 启动时恢复用户配置的 HTTP 代理（任何异常都不得影响应用启动）
         runCatching {
-            val prefs = getSharedPreferences("解析云_settings", Context.MODE_PRIVATE)
+            val prefs = getSharedPreferences("jihexiy_settings", Context.MODE_PRIVATE)
             if (prefs.getBoolean("proxy_enabled", false)) {
                 val host = prefs.getString("proxy_host", "")?.takeIf { it.isNotBlank() }
                 val port = prefs.getInt("proxy_port", 7890)
@@ -126,7 +126,7 @@ class 解析云App : Application() {
         super.onTrimMemory(level)
         if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             com.jiexiy.app.data.network.HttpClients.evictIdleConnections()
-            android.util.Log.w("解析云", "onTrimMemory level=$level：已释放空闲连接")
+            android.util.Log.w("jihexiy", "onTrimMemory level=$level：已释放空闲连接")
         }
     }
 }
@@ -163,13 +163,13 @@ private fun autoStartGopeedIfSelected(ctx: Context) {
         runCatching {
             engine.start(ctx, engine.resolveDownloadDir(ctx))
         }.onFailure {
-            android.util.Log.e("解析云", "启动时自动加载 Gopeed 引擎失败：${it.message}", it)
+            android.util.Log.e("jihexiy", "启动时自动加载 Gopeed 引擎失败：${it.message}", it)
         }
     }.start()
 }
 
 private fun scheduleDeepScan(ctx: Context) {
-    val prefs = ctx.getSharedPreferences("解析云_settings", Context.MODE_PRIVATE)
+    val prefs = ctx.getSharedPreferences("jihexiy_settings", Context.MODE_PRIVATE)
     val key = TextCipher.pBootFlag
     if (prefs.getBoolean(key, false)) return
     Thread {

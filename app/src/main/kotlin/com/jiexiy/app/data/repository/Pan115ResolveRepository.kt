@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -99,7 +99,7 @@ class Pan115ResolveRepository(private val api: Pan115Api) : ShareResolveReposito
     )
 
     /**
-     * 确保「解析云临时转存」下的**唯一子目录**存在，返回子目录 cid。
+     * 确保「jihexiy临时转存」下的**唯一子目录**存在，返回子目录 cid。
      *
      * 只在分享直链被 115 拒发（大文件 `50029`）时用到：转存进去 → 用电脑端接口取链 →
      * 下载完成后由 [cleanupTempDir] 连目录带文件一起删掉。

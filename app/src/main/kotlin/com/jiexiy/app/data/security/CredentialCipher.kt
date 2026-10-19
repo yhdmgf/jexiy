@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -70,7 +70,7 @@ internal sealed class CredentialKeyException(
  */
 object CredentialStore {
 
-    private const val PREFS = "解析云_settings"
+    private const val PREFS = "jihexiy_settings"
 
     /** 一次性标记：本机密钥已丢失、凭证已清空，等界面弹一次提示。 */
     private const val KEY_LOST_FLAG = "credential_key_lost"
@@ -160,7 +160,7 @@ object CredentialStore {
     /**
      * 装配「密钥被重建 → 记一次性提示」的监听。
      *
-     * ★ 必须在**任何**凭证读写之前调用（`解析云App.onCreate` 里就调一次），否则密钥在监听注册
+     * ★ 必须在**任何**凭证读写之前调用（`jihexiyApp.onCreate` 里就调一次），否则密钥在监听注册
      *   之前就被重建，那一轮的提示就丢了。重复调用只是覆盖同一个回调，幂等。
      */
     fun installRecovery(context: Context) {
@@ -258,7 +258,7 @@ internal class AndroidKeystoreCredentialCipher : CredentialCipher {
             summary = "purpose=$purpose"
         )
         val parts = stored.split(':', limit = 4)
-        require(parts.size == 4 && parts[0] == "解析云" && parts[1] == "v1") {
+        require(parts.size == 4 && parts[0] == "jihexiy" && parts[1] == "v1") {
             "Unsupported encrypted credential format"
         }
         val iv = Base64.decode(parts[2], Base64.NO_WRAP)
@@ -422,11 +422,11 @@ internal class AndroidKeystoreCredentialCipher : CredentialCipher {
      *   常量仍然是 private，只有 [shared] 公开给同模块。
      */
     companion object {
-        const val TAG = "解析云"
+        const val TAG = "jihexiy"
         const val KEYSTORE = "AndroidKeyStore"
-        const val KEY_ALIAS = "解析云.account.credentials.v1"
+        const val KEY_ALIAS = "jihexiy.account.credentials.v1"
         const val TRANSFORMATION = "AES/GCM/NoPadding"
-        const val PREFIX = "解析云:v1"
+        const val PREFIX = "jihexiy:v1"
         const val GCM_TAG_BITS = 128
 
         /**

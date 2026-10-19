@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ package com.jiexiy.app.data.network
 /**
  * 115 网盘常量。
  *
- * 依据实测抓包文档 `云析分析资料/网盘API文档/115/115_api.md`（个人盘）与 `115_share_api.md`（分享）。
+ * 依据实测抓包文档 `jihexiy分析资料/网盘API文档/115/115_api.md`（个人盘）与 `115_share_api.md`（分享）。
  * 几个容易踩的点：
  * - 业务 API 全部在 `webapi.115.com`，POST 默认表单编码；
  * - 写操作里的 `fid` 对文件是 `file_id`、对文件夹是 `cate_id`（即列表里的 `cid`），见文档 §2.1 的提醒；
@@ -122,7 +122,7 @@ object Pan115Constants {
     const val MOVE_POLL_INTERVAL_MS = 400L
 
     /** 临时转存根目录名（分享直链被拒时，先转存到这里再用电脑端接口取链，下载完删掉子目录） */
-    const val TEMP_DIR_NAME = "解析云临时转存"
+    const val TEMP_DIR_NAME = "jihexiy临时转存"
 
     /** 每次转存用的唯一子目录前缀（同名文件不会互相覆盖） */
     const val TEMP_SUBDIR_PREFIX = "tr_"

@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -51,7 +51,7 @@ data class Pan115SharePage(
 /**
  * 115 网盘接口（个人盘 + 分享）。
  *
- * 抓包文档：`云析分析资料/网盘API文档/115/115_api.md`、`115_share_api.md`。
+ * 抓包文档：`jihexiy分析资料/网盘API文档/115/115_api.md`、`115_share_api.md`。
  * 全部接口共用同一套请求头：桌面 UA + `X-Requested-With` + 对应页面 Referer + Cookie。
  */
 class Pan115Api(

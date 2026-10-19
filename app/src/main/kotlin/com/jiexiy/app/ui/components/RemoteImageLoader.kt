@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -84,7 +84,7 @@ object RemoteImageLoader {
                 val bytes: ByteArray? = runCatching {
                     semaphore.withPermit {
                         val req = okhttp3.Request.Builder().url(candidate)
-                            .header("User-Agent", "解析云").build()
+                            .header("User-Agent", "jihexiy").build()
                         client.newCall(req).execute().use { resp ->
                             if (!resp.isSuccessful) return@withPermit null
                             resp.body?.bytes()

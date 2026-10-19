@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -125,7 +125,7 @@ data class DownloadResourceDebug(
     val poolQueue: Int
 )
 
-private const val TAG = "解析云-DL"
+private const val TAG = "jihexiy-DL"
 
 /** 单文件 Range 分片的安全并发上限。迅雷等 CDN 对单文件并发 Range 有阈值，
  *  超过约 8 个并发会把多余请求降级为 200 整文件（忽略 Range），
@@ -821,7 +821,7 @@ class DownloadManager(
                     connections = if (platform == DownloadPlatform.MAGNET) 0 else threadProvider(platform),
                     // 磁力在元数据到手前没有名字：交给引擎自己命名（种子名稍后写回本地记录）
                     name = if (platform == DownloadPlatform.MAGNET) "" else (safe?.fileName ?: fileName),
-                    labels = mapOf("解析云TaskId" to id.toString())
+                    labels = mapOf("jihexiyTaskId" to id.toString())
                 )
             }
         } catch (e: Throwable) {
@@ -831,7 +831,7 @@ class DownloadManager(
             dao.updateError(id, e.message ?: e.toString())
             return
         }
-        Log.d(TAG, "引擎任务已创建：解析云Id=$id engineId=$engineTaskId")
+        Log.d(TAG, "引擎任务已创建：jihexiyId=$id engineId=$engineTaskId")
         DownloadDebugLog.record(id, "引擎任务创建", "engineId=$engineTaskId 平台=$platform 连接数=${threadProvider(platform)}")
         DiagnosticLog.log(
             DiagnosticLog.DOWNLOAD, "engine_task_created", taskId = id, status = "downloading",
@@ -875,7 +875,7 @@ class DownloadManager(
                     when (status.status) {
                         "done" -> completeEngineTask(task, status.total)
                         "error" -> {
-                            Log.e(TAG, "引擎任务失败：解析云Id=${task.id} engineId=${task.engineTaskId}")
+                            Log.e(TAG, "引擎任务失败：jihexiyId=${task.id} engineId=${task.engineTaskId}")
                             DiagnosticLog.error(
                                 DiagnosticLog.DOWNLOAD, "engine_task_failed", code = "ENGINE_ERROR",
                                 summary = "task=${task.id} engineId=${task.engineTaskId} name=${task.fileName}"
@@ -977,7 +977,7 @@ class DownloadManager(
         }
         dao.complete(task.id, DownloadTaskEntity.STATUS_COMPLETED, savedPath, avgSpeed)
         _stats.update { it - task.id }
-        Log.d(TAG, "引擎任务完成：解析云Id=${task.id} engineId=${task.engineTaskId} path=$savedPath size=$size " +
+        Log.d(TAG, "引擎任务完成：jihexiyId=${task.id} engineId=${task.engineTaskId} path=$savedPath size=$size " +
             "avg=$avgSpeed files=${detail?.fileCount ?: -1} folder=${detail?.folder ?: false}")
         DiagnosticLog.log(
             DiagnosticLog.DOWNLOAD, "engine_task_complete", taskId = task.id, status = "completed",
@@ -1158,7 +1158,7 @@ class DownloadManager(
         val pm = context.getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager ?: return
         if (wakeLock == null) {
             wakeLock = pm.newWakeLock(
-                android.os.PowerManager.PARTIAL_WAKE_LOCK, "解析云:download"
+                android.os.PowerManager.PARTIAL_WAKE_LOCK, "jihexiy:download"
             ).apply { setReferenceCounted(false) }
         }
         wakeLock?.let { if (!it.isHeld) it.acquire() }
@@ -2482,7 +2482,7 @@ class DownloadManager(
             30L,
             TimeUnit.SECONDS,
             LinkedBlockingQueue<Runnable>()
-        ) { r -> Thread(r, "解析云-chunk-io").apply { isDaemon = true } }
+        ) { r -> Thread(r, "jihexiy-chunk-io").apply { isDaemon = true } }
             .apply { allowCoreThreadTimeOut(true) }
 
         internal val chunkIoDispatcher: CoroutineDispatcher = chunkIoExecutor.asCoroutineDispatcher()

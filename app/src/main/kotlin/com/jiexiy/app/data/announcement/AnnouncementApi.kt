@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -56,7 +56,7 @@ object AnnouncementApi {
      * 图床域名与 API 域名无关：图片直链由服务端给出、客户端直接加载，http 图床同样要在
      * network_security_config 里放行（见那里的注释），https 图床不受影响。
      */
-    const val BASE_URL = "http://解析云.cyqawa.os.kg"
+    const val BASE_URL = "https://qlyyz.xyz/jiexiy"
 
     /**
      * 列表分页大小 = 接口上限 100。
@@ -66,7 +66,7 @@ object AnnouncementApi {
     const val PAGE_SIZE = 100
 
     /** 公告相关日志统一走这个标签，失败原因一律 E 级打印，方便直接看 logcat 定位 */
-    private const val TAG = "解析云-Announce"
+    private const val TAG = "jihexiy-Announce"
 
     /** 发布者（服务端 `publisher` 对象） */
     data class Publisher(val name: String, val avatarUrl: String?)
@@ -141,7 +141,7 @@ object AnnouncementApi {
                 val call = Request.Builder()
                     .url(url)
                     .header("Accept", "application/json")
-                    .header("User-Agent", "解析云")
+                    .header("User-Agent", "jihexiy")
                     .get()
                     .build()
                 HttpClients.apiClient().newCall(call).execute().use { resp ->

@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -126,7 +126,7 @@ import com.jiexiy.app.data.network.HttpClients
 import com.jiexiy.app.data.prefs.SettingsRepository
 import com.jiexiy.app.data.update.UpdateChecker
 import com.jiexiy.app.ui.SnackbarController
-import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.components.jihexiyLoading
 import com.jiexiy.app.ui.theme.ListGroupGap
 import com.jiexiy.app.ui.theme.ListGroupPos
 import com.jiexiy.app.ui.theme.ThemeController
@@ -184,7 +184,7 @@ private fun openNotificationSettings(context: Context) {
 /** 复制文本到剪贴板（写剪贴板不受「自动识别剪贴板」开关约束，见 Agent.md §3.22） */
 private fun copyToClipboard(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("解析云_contact", text))
+    cm.setPrimaryClip(ClipData.newPlainText("jihexiy_contact", text))
 }
 
 /** 用系统浏览器打开链接：没有可用浏览器时退化成复制链接，不静默失败 */
@@ -206,11 +206,10 @@ fun SettingsScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     /**
      * 容器变换（Container Transform）源侧修饰符：由 MainScreen 在 SharedTransitionLayout 作用域内构造
-     * （设置页自己拿不到那个作用域），分别挂到「主题与外观 / 关于云析 / 支持开发 / 下载引擎」这四行上。
+     * （设置页自己拿不到那个作用域），分别挂到「主题与外观 / 关于jihexiy / 下载引擎」这几行上。
      */
     themeRowModifier: Modifier = Modifier,
     aboutRowModifier: Modifier = Modifier,
-    supportRowModifier: Modifier = Modifier,
     engineRowModifier: Modifier = Modifier,
     /** 「链接唤起」行的容器变换源侧修饰符（同上，由 MainScreen 构造） */
     linkOpenRowModifier: Modifier = Modifier,
@@ -218,7 +217,6 @@ fun SettingsScreen(
     multiAccountRowModifier: Modifier = Modifier,
     onThemeClick: () -> Unit,
     onAboutClick: () -> Unit,
-    onSupportClick: () -> Unit,
     /** 打开下载引擎页（两套下载器切换、导入内核、引擎启停与状态） */
     onGopeedClick: () -> Unit,
     /** 打开「链接唤起」页（深链接注册项的逐个开关） */
@@ -540,7 +538,7 @@ fun SettingsScreen(
         }
 
         // 取链方式：免转存（默认）↔ 转存。只影响夸克 —— 其分享文件可以「用分享凭证直接换直链」，
-        // 不必先转存进用户网盘；关掉后回到「转存到 解析云临时转存 再取链」的老流程。
+        // 不必先转存进用户网盘；关掉后回到「转存到 jihexiy临时转存 再取链」的老流程。
         SettingsItem(
             icon = Icons.Outlined.SwapHoriz,
             shape = listGroupShape(ListGroupPos.MIDDLE),
@@ -746,7 +744,7 @@ fun SettingsScreen(
             icon = Icons.Outlined.Link,
             shape = listGroupShape(ListGroupPos.SINGLE),
             title = "网盘链接一键唤起",
-            description = "点分享链接（或分享到云析）直接进来解析；可按平台逐个开关",
+            description = "点分享链接（或分享到jihexiy）直接进来解析；可按平台逐个开关",
             modifier = linkOpenRowModifier,
             onClick = onLinkOpenClick
         )
@@ -757,7 +755,7 @@ fun SettingsScreen(
         SettingsItem(
             icon = Icons.Outlined.Info,
             shape = listGroupShape(ListGroupPos.FIRST),
-            title = "关于云析",
+            title = "关于jihexiy",
             description = "版本信息、支持平台与技术说明",
             modifier = aboutRowModifier,
             onClick = onAboutClick,
@@ -766,34 +764,13 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(ListGroupGap))
         SettingsItem(
-            icon = Icons.Outlined.VolunteerActivism,
-            shape = listGroupShape(ListGroupPos.MIDDLE),
-            title = "支持开发",
-            description = "微信扫码捐赠，支持项目持续维护",
-            modifier = supportRowModifier,
-            onClick = onSupportClick
+            icon = Icons.Outlined.Code,
+            shape = listGroupShape(ListGroupPos.LAST),
+            title = "GitHub 仓库",
+            description = "${AppLinks.GITHUB_REPO_DISPLAY} · 查看源码与反馈问题",
+            onClick = { openUrl(context, AppLinks.GITHUB_REPO) }
         )
-
-        Spacer(modifier = Modifier.height(ListGroupGap))
-        SettingsItem(
-            icon = Icons.Outlined.Groups,
-            shape = listGroupShape(ListGroupPos.MIDDLE),
-            title = "QQ 交流群",
-            description = "群号 ${AppLinks.QQ_GROUP}（点击加入群聊，长按复制群号）",
-            // 优先拉起 QQ 群卡片；设备上没装 QQ 时退回复制群号，保证入口永远可用
-            onClick = {
-                if (!AppLinks.openQQGroup(context)) {
-                    copyToClipboard(context, AppLinks.QQ_GROUP)
-                    SnackbarController.show("未安装 QQ，群号已复制：${AppLinks.QQ_GROUP}")
-                }
-            },
-            onLongClick = {
-                copyToClipboard(context, AppLinks.QQ_GROUP)
-                SnackbarController.show("群号已复制：${AppLinks.QQ_GROUP}")
-            }
-        )
-
-        Spacer(modifier = Modifier.height(ListGroupGap))
+    }
         SettingsItem(
             icon = Icons.Outlined.Code,
             shape = listGroupShape(ListGroupPos.LAST),
@@ -813,7 +790,7 @@ fun SettingsScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = "Gopeed 是原生下载核心，只能按真实文件路径落盘，读不了系统文件选择器给的目录。" +
-                            "请填一个绝对路径，例如 ${StorageDirs.defaultDownloadPath()}/解析云。",
+                            "请填一个绝对路径，例如 ${StorageDirs.defaultDownloadPath()}/jihexiy。",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -932,7 +909,7 @@ fun SettingsScreen(
         )
     }
 
-    // 隐藏开发调试菜单（长按「关于云析」打开）
+    // 隐藏开发调试菜单（长按「关于jihexiy」打开）
     if (showDevMenu) {
         AlertDialog(
             onDismissRequest = { showDevMenu = false },
@@ -1052,7 +1029,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 导出入口（zip 名 解析云_diagnostic_logs_yyyyMMdd_HHmmss.zip，导出前会先 flush）
+                    // 导出入口（zip 名 jihexiy_diagnostic_logs_yyyyMMdd_HHmmss.zip，导出前会先 flush）
                     TextButton(
                         onClick = {
                             showDevMenu = false
@@ -1483,7 +1460,7 @@ fun SettingsScreen(
             title = { Text("保持后台下载") },
             text = {
                 Text(
-                    text = "为确保障屏后下载不中断，建议将云析加入「忽略电池优化」白名单。是否前往系统设置？",
+                    text = "为确保障屏后下载不中断，建议将jihexiy加入「忽略电池优化」白名单。是否前往系统设置？",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -1772,7 +1749,7 @@ private fun OperationLoadingDialog(message: String) {
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                解析云Loading()
+                jihexiyLoading()
             }
         },
         confirmButton = {},

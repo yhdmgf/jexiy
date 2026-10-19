@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -70,7 +70,7 @@ object HeadlessWebView {
     @Volatile
     private var resumedActivity: WeakReference<Activity>? = null
 
-    /** 在 `解析云App.onCreate` 里调一次，之后 [loadAndExtract] 才能拿到 Activity */
+    /** 在 `jihexiyApp.onCreate` 里调一次，之后 [loadAndExtract] 才能拿到 Activity */
     fun install(app: Application) {
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) {

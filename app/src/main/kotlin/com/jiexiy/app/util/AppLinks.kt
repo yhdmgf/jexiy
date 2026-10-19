@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,10 +34,10 @@ object AppLinks {
     const val QQ_GROUP = "635207650"
 
     /** GitHub 仓库完整地址（点击用系统浏览器打开） */
-    const val GITHUB_REPO = "https://github.com/CYQawa/解析云"
+    const val GITHUB_REPO = "https://github.com/jihexiy/jihexiy"
 
     /** GitHub 仓库展示用短地址（去掉协议头，界面文字用；与 [GITHUB_REPO] 必须指向同一仓库） */
-    const val GITHUB_REPO_DISPLAY = "github.com/CYQawa/解析云"
+    const val GITHUB_REPO_DISPLAY = "github.com/jihexiy/jihexiy"
 
     /**
      * QQ 群资料页 scheme：QQ 已安装时直接拉起群卡片，用户点一下「加入」即可进群。

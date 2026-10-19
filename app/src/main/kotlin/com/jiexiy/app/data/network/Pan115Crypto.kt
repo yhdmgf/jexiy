@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,8 +29,8 @@ import java.security.SecureRandom
  * （`50028 文件大小超出限制，请使用115电脑端下载`），分享直链同样被拒（`50029 当前版本过低…`）。
  * 115 电脑端走的是 proapi + RSA/XOR 包装的私有协议，实测 482MB/1.05GB 文件在网页端被拒、
  * 而下面这套协议是 115 官方电脑端自己用的（参考实现：
- * `云析分析资料/网盘参考/115drive-webdav-main/115/api.go`、`115/crypto.go` 与
- * `云析分析资料/网盘参考/115-minus-main/src/platform/115/download-codec.ts`，两份实现互为印证）。
+ * `jihexiy分析资料/网盘参考/115drive-webdav-main/115/api.go`、`115/crypto.go` 与
+ * `jihexiy分析资料/网盘参考/115-minus-main/src/platform/115/download-codec.ts`，两份实现互为印证）。
  *
  * 协议结构（以 [encode]/[decode] 为准）：
  * - 请求：`data = base64( RSA( 我们的16字节key || 密文 ) )`，RSA 为 1024 位、指数 65537、128 字节分块；

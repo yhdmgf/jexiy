@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -63,7 +63,7 @@ import androidx.compose.ui.unit.dp
 import com.jiexiy.app.data.update.UpdateChecker
 
 /** Release 说明里没给 html_url 时的兜底跳转地址 */
-private const val RELEASES_PAGE_FALLBACK = "https://github.com/CYQawa/解析云/releases/latest"
+private const val RELEASES_PAGE_FALLBACK = "https://github.com/jihexiy/jihexiy/releases/latest"
 
 /**
  * 发现新版本的**底部弹窗**。

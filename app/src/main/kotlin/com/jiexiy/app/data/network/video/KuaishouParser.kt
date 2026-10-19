@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -41,7 +41,7 @@ object KuaishouParser : VideoParser {
 
     override val platform: VideoPlatform = VideoPlatform.KUAISHOU
 
-    private const val TAG = "解析云"
+    private const val TAG = "jihexiy"
 
     private const val DEFAULT_REFERER = "https://v.kuaishou.com/"
 

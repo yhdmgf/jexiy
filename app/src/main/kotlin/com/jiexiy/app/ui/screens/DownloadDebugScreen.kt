@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -74,7 +74,7 @@ import com.jiexiy.app.data.download.DownloadResourceDebug
 import com.jiexiy.app.data.download.DownloadStats
 import com.jiexiy.app.ui.SnackbarController
 import com.jiexiy.app.ui.components.FileNameText
-import com.jiexiy.app.ui.components.解析云WavyProgress
+import com.jiexiy.app.ui.components.jihexiyWavyProgress
 import com.jiexiy.app.ui.viewmodel.DownloadViewModel
 import com.jiexiy.app.util.LogExporter
 import kotlinx.coroutines.Dispatchers
@@ -93,7 +93,7 @@ private const val STUCK_MIN_BPS = 12 * 1024L
 /**
  * 下载调试页（下载页长按任务 → 「调试信息」）。
  *
- * 需先在「设置 → 关于云析 → 长按 → 开发调试 → 下载调试」打开开关；否则菜单里不会出现入口。
+ * 需先在「设置 → 关于jihexiy → 长按 → 开发调试 → 下载调试」打开开关；否则菜单里不会出现入口。
  * 页面在「下载」Tab 内全屏展开（与 ResolveScreen 内嵌 ShareDetailScreen 同款），自上而下：
  * 任务卡（可暂停/继续）→ 全局资源 → 每个线程（在飞分片）在干什么 → 调试操作 → 实时日志跟随。
  *
@@ -322,7 +322,7 @@ private fun DebugTaskCard(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            解析云WavyProgress(
+            jihexiyWavyProgress(
                 progress = { fraction },
                 modifier = Modifier.fillMaxWidth(),
                 color = if (task.status == DownloadTaskEntity.STATUS_FAILED) {
@@ -504,7 +504,7 @@ private fun buildSnapshotText(
     resources: DownloadResourceDebug?,
     env: String
 ): String = buildString {
-    appendLine("云析（解析云）下载调试快照")
+    appendLine("jihexiy（jihexiy）下载调试快照")
     appendLine("任务 id：${task.id}　文件名：${task.fileName}")
     appendLine("状态：${DownloadTaskEntity.statusText(task.status)}　平台：${task.platform.ifBlank { "-" }}")
     appendLine("执行器：${task.engineTaskId.ifBlank { "内置分片下载器" }}")
@@ -541,5 +541,5 @@ private fun buildSnapshotText(
 
 private fun copyDebugText(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("解析云_download_debug", text))
+    cm.setPrimaryClip(ClipData.newPlainText("jihexiy_download_debug", text))
 }

@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -92,7 +92,7 @@ import com.mikepenz.markdown.m3.Markdown
 import com.jiexiy.app.data.network.video.VideoHttp
 import com.jiexiy.app.ui.SnackbarController
 import com.jiexiy.app.ui.components.GitHubMarkdownImageTransformer
-import com.jiexiy.app.ui.components.解析云WavyLoading
+import com.jiexiy.app.ui.components.jihexiyWavyLoading
 import com.jiexiy.app.ui.components.compactMarkdownTypography
 import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 import java.net.URI
@@ -342,7 +342,7 @@ private fun ZoomableImage(media: PreviewMedia, modifier: Modifier = Modifier) {
             }
         )
         if (loading) {
-            解析云WavyLoading(modifier = Modifier.width(140.dp))
+            jihexiyWavyLoading(modifier = Modifier.width(140.dp))
         }
     }
 }
@@ -524,7 +524,7 @@ private fun TextPreviewPane(request: PreviewRequest, modifier: Modifier = Modifi
     when (val current = state) {
         TextPreviewState.Loading -> Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                解析云WavyLoading(modifier = Modifier.width(160.dp))
+                jihexiyWavyLoading(modifier = Modifier.width(160.dp))
                 Spacer(modifier = Modifier.size(12.dp))
                 Text(
                     text = "正在读取前 512KB…",

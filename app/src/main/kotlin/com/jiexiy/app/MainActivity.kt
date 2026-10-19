@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // 应用内主题设置：始终深色/浅色时提前切换窗口主题，避免冷启动闪错背景色
         // （values-night 只跟随系统；应用内「始终深色」但系统浅色时，需显式使用深色窗口主题）
-        val darkModePref = getSharedPreferences("解析云_settings", android.content.Context.MODE_PRIVATE)
+        val darkModePref = getSharedPreferences("jihexiy_settings", android.content.Context.MODE_PRIVATE)
             .getInt("dark_mode", 0)
         when (darkModePref) {
             1 -> setTheme(R.style.Theme_ComposeEmptyActivity_Light)

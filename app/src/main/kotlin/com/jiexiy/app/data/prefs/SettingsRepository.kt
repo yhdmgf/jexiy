@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +27,7 @@ import com.jiexiy.app.data.download.DownloadPlatform
 class SettingsRepository(context: Context) {
 
     private val prefs = context.applicationContext
-        .getSharedPreferences("解析云_settings", Context.MODE_PRIVATE)
+        .getSharedPreferences("jihexiy_settings", Context.MODE_PRIVATE)
 
     /** 下载线程数（通用/手动添加，分片并发数），默认 32，上限 512（真实并发另见 [MAX_DOWNLOAD_THREADS] 的说明） */
     var downloadThreads: Int
@@ -59,7 +59,7 @@ class SettingsRepository(context: Context) {
         }
 
     /**
-     * Gopeed 引擎的下载目录（**真实文件系统路径**，如 `/storage/emulated/0/Download/解析云`）；
+     * Gopeed 引擎的下载目录（**真实文件系统路径**，如 `/storage/emulated/0/Download/jihexiy`）；
      * 空 = 默认目录（公共 `Download` 根目录，与内置下载器同一口径，见 `StorageDirs`）。
      *
      * 为什么不复用 [downloadDirUri]：引擎是原生核心，写不了 SAF 的 `content://` 目录，只能拿真实路径。
@@ -163,7 +163,7 @@ class SettingsRepository(context: Context) {
         }
 
     /**
-     * 诊断模式（设置 → 关于云析 → 长按 → 开发调试）：默认关，开启后把 db / crypto / download /
+     * 诊断模式（设置 → 关于jihexiy → 长按 → 开发调试）：默认关，开启后把 db / crypto / download /
      * webview / network / operation 六个模块的详细日志写进私有目录（见 `DiagnosticLog`）。
      * ★ 这里只存开关值，运行态由 `DiagnosticLog` 自己缓存（改完立刻生效，不必重启）。
      */
@@ -174,7 +174,7 @@ class SettingsRepository(context: Context) {
         }
 
     /**
-     * 下载调试（设置 → 关于云析 → 长按 → 开发调试）：默认关。
+     * 下载调试（设置 → 关于jihexiy → 长按 → 开发调试）：默认关。
      * 开启后按下载任务记录事件流（主要变更节点 / 错误节点），下载页长按任务可进「调试信息」页查看并导出；
      * **关闭会清空全部日志**（见 `DownloadDebugLog`），所以设置页关开关前有二次确认弹窗。
      */

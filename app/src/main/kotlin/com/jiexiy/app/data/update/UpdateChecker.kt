@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,10 +29,10 @@ import org.json.JSONObject
 
 /**
  * GitHub Release 更新检测。
- * 正式版通道（默认）：GET https://api.github.com/repos/CYQawa/解析云/releases/latest
- * 预发布通道（设置页开启「接受预发布版更新」后）：GET https://api.github.com/repos/CYQawa/解析云/releases
+ * 正式版通道（默认）：GET https://api.github.com/repos/jihexiy/jihexiy/releases/latest
+ * 预发布通道（设置页开启「接受预发布版更新」后）：GET https://api.github.com/repos/jihexiy/jihexiy/releases
  *
- * ★ 仓库路径参数化了（[repo]）：内核包下载走的是另一个仓库（`CYQawa/解析云_gopeed_build`，
+ * ★ 仓库路径参数化了（[repo]）：内核包下载走的是另一个仓库（`jihexiy/jihexiy_gopeed_build`，
  *   见 `KernelProvisioner.KERNEL_REPO`）。Release 的抓取/解析**只此一份实现**，
  *   不要为了第二个仓库再写一个平行的请求器。
  */
@@ -47,7 +47,7 @@ object UpdateChecker {
     private fun listUrl(repo: String) = "https://api.github.com/repos/$repo/releases"
 
     /** 更新检测日志标签：失败原因一律 E 级打印，方便直接看 logcat 定位（断网 / 限流 / 无 Release） */
-    private const val TAG = "解析云-Update"
+    private const val TAG = "jihexiy-Update"
 
     /** GitHub 下载加速镜像站前缀（国内直连 GitHub 慢/失败时的兜底下载通道） */
     const val MIRROR_PREFIX = "https://cdn.gh-proxy.org/"
@@ -257,7 +257,7 @@ object UpdateChecker {
         val request = Request.Builder()
             .url(url)
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", "解析云")
+            .header("User-Agent", "jihexiy")
             .get()
             .build()
         return client.newCall(request).execute().use { resp ->

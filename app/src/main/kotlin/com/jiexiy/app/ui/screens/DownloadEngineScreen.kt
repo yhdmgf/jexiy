@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -101,8 +101,8 @@ import com.jiexiy.app.data.gopeed.GopeedEngine
 import com.jiexiy.app.data.gopeed.KernelProvisioner
 import com.jiexiy.app.data.prefs.SettingsRepository
 import com.jiexiy.app.ui.components.ExperimentalBadge
-import com.jiexiy.app.ui.components.解析云WavyLoading
-import com.jiexiy.app.ui.components.解析云WavyProgress
+import com.jiexiy.app.ui.components.jihexiyWavyLoading
+import com.jiexiy.app.ui.components.jihexiyWavyProgress
 import com.jiexiy.app.ui.resolve.formatSize
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
@@ -134,7 +134,7 @@ import kotlinx.coroutines.withContext
  *    被写过，进程重启后是 NOT_INSTALLED，选内置下载器时启动流程不会碰引擎）。
  *
  * 切换结果写进 `SettingsRepository.downloadEngine`，`DownloadManager.enqueue` 按它分流（见 Agent.md §3.30）；
- * 选 Gopeed 且已导入内核时，应用启动会自动加载引擎（见 解析云App.autoStartGopeedIfSelected）；
+ * 选 Gopeed 且已导入内核时，应用启动会自动加载引擎（见 jihexiyApp.autoStartGopeedIfSelected）；
  * **删掉内核会自动切回内置下载器**，避免"设置说在用 Gopeed、实际跑的是内置下载器"这种不一致。
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -967,14 +967,14 @@ private fun KernelProgressDialog(
                             0f
                         }
                         if (known) {
-                            解析云WavyProgress(
+                            jihexiyWavyProgress(
                                 progress = { fraction },
                                 modifier = Modifier.fillMaxWidth(),
                                 color = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                         } else {
-                            解析云WavyLoading(modifier = Modifier.fillMaxWidth())
+                            jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
                         }
                         Text(
                             text = buildString {
@@ -994,7 +994,7 @@ private fun KernelProgressDialog(
                         )
                     }
                     merging != null -> {
-                        解析云WavyProgress(
+                        jihexiyWavyProgress(
                             progress = { (merging.percent / 100f).coerceIn(0f, 1f) },
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.primary,
@@ -1007,10 +1007,10 @@ private fun KernelProgressDialog(
                         )
                     }
                     phase is KernelProvisioner.Phase.Importing -> {
-                        解析云WavyLoading(modifier = Modifier.fillMaxWidth())
+                        jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
                     }
                     !finished -> {
-                        解析云WavyLoading(modifier = Modifier.fillMaxWidth())
+                        jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
                     }
                 }
 

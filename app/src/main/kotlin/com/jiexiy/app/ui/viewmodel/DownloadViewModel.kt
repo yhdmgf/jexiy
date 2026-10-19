@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -93,7 +93,7 @@ class DownloadViewModel(private val manager: DownloadManager) : ViewModel() {
         tasks.value.toList().forEach { manager.remove(it.id, deleteLocal) }
     }
 
-    // ---------- 下载调试（设置 → 关于云析 → 长按 → 开发调试 → 下载调试）----------
+    // ---------- 下载调试（设置 → 关于jihexiy → 长按 → 开发调试 → 下载调试）----------
 
     /** 调试：某任务当前每个在飞线程（分片）在干什么（拉取式快照，无在飞分片时为空表） */
     fun chunkDebugSnapshot(taskId: Long): List<ChunkDebug> = manager.chunkDebugSnapshot(taskId)

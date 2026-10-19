@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -120,7 +120,7 @@ import com.jiexiy.app.ui.viewmodel.ResolveUiState
 import com.jiexiy.app.ui.viewmodel.ResolveViewModel
 import com.jiexiy.app.ui.viewmodel.UCCoudViewModel
 import com.jiexiy.app.ui.viewmodel.XunleiCloudViewModel
-import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.components.jihexiyLoading
 import com.jiexiy.app.ui.theme.ThemeController
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
@@ -488,7 +488,7 @@ fun ResolveScreen(
             title = { Text("获取下载链接") },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    解析云Loading(modifier = Modifier.size(24.dp))
+                    jihexiyLoading(modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "正在获取下载链接，请稍候…",
@@ -862,7 +862,7 @@ private fun LoadingContent() {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            解析云Loading(modifier = Modifier.size(28.dp))
+            jihexiyLoading(modifier = Modifier.size(28.dp))
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "加载中…",

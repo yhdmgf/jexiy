@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -66,7 +66,7 @@ class QuarkResolveRepository(private val api: QuarkApi) : ShareResolveRepository
         )
 
     /**
-     * 确保「解析云临时转存」目录存在，返回其 fid；不存在则创建。
+     * 确保「jihexiy临时转存」目录存在，返回其 fid；不存在则创建。
      */
     override suspend fun ensureTempDir(cookie: String): Result<String> = runCatching {
         val rootFiles = api.getFileList(QuarkConstants.DEFAULT_PDIR_FID, cookie)
@@ -115,7 +115,7 @@ class QuarkResolveRepository(private val api: QuarkApi) : ShareResolveRepository
     )
 
     /** 夸克取直链（修复版，文档《夸克网盘重复获取直链失败修复》方案二）：
-     *  1) 每次转存落到「解析云临时转存」下的【唯一子目录 tr_<时间戳>_<随机>】，
+     *  1) 每次转存落到「jihexiy临时转存」下的【唯一子目录 tr_<时间戳>_<随机>】，
      *     使夸克 sharepage/save 去重键（to_pdir_fid）每次不同 → 永远生成新 fid，
      *     从根上避免「二次转存返回已删除 fid → download 404 code:21001」。
      *  2) 取链成功后【不立即删】，把临时子目录 fid 通过 DownloadLink.cleanupDirFid 带回，

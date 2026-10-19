@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,7 +29,7 @@ import com.jiexiy.app.data.prefs.SettingsRepository
  * 深链接注册项的启停。
  *
  * 清单里的 `intent-filter` 运行时改不了，所以每种链接挂一个 activity-alias，
- * 用户在设置里关掉某个平台 = 把对应 alias 置为 DISABLED，系统就不会再把那种链接派给云析
+ * 用户在设置里关掉某个平台 = 把对应 alias 置为 DISABLED，系统就不会再把那种链接派给jihexiy
  * （与桌面动态图标同一套机制，见 `ThemeScreen`）。
  *
  * ★ 用 `DONT_KILL_APP`：改组件状态不该把用户正在跑的下载杀掉。
@@ -37,7 +37,7 @@ import com.jiexiy.app.data.prefs.SettingsRepository
  */
 object LinkOpener {
 
-    private const val TAG = "解析云-Link"
+    private const val TAG = "jihexiy-Link"
 
     /** 用户改开关后立刻生效 */
     fun apply(context: Context, target: LinkOpenTarget, enabled: Boolean) {

@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -81,9 +81,9 @@ import java.util.concurrent.atomic.AtomicLong
 object KernelProvisioner {
 
     /** 内核包仓库：Release 里按 CPU 架构分包（`libgopeed-<abi>.aar`），说明里带「网盘下载」条目 */
-    const val KERNEL_REPO = "CYQawa/解析云_gopeed_build"
+    const val KERNEL_REPO = "jihexiy/jihexiy_gopeed_build"
 
-    private const val TAG = "解析云-Kernel"
+    private const val TAG = "jihexiy-Kernel"
 
     /** 分片下载用的合成任务 id（只给 ChunkDownloader 的取消登记表用） */
     private const val TASK_ID = -20261004L

@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -112,7 +112,7 @@ import com.jiexiy.app.data.download.MagnetLink
 import com.jiexiy.app.ui.SnackbarController
 import com.jiexiy.app.ui.viewmodel.DownloadViewModel
 import com.jiexiy.app.ui.components.FileNameText
-import com.jiexiy.app.ui.components.解析云WavyProgress
+import com.jiexiy.app.ui.components.jihexiyWavyProgress
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
 import com.jiexiy.app.ui.theme.spatialDefault
@@ -127,7 +127,7 @@ import java.io.File
 fun DownloadScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     viewModel: DownloadViewModel,
-    /** 下载调试开关（设置 → 关于云析 → 长按 → 开发调试）：开启后长按任务菜单里出现「调试信息」 */
+    /** 下载调试开关（设置 → 关于jihexiy → 长按 → 开发调试）：开启后长按任务菜单里出现「调试信息」 */
     downloadDebug: Boolean = false,
     /** 深链接进来的直链 / 磁力：预填「添加下载任务」弹窗，用户确认后入队；null = 没有 */
     incomingAddUrl: String? = null,
@@ -632,7 +632,7 @@ private fun FolderDownloadGroup(
                 Column {
                     // 总体进度条（已完成时隐藏）；Expressive 波浪进度条（仅在有子任务下载中时起伏）
                     if (!done) {
-                        解析云WavyProgress(
+                        jihexiyWavyProgress(
                             progress = { fraction },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -796,7 +796,7 @@ private fun DownloadSubTaskRow(
                 enter = expandVertically(spatialDefault()) + fadeIn(effectsDefault()),
                 exit = shrinkVertically(spatialFast()) + fadeOut(effectsFast())
             ) {
-                解析云WavyProgress(
+                jihexiyWavyProgress(
                     progress = { fraction },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1023,7 +1023,7 @@ private fun DownloadTaskCard(
                             Spacer(modifier = Modifier.height(6.dp))
                         }
                     }
-                    解析云WavyProgress(
+                    jihexiyWavyProgress(
                         progress = { fraction },
                         modifier = Modifier.fillMaxWidth(),
                         color = when (task.status) {
@@ -1132,7 +1132,7 @@ private fun DownloadTaskCard(
 
 private fun copyToClipboard(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("解析云_url", text))
+    cm.setPrimaryClip(ClipData.newPlainText("jihexiy_url", text))
 }
 
 internal fun taskStatusLine(task: DownloadTaskEntity): String {

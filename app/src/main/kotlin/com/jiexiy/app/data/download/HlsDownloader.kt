@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,7 +34,7 @@ import kotlin.coroutines.coroutineContext
 
 /** Bounded HLS downloader that never forwards credentials across origins. */
 object HlsDownloader {
-    private const val TAG = "解析云-HLS"
+    private const val TAG = "jihexiy-HLS"
     private const val MAX_REDIRECTS = 5
     private const val MAX_PLAYLIST_BYTES = 1024 * 1024L
     private const val MAX_SEGMENTS = 20_000

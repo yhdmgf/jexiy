@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -63,7 +63,6 @@ import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Button
@@ -175,7 +174,7 @@ fun OnboardingScreen(
 
     // ★ 整页铺一层 Surface：引导页是 MainScreen 里提前 return 的全屏覆盖页，**不在 Scaffold 里**，
     //   没有 Surface/Scaffold 就没人提供 LocalContentColor（其默认值是黑色）——
-    //   于是没写 color 的文本（第 1 页「云析」、第 2 页「使用前请阅读」）在深色模式下会变成黑字。
+    //   于是没写 color 的文本（第 1 页「jihexiy」、第 2 页「使用前请阅读」）在深色模式下会变成黑字。
     //   底色用 scheme.surface，与 BlobBackground 自己铺的 base 完全一致，观感不变。
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -325,7 +324,7 @@ private fun WelcomePage(context: Context) {
         ) {
             Image(
                 painter = painterResource(R.drawable.icon),
-                contentDescription = "云析图标",
+                contentDescription = "jihexiy图标",
                 modifier = Modifier
                     .size(112.dp)
                     .clip(RoundedCornerShape(30.dp)),
@@ -335,7 +334,7 @@ private fun WelcomePage(context: Context) {
 
         Spacer(modifier = Modifier.height(26.dp))
         Text(
-            text = "云析",
+            text = "jihexiy",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold,
             // 显式给色：全屏覆盖页里不依赖 LocalContentColor（默认黑色，深色模式下会变黑字）
@@ -343,7 +342,7 @@ private fun WelcomePage(context: Context) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "解析云 · v$versionName",
+            text = "jihexiy · v$versionName",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -370,8 +369,6 @@ private fun WelcomePage(context: Context) {
         Spacer(modifier = Modifier.height(30.dp))
         GitHubCard(context)
 
-        Spacer(modifier = Modifier.height(12.dp))
-        QQGroupPill(context)
     }
 }
 
@@ -446,60 +443,10 @@ private fun GitHubCard(context: Context) {
     }
 }
 
-/**
- * QQ 交流群入口（胶囊）：点击拉起 QQ 群卡片，没装 QQ 时退回复制群号。
- *
- * ★ 反馈用系统 Toast：引导页是 MainScreen 里 early-return 的全屏页，不在 Scaffold 里，
- *   拿不到 Snackbar 宿主（SnackbarController 的气泡挂在 MainScreen 的 Scaffold 上）；
- *   Android 13+ 复制剪贴板时系统自己也会弹提示。
- * ★ 做成胶囊而不是卡片：首页已经有一张 GitHub 卡片，小屏（≈640dp 高）再加一张卡片会挤掉图标区。
- */
-@Composable
-private fun QQGroupPill(context: Context) {
-    Card(
-        onClick = {
-            // 优先拉起 QQ 群卡片（openQQGroup 内部靠 ActivityNotFoundException 判断有没有 QQ），失败才复制群号
-            if (!AppLinks.openQQGroup(context)) {
-                copyToClipboard(context, AppLinks.QQ_GROUP)
-                Toast.makeText(context, "未安装 QQ，群号已复制：${AppLinks.QQ_GROUP}", Toast.LENGTH_SHORT).show()
-            }
-        },
-        shape = CircleShape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Groups,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "QQ 群 ${AppLinks.QQ_GROUP}",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Icon(
-                imageVector = Icons.Outlined.OpenInNew,
-                contentDescription = "打开 QQ",
-                modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
-    }
-}
-
 /** 复制文本到剪贴板（写剪贴板不受「自动识别剪贴板」开关约束，见 Agent.md §3.22） */
 private fun copyToClipboard(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("解析云_qq_group", text))
+    cm.setPrimaryClip(ClipData.newPlainText("jihexiy_qq_group", text))
 }
 
 // ==================== 第 2 页：协议与声明 ====================
@@ -521,7 +468,7 @@ private fun TermsPage() {
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "云析是开源工具，以下是使用条款与免责说明",
+            text = "jihexiy是开源工具，以下是使用条款与免责说明",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

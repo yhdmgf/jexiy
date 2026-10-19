@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,20 +31,20 @@ import android.content.Intent
  */
 object DeepLinks {
 
-    /** 自有协议 scheme：`解析云://resolve?url=<编码后的分享链接>&pwd=<提取码>` */
-    private const val SCHEME_PREFIX = "解析云://"
+    /** 自有协议 scheme：`jihexiy://resolve?url=<编码后的分享链接>&pwd=<提取码>` */
+    private const val SCHEME_PREFIX = "jihexiy://"
 
-    /** `解析云://` 里承载真实分享链接的参数名 */
+    /** `jihexiy://` 里承载真实分享链接的参数名 */
     private const val PARAM_URL = "url"
 
-    /** `解析云://` 里可选的提取码参数名 */
+    /** `jihexiy://` 里可选的提取码参数名 */
     private const val PARAM_PWD = "pwd"
 
     /**
      * 从 intent 的三要素里取出待解析文本；null = 这个 intent 不是「链接唤起 / 分享 / 选中文本解析」。
      *
      * @param action    `Intent.action`
-     * @param data      `Intent.dataString`（ACTION_VIEW：点链接 / 解析云:// / magnet:）
+     * @param data      `Intent.dataString`（ACTION_VIEW：点链接 / jihexiy:// / magnet:）
      * @param extraText 文本类 action 带过来的文本：
      *                  ACTION_SEND 用 `EXTRA_TEXT`，ACTION_PROCESS_TEXT 用 `EXTRA_PROCESS_TEXT`（选中文本）
      */
@@ -56,7 +56,7 @@ object DeepLinks {
         else -> null
     }
 
-    /** ACTION_VIEW 的 data：`解析云://` 要拆出真实链接，其余（https / magnet:）原样返回 */
+    /** ACTION_VIEW 的 data：`jihexiy://` 要拆出真实链接，其余（https / magnet:）原样返回 */
     private fun viewText(data: String?): String? {
         val raw = data?.trim().orEmpty()
         if (raw.isEmpty()) return null

@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -67,7 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.jiexiy.app.data.network.QuarkConstants
 import com.jiexiy.app.ui.viewmodel.QuarkAccountViewModel
-import com.jiexiy.app.ui.components.解析云WavyLoading
+import com.jiexiy.app.ui.components.jihexiyWavyLoading
 import com.jiexiy.app.util.DiagnosticLog
 import kotlinx.coroutines.launch
 
@@ -217,7 +217,7 @@ fun QuarkLoginScreen(
                 modifier = Modifier.fillMaxSize()
             )
             if (isLoading) {
-                解析云WavyLoading(modifier = Modifier.fillMaxWidth())
+                jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
             }
         }
     }

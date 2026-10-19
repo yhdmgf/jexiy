@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -61,7 +61,7 @@ import com.jiexiy.app.ui.resolve.ShareFileRow
 import com.jiexiy.app.ui.viewmodel.Pan115CloudUiState
 import com.jiexiy.app.ui.viewmodel.Pan115CloudViewModel
 import com.jiexiy.app.ui.viewmodel.ResolveViewModel
-import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.components.jihexiyLoading
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.ListGroupGap
 import com.jiexiy.app.ui.theme.effectsFast
@@ -138,7 +138,7 @@ internal fun Pan115SaveContent(
                             .height(200.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        解析云Loading()
+                        jihexiyLoading()
                     }
 
                     is Pan115CloudUiState.Error -> Box(

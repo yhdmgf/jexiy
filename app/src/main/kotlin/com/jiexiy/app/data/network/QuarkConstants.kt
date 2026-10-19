@@ -1,6 +1,6 @@
 /*
- * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 CYQawa
+ * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jihexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -90,7 +90,7 @@ object QuarkConstants {
     const val SHARE_INFO_URL = "$API_BASE/1/clouddrive/share/password?pr=ucpro&fr=pc&uc_param_str="
 
     /** 临时转存目录名 */
-    const val TEMP_DIR_NAME = "解析云临时转存"
+    const val TEMP_DIR_NAME = "jihexiy临时转存"
 
     /** 临时转存子目录前缀（唯一子目录 tr_<时间戳>_<随机>，供启动一次性清理识别） */
     const val TEMP_SUBDIR_PREFIX = "tr_"
