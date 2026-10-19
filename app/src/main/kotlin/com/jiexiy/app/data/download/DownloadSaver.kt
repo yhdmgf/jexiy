@@ -33,7 +33,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
 
-private const val TAG = jexiy-DL"
+private const val TAG = "jexiy-DL"
 
 /**
  * 保存目的地：**直接向最终位置流式写入**，不再经过私有缓存副本。

@@ -42,7 +42,7 @@ import org.json.JSONObject
  */
 object StarSeaApi {
 
-    private const val TAG = jexiy-StarSea"
+    private const val TAG = "jexiy-StarSea"
 
     /** 解析深度：只要 pwd_id（见类注释，刻意不用 full） */
     private const val STEP_PARSE = "parse"

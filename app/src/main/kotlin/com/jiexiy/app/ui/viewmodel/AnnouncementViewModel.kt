@@ -307,6 +307,6 @@ class AnnouncementViewModel(private val readStore: AnnouncementReadStore) : View
     }
 
     companion object {
-        private const val TAG = jexiy-Announce"
+        private const val TAG = "jexiy-Announce"
     }
 }

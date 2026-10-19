@@ -66,7 +66,7 @@ object AnnouncementApi {
     const val PAGE_SIZE = 100
 
     /** 公告相关日志统一走这个标签，失败原因一律 E 级打印，方便直接看 logcat 定位 */
-    private const val TAG = jexiy-Announce"
+    private const val TAG = "jexiy-Announce"
 
     /** 发布者（服务端 `publisher` 对象） */
     data class Publisher(val name: String, val avatarUrl: String?)

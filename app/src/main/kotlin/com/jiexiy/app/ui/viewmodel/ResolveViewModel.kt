@@ -624,7 +624,7 @@ class ResolveViewModel(
                         failCount++
                         val reason = e.message ?: e.javaClass.simpleName
                         if (firstFailReason == null) firstFailReason = reason
-                        android.util.Log.w(jexiy-Resolve", "批量下载跳过 ${file.fname}：$reason")
+                        android.util.Log.w("jexiy-Resolve", "批量下载跳过 ${file.fname}：$reason")
                     }
                 }
                 if (!interrupted) {

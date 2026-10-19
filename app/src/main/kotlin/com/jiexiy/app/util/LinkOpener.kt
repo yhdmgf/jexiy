@@ -37,7 +37,7 @@ import com.jiexiy.app.data.prefs.SettingsRepository
  */
 object LinkOpener {
 
-    private const val TAG = jexiy-Link"
+    private const val TAG = "jexiy-Link"
 
     /** 用户改开关后立刻生效 */
     fun apply(context: Context, target: LinkOpenTarget, enabled: Boolean) {

@@ -125,7 +125,7 @@ data class DownloadResourceDebug(
     val poolQueue: Int
 )
 
-private const val TAG = jexiy-DL"
+private const val TAG = "jexiy-DL"
 
 /** 单文件 Range 分片的安全并发上限。迅雷等 CDN 对单文件并发 Range 有阈值，
  *  超过约 8 个并发会把多余请求降级为 200 整文件（忽略 Range），
@@ -2482,7 +2482,7 @@ class DownloadManager(
             30L,
             TimeUnit.SECONDS,
             LinkedBlockingQueue<Runnable>()
-        ) { r -> Thread(r, jexiy-chunk-io").apply { isDaemon = true } }
+        ) { r -> Thread(r, "jexiy-chunk-io").apply { isDaemon = true } }
             .apply { allowCoreThreadTimeOut(true) }
 
         internal val chunkIoDispatcher: CoroutineDispatcher = chunkIoExecutor.asCoroutineDispatcher()

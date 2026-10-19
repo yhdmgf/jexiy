@@ -59,7 +59,7 @@ object DiagnosticLog {
     const val NETWORK = "network"
     const val OPERATION = "operation"
 
-    private const val TAG = jexiy-Diag"
+    private const val TAG = "jexiy-Diag"
     private const val DIR_NAME = "diagnostic_logs"
 
     /** 单文件上限 2MB */
@@ -337,7 +337,7 @@ object DiagnosticLog {
         if (worker?.isAlive == true) return
         synchronized(lock) {
             if (worker?.isAlive == true) return
-            worker = Thread({ runWorker() }, jexiy-diagnostic-log").apply {
+            worker = Thread({ runWorker() }, "jexiy-diagnostic-log").apply {
                 isDaemon = true
                 priority = Thread.MIN_PRIORITY
                 start()

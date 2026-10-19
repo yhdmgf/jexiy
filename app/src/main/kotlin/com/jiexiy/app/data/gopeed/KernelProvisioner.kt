@@ -83,7 +83,7 @@ object KernelProvisioner {
     /** 内核包仓库：Release 里按 CPU 架构分包（`libgopeed-<abi>.aar`），说明里带「网盘下载」条目 */
     const val KERNEL_REPO = "yhdmgf/jiexiy_gopeed_build"
 
-    private const val TAG = jexiy-Kernel"
+    private const val TAG = "jexiy-Kernel"
 
     /** 分片下载用的合成任务 id（只给 ChunkDownloader 的取消登记表用） */
     private const val TASK_ID = -20261004L

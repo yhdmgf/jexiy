@@ -47,7 +47,7 @@ object UpdateChecker {
     private fun listUrl(repo: String) = "https://api.github.com/repos/$repo/releases"
 
     /** 更新检测日志标签：失败原因一律 E 级打印，方便直接看 logcat 定位（断网 / 限流 / 无 Release） */
-    private const val TAG = jexiy-Update"
+    private const val TAG = "jexiy-Update"
 
     /** GitHub 下载加速镜像站前缀（国内直连 GitHub 慢/失败时的兜底下载通道） */
     const val MIRROR_PREFIX = "https://cdn.gh-proxy.org/"

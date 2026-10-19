@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 import kotlin.math.min
 
-private const val TAG = jexiy-DL"
+private const val TAG = "jexiy-DL"
 
 /** 分片下载单次失败后的瞬时 IO 重试次数 */
 private const val CHUNK_RETRIES = 3

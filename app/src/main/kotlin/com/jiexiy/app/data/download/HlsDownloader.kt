@@ -34,7 +34,7 @@ import kotlin.coroutines.coroutineContext
 
 /** Bounded HLS downloader that never forwards credentials across origins. */
 object HlsDownloader {
-    private const val TAG = jexiy-HLS"
+    private const val TAG = "jexiy-HLS"
     private const val MAX_REDIRECTS = 5
     private const val MAX_PLAYLIST_BYTES = 1024 * 1024L
     private const val MAX_SEGMENTS = 20_000

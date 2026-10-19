@@ -96,7 +96,7 @@ internal open class DiagnosticWebViewClient : WebViewClient() {
     }
 
     private companion object {
-        const val TAG = jexiy-WebView"
+        const val TAG = "jexiy-WebView"
     }
 }
 
@@ -128,7 +128,7 @@ internal open class DiagnosticWebChromeClient : WebChromeClient() {
     }
 
     private companion object {
-        const val TAG = jexiy-WebView"
+        const val TAG = "jexiy-WebView"
     }
 }
 
