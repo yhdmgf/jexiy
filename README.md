@@ -17,18 +17,16 @@
 
 [下载最新版](https://github.com/yhdmgf/jexiy/releases/latest) · [功能](#功能) · [使用](#使用) · [构建](#构建) · [常见问题](#常见问题)
 
-[![QQ交流群](https://img.shields.io/badge/QQ%E7%BE%A4-635207650-12B7F5?style=flat-square\&logo=qq\&logoColor=white)](http://qm.qq.com/cgi-bin/qm/qr?...\&group_code=635207650)
-
 </div>
 
 ***
 
+> **项目说明**：本项目（解析云 · JieXiy）是基于上游原项目 **[CYQawa/YunX (云析/云溪)](https://github.com/CYQawa/YunX)** 进行二次开发与维护的分支版本。感谢原作者及社区的无私奉献与开源精神！
+
 > **云析永远免费开源。** 如果你是在任何地方"花钱买到"的，说明你被骗了，请立即退款。
 > 任何收费版本均为二次打包的诈骗版本，与本项目无关。
 
-> **云析使用AGPL-3.0开源协议** 如果你使用了云析的代码，未经授权请遵守协议，同样以AGPL-3.0开放源代码
-
-> 本仓库为仅安卓端app，PC端可见 [YunX-Desktop](https://github.com/tidain/YunX-Desktop)
+> **云析使用AGPL-3.0开源协议** 如果你使用了云析的代码，未经授权请遵守协议，同样以AGPL-3.0开放源代码。
 
 ## 截图
 
