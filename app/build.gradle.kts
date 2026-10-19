@@ -67,17 +67,16 @@ android {
             keyPassword = "android"
         }
         // 正式发布签名：只在环境变量齐备时注册（CI nightly 走这里；本地不注册，见文件顶部说明）。
-        // 签名方案：v1 (jar) + v2 (whole apk) + v3 (APK Signature Scheme v3) + v4 (APK Signature Scheme v4)
-        // 全开，满足 Play Store / 手动安装 / 自动更新覆盖安装全部要求。
-        // v3 开启需 Android Gradle Plugin >= 7.3.0；v4 需 minSdk >= 30。
+        // 签名方案：v1 (jar) + v2 (whole apk) + v3 (APK Signature Scheme v3)
+        // v4 签名需要 minSdk >= 30，当前 minSdk=24 不满足，先不启用。
+        // v3 开启需 Android Gradle Plugin >= 7.3.0（当前 AGP 8.13.0 ✅）。
         if (releaseSigningReady) {
             create("release") {
                 storeFile = releaseKeystorePath?.let { file(it) }
                 storePassword = System.getenv("YUNX_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("YUNX_KEY_ALIAS")
                 keyPassword = System.getenv("YUNX_KEY_PASSWORD")
-                enableV3Signing()  // APK Signature Scheme v3
-                enableV4Signing()  // APK Signature Scheme v4 (requires minSdk 30)
+                v3SigningEnabled = true
             }
         }
     }
