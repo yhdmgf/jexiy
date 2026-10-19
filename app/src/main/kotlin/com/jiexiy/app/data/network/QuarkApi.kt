@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.QuotaInfo
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareInfo
-import com.解析云.app.data.network.model.ShareToken
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.QuotaInfo
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareInfo
+import com.jiexiy.app.data.network.model.ShareToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -639,7 +639,7 @@ class QuarkApi(
      * 注意：分享创建是**异步任务**——响应只有 data.task_id，必须轮询 /1/clouddrive/task 直到完成拿到 share_id。
      * @param urlType 1=链接无提取码 2=链接+提取码
      * @param expiredType 1=永久 2=一天 3=七天 4=三十天（**取值域与 UI 中性码一致**，见
-     *   [com.解析云.app.data.network.model.ShareExpire]，无需转换，Agent.md §3.20；调用方只能传 1..4）
+     *   [com.jiexiy.app.data.network.model.ShareExpire]，无需转换，Agent.md §3.20；调用方只能传 1..4）
      * @return 分享 share_id
      */
     suspend fun createShare(

@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.AppDatabase
-import com.解析云.app.data.db.MultiAccountEntity
-import com.解析云.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.db.AppDatabase
+import com.jiexiy.app.data.db.MultiAccountEntity
+import com.jiexiy.app.data.download.DownloadPlatform
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 

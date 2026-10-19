@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.Manifest
 import androidx.activity.compose.BackHandler
@@ -97,16 +97,16 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.解析云.app.data.gopeed.GopeedEngine
-import com.解析云.app.data.gopeed.KernelProvisioner
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.ui.components.ExperimentalBadge
-import com.解析云.app.ui.components.解析云WavyLoading
-import com.解析云.app.ui.components.解析云WavyProgress
-import com.解析云.app.ui.resolve.formatSize
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.util.PermissionState
+import com.jiexiy.app.data.gopeed.GopeedEngine
+import com.jiexiy.app.data.gopeed.KernelProvisioner
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.ui.components.ExperimentalBadge
+import com.jiexiy.app.ui.components.解析云WavyLoading
+import com.jiexiy.app.ui.components.解析云WavyProgress
+import com.jiexiy.app.ui.resolve.formatSize
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.util.PermissionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

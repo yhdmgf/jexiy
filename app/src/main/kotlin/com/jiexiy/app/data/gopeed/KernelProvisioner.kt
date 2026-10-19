@@ -16,29 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.gopeed
+package com.jiexiy.app.data.gopeed
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.解析云.app.data.db.AppDatabase
-import com.解析云.app.data.download.ChunkDownloader
-import com.解析云.app.data.download.ChunkResult
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.download.DownloadService
-import com.解析云.app.data.network.HttpClients
-import com.解析云.app.data.network.QuarkApi
-import com.解析云.app.data.network.QuarkConstants
-import com.解析云.app.data.network.ShareLinkParser
-import com.解析云.app.data.network.SharePlatform
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareSession
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.data.repository.QuarkAccountRepository
-import com.解析云.app.data.repository.QuarkResolveRepository
-import com.解析云.app.data.update.UpdateChecker
-import com.解析云.app.util.LogRedactor
+import com.jiexiy.app.data.db.AppDatabase
+import com.jiexiy.app.data.download.ChunkDownloader
+import com.jiexiy.app.data.download.ChunkResult
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.download.DownloadService
+import com.jiexiy.app.data.network.HttpClients
+import com.jiexiy.app.data.network.QuarkApi
+import com.jiexiy.app.data.network.QuarkConstants
+import com.jiexiy.app.data.network.ShareLinkParser
+import com.jiexiy.app.data.network.SharePlatform
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareSession
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.data.repository.QuarkAccountRepository
+import com.jiexiy.app.data.repository.QuarkResolveRepository
+import com.jiexiy.app.data.update.UpdateChecker
+import com.jiexiy.app.util.LogRedactor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * Gopeed 内核（libgojni.so）的云端获取：**取包 → 下载 → 导入**一条链路。
  *
- * 为什么单独一个对象：这条链路和普通下载任务有三处根本不同，塞进 [com.解析云.app.data.download.DownloadManager]
+ * 为什么单独一个对象：这条链路和普通下载任务有三处根本不同，塞进 [com.jiexiy.app.data.download.DownloadManager]
  * 会把两者的语义搅在一起：
  *  ① 落地位置是**应用私有目录**（[GopeedEngine.kernelTempDir]，Android/data/…），不是公共 Download：
  *     内核包只是导入用的临时物件，导入完就删，用户不需要在文件管理器里看到它，也就不需要任何存储权限；

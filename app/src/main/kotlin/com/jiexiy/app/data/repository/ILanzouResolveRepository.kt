@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.network.ILanzouApi
-import com.解析云.app.data.network.ILanzouConstants
-import com.解析云.app.data.network.ShareLinkParser
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareSession
+import com.jiexiy.app.data.network.ILanzouApi
+import com.jiexiy.app.data.network.ILanzouConstants
+import com.jiexiy.app.data.network.ShareLinkParser
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareSession
 import kotlinx.coroutines.delay
 
 /**

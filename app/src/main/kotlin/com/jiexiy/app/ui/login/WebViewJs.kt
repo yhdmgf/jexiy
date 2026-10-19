@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import android.webkit.WebView
-import com.解析云.app.util.DiagnosticLog
+import com.jiexiy.app.util.DiagnosticLog
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull

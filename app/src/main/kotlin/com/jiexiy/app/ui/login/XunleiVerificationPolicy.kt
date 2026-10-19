@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import java.net.URI
 

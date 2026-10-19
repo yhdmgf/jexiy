@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -77,20 +77,20 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
-import com.解析云.app.data.network.video.VideoMedia
-import com.解析云.app.data.network.video.VideoMediaKind
-import com.解析云.app.data.network.video.VideoParseResult
-import com.解析云.app.ui.items.MultiSelectAction
-import com.解析云.app.ui.items.MultiSelectBar
-import com.解析云.app.ui.items.logoRes
-import com.解析云.app.ui.preview.MediaPlayerPane
-import com.解析云.app.ui.preview.PreviewKind
-import com.解析云.app.ui.preview.PreviewLauncher
-import com.解析云.app.ui.preview.PreviewMedia
-import com.解析云.app.ui.preview.previewNetworkHeaders
-import com.解析云.app.ui.resolve.formatSize
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.listGroupShape
+import com.jiexiy.app.data.network.video.VideoMedia
+import com.jiexiy.app.data.network.video.VideoMediaKind
+import com.jiexiy.app.data.network.video.VideoParseResult
+import com.jiexiy.app.ui.items.MultiSelectAction
+import com.jiexiy.app.ui.items.MultiSelectBar
+import com.jiexiy.app.ui.items.logoRes
+import com.jiexiy.app.ui.preview.MediaPlayerPane
+import com.jiexiy.app.ui.preview.PreviewKind
+import com.jiexiy.app.ui.preview.PreviewLauncher
+import com.jiexiy.app.ui.preview.PreviewMedia
+import com.jiexiy.app.ui.preview.previewNetworkHeaders
+import com.jiexiy.app.ui.resolve.formatSize
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.listGroupShape
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.Intent
 import android.net.Uri
@@ -60,7 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.update.UpdateChecker
+import com.jiexiy.app.data.update.UpdateChecker
 
 /** Release 说明里没给 html_url 时的兜底跳转地址 */
 private const val RELEASES_PAGE_FALLBACK = "https://github.com/CYQawa/解析云/releases/latest"

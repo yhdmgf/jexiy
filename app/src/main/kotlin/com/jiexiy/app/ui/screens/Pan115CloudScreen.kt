@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.ui.SnackbarController
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -90,32 +90,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.network.Pan115Constants
-import com.解析云.app.data.network.model.ShareExpire
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.ui.items.MultiSelectAction
-import com.解析云.app.ui.items.MultiSelectBar
-import com.解析云.app.ui.components.ScrollToTopButton
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.resolve.DownloadLinkDialog
-import com.解析云.app.ui.resolve.BackToParentItem
-import com.解析云.app.ui.resolve.CrumbBar
-import com.解析云.app.ui.resolve.ShareFileRow
-import com.解析云.app.ui.viewmodel.Pan115CloudUiState
-import com.解析云.app.ui.viewmodel.Pan115CloudViewModel
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.listGroupShape
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.data.network.Pan115Constants
+import com.jiexiy.app.data.network.model.ShareExpire
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.ui.items.MultiSelectAction
+import com.jiexiy.app.ui.items.MultiSelectBar
+import com.jiexiy.app.ui.components.ScrollToTopButton
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.resolve.DownloadLinkDialog
+import com.jiexiy.app.ui.resolve.BackToParentItem
+import com.jiexiy.app.ui.resolve.CrumbBar
+import com.jiexiy.app.ui.resolve.ShareFileRow
+import com.jiexiy.app.ui.viewmodel.Pan115CloudUiState
+import com.jiexiy.app.ui.viewmodel.Pan115CloudViewModel
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.listGroupShape
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /**
  * 115 网盘云盘浏览页（参考 123/139 云盘页）：
  * - 目录浏览 + 下拉刷新 + 面包屑回退
  * - 长按多选（批量下载/分享/移动/删除）
  * - 文件/文件夹操作菜单（下载/重命名/移动/分享/删除）
- * 认证走整串登录 Cookie（[com.解析云.app.data.db.Pan115AccountEntity.cookie]），目录 ID 用 cid（根="0"）；
+ * 认证走整串登录 Cookie（[com.jiexiy.app.data.db.Pan115AccountEntity.cookie]），目录 ID 用 cid（根="0"）；
  * 分享有效期是 115 专属档位（`ShareExpire.PAN115_OPTIONS`：长期/1/3/7/15 天），
  * 访问码由服务端生成、不可自定义（与 139 同规则），故提取码步骤传 `PasscodeMode.SERVER_GENERATED`。
  */

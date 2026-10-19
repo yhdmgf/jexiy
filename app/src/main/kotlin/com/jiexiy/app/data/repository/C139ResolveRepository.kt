@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.network.C139Api
-import com.解析云.app.data.network.C139Constants
-import com.解析云.app.data.network.ShareLinkParser
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareSession
+import com.jiexiy.app.data.network.C139Api
+import com.jiexiy.app.data.network.C139Constants
+import com.jiexiy.app.data.network.ShareLinkParser
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareSession
 
 /**
  * 139（和彩云）分享解析仓库：cookie → getOutLinkInfoV6 列目录 → dlFromOutLinkV3 直链。

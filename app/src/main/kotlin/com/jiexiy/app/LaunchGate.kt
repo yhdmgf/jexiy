@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app
+package com.jiexiy.app
 
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
-import com.解析云.app.crash.CrashHandler
-import com.解析云.app.util.ArchiveProbe
+import com.jiexiy.app.crash.CrashHandler
+import com.jiexiy.app.util.ArchiveProbe
 
 class LaunchGate : ContentProvider() {
 

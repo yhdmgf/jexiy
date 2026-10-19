@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -78,11 +78,11 @@ import androidx.activity.compose.BackHandler
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.DrawableRes
-import com.解析云.app.R
-import com.解析云.app.data.network.SharePlatform
-import com.解析云.app.data.network.video.VideoPlatform
-import com.解析云.app.ui.items.logoRes
-import com.解析云.app.util.AppLinks
+import com.jiexiy.app.R
+import com.jiexiy.app.data.network.SharePlatform
+import com.jiexiy.app.data.network.video.VideoPlatform
+import com.jiexiy.app.ui.items.logoRes
+import com.jiexiy.app.util.AppLinks
 
 /**
  * 关于云析页：应用介绍、支持平台、功能特性、技术栈与免责声明。

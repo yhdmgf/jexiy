@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -93,14 +93,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.db.BookmarkEntity
-import com.解析云.app.data.network.ShareLinkParser
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.viewmodel.BookmarkViewModel
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.data.db.BookmarkEntity
+import com.jiexiy.app.data.network.ShareLinkParser
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.viewmodel.BookmarkViewModel
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /** 「自定义分类」虚拟选项标识（不参与持久化，仅用于弹窗交互） */
 private const val CUSTOM_CATEGORY = "__custom__"
@@ -202,7 +202,7 @@ fun BookmarkScreen(
                 val parsed = ShareLinkParser.parse(link)
                 // GitHub 链接 ShareLinkParser 不识别，单独取平台标签
                 val platform = parsed?.platform?.name
-                    ?: if (com.解析云.app.data.network.GitHubLinkParser.parse(link) != null) "GITHUB" else ""
+                    ?: if (com.jiexiy.app.data.network.GitHubLinkParser.parse(link) != null) "GITHUB" else ""
                 viewModel.addBookmark(
                     link = link,
                     title = title,
@@ -239,7 +239,7 @@ fun BookmarkScreen(
             onCopy = {
                 menuBookmark = null
                 copyToClipboard(context, bookmark.link)
-                com.解析云.app.ui.SnackbarController.show("链接已复制")
+                com.jiexiy.app.ui.SnackbarController.show("链接已复制")
             },
             onEditCategory = {
                 menuBookmark = null

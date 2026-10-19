@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.preview
+package com.jiexiy.app.ui.preview
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
@@ -89,12 +89,12 @@ import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import com.mikepenz.markdown.m3.Markdown
-import com.解析云.app.data.network.video.VideoHttp
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.components.GitHubMarkdownImageTransformer
-import com.解析云.app.ui.components.解析云WavyLoading
-import com.解析云.app.ui.components.compactMarkdownTypography
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.data.network.video.VideoHttp
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.components.GitHubMarkdownImageTransformer
+import com.jiexiy.app.ui.components.解析云WavyLoading
+import com.jiexiy.app.ui.components.compactMarkdownTypography
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 import java.net.URI
 import kotlinx.coroutines.CancellationException
 

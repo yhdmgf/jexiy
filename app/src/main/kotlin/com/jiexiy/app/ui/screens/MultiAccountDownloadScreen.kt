@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -60,12 +60,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.components.ExperimentalBadge
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.ListGroupPos
-import com.解析云.app.ui.theme.listGroupShape
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.components.ExperimentalBadge
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.ListGroupPos
+import com.jiexiy.app.ui.theme.listGroupShape
 
 /**
  * 「多账号下载」设置子页：两个**实验性**开关。

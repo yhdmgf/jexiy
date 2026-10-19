@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.db
+package com.jiexiy.app.data.db
 
 import androidx.room.Dao
 import androidx.room.Insert

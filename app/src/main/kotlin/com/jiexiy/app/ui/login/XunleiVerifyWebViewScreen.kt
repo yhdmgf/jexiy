@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import android.graphics.Bitmap
 import android.net.Uri
@@ -55,11 +55,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.解析云.app.data.network.XunleiConstants
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.components.解析云WavyLoading
+import com.jiexiy.app.data.network.XunleiConstants
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.components.解析云WavyLoading
 import org.json.JSONObject
-import com.解析云.app.util.DiagnosticLog
+import com.jiexiy.app.util.DiagnosticLog
 
 private class XunleiJsBridge(
     private val onSuccess: (String) -> Unit,

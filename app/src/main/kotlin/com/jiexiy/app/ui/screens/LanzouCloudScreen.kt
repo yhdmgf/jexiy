@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.ui.SnackbarController
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -82,22 +82,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.解析云.app.ui.items.MultiSelectAction
-import com.解析云.app.ui.items.MultiSelectBar
-import com.解析云.app.ui.components.ScrollToTopButton
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.resolve.DownloadLinkDialog
-import com.解析云.app.ui.resolve.BackToParentItem
-import com.解析云.app.ui.resolve.CrumbBar
-import com.解析云.app.ui.resolve.ShareFileRow
-import com.解析云.app.ui.viewmodel.LanzouCloudUiState
-import com.解析云.app.ui.viewmodel.LanzouCloudViewModel
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.listGroupShape
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.ui.items.MultiSelectAction
+import com.jiexiy.app.ui.items.MultiSelectBar
+import com.jiexiy.app.ui.components.ScrollToTopButton
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.resolve.DownloadLinkDialog
+import com.jiexiy.app.ui.resolve.BackToParentItem
+import com.jiexiy.app.ui.resolve.CrumbBar
+import com.jiexiy.app.ui.resolve.ShareFileRow
+import com.jiexiy.app.ui.viewmodel.LanzouCloudUiState
+import com.jiexiy.app.ui.viewmodel.LanzouCloudViewModel
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.listGroupShape
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /**
  * 蓝奏云个人盘浏览页（镜像 123 云盘页）：

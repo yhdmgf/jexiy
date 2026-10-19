@@ -16,15 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.network.GuangYaApi
-import com.解析云.app.data.network.GuangYaConstants
-import com.解析云.app.data.network.GuangYaShareRestrictedException
-import com.解析云.app.data.network.ShareLinkParser
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareSession
+import com.jiexiy.app.data.network.GuangYaApi
+import com.jiexiy.app.data.network.GuangYaConstants
+import com.jiexiy.app.data.network.GuangYaShareRestrictedException
+import com.jiexiy.app.data.network.ShareLinkParser
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareSession
 import kotlinx.coroutines.delay
 import java.util.UUID
 

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -69,17 +69,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
-import com.解析云.app.data.announcement.AnnouncementApi
-import com.解析云.app.data.announcement.formatLocalDateTime
-import com.解析云.app.data.announcement.parseIsoMillis
-import com.解析云.app.data.announcement.relativeTime
-import com.解析云.app.ui.components.GitHubMarkdownImageTransformer
-import com.解析云.app.ui.components.RemoteImage
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.components.compactMarkdownTypography
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.viewmodel.AnnouncementViewModel
+import com.jiexiy.app.data.announcement.AnnouncementApi
+import com.jiexiy.app.data.announcement.formatLocalDateTime
+import com.jiexiy.app.data.announcement.parseIsoMillis
+import com.jiexiy.app.data.announcement.relativeTime
+import com.jiexiy.app.ui.components.GitHubMarkdownImageTransformer
+import com.jiexiy.app.ui.components.RemoteImage
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.components.compactMarkdownTypography
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.viewmodel.AnnouncementViewModel
 
 /**
  * 公告详情页（共享元素的**目标**侧：从列表里被点的那一行"长"成整页，key 见 [announcementSharedKey]）。

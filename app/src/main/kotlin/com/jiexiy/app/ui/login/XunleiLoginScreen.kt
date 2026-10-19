@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -46,7 +46,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.解析云.app.ui.viewmodel.XunleiAccountViewModel
+import com.jiexiy.app.ui.viewmodel.XunleiAccountViewModel
 import kotlinx.coroutines.delay
 
 /** 登录方式：0=账号密码（可能触发安全验证）、1=短信登录（不经过密码）。网页登录是独立页面。 */
@@ -233,7 +233,7 @@ fun XunleiLoginScreen(
                                 // 用与登录请求一致的设备签名（deviceSign = div101.xxx）：
                                 // 验证页会把 URL 里的 deviceid 原样当 devicesign 用，
                                 // 必须与 v3/login 的 devicesign 字段一致，否则报"登录信息已过期"
-                                onVerify(smsStep.reviewUrl, com.解析云.app.data.network.XunleiDeviceFingerprint.deviceSign())
+                                onVerify(smsStep.reviewUrl, com.jiexiy.app.data.network.XunleiDeviceFingerprint.deviceSign())
                             },
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {

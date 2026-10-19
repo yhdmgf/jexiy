@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.security
+package com.jiexiy.app.data.security
 
 import android.content.Context
 import android.security.KeyStoreException
@@ -25,7 +25,7 @@ import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.util.Log
-import com.解析云.app.util.DiagnosticLog
+import com.jiexiy.app.util.DiagnosticLog
 import java.security.KeyStore
 import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher

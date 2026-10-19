@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.crash
+package com.jiexiy.app.crash
 
 import android.app.Activity
 import android.content.ClipData
@@ -61,12 +61,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.解析云.app.MainActivity
-import com.解析云.app.ui.GlobalSnackbarHost
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.items.CustomFabMenu
-import com.解析云.app.ui.items.FabMenuItem
-import com.解析云.app.ui.theme.ComposeEmptyActivityTheme
+import com.jiexiy.app.MainActivity
+import com.jiexiy.app.ui.GlobalSnackbarHost
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.items.CustomFabMenu
+import com.jiexiy.app.ui.items.FabMenuItem
+import com.jiexiy.app.ui.theme.ComposeEmptyActivityTheme
 
 /**
  * 崩溃界面（运行在独立进程 :crash）：

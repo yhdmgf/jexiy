@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.ClipboardManager
 import android.content.Context
@@ -96,36 +96,36 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.解析云.app.data.db.BookmarkEntity
-import com.解析云.app.data.network.GitHubLinkParser
-import com.解析云.app.data.network.ShareLinkParser
-import com.解析云.app.data.network.SharePlatform
-import com.解析云.app.data.network.video.VideoLinkParser
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.data.db.BookmarkEntity
+import com.jiexiy.app.data.network.GitHubLinkParser
+import com.jiexiy.app.data.network.ShareLinkParser
+import com.jiexiy.app.data.network.SharePlatform
+import com.jiexiy.app.data.network.video.VideoLinkParser
+import com.jiexiy.app.ui.SnackbarController
 import com.mikepenz.markdown.m3.Markdown
-import com.解析云.app.ui.components.FileNameText
-import com.解析云.app.ui.components.GitHubMarkdownImageTransformer
-import com.解析云.app.ui.components.compactMarkdownTypography
-import com.解析云.app.ui.items.logoRes
-import com.解析云.app.ui.resolve.DownloadLinkDialog
-import com.解析云.app.ui.resolve.ShareDetailScreen
-import com.解析云.app.ui.viewmodel.BaiduCloudViewModel
-import com.解析云.app.ui.viewmodel.BookmarkViewModel
-import com.解析云.app.ui.viewmodel.C139CloudViewModel
-import com.解析云.app.ui.viewmodel.GuangYaCloudViewModel
-import com.解析云.app.ui.viewmodel.Pan115CloudViewModel
-import com.解析云.app.ui.viewmodel.Pan123CloudViewModel
-import com.解析云.app.ui.viewmodel.QuarkCloudViewModel
-import com.解析云.app.ui.viewmodel.ResolveUiState
-import com.解析云.app.ui.viewmodel.ResolveViewModel
-import com.解析云.app.ui.viewmodel.UCCoudViewModel
-import com.解析云.app.ui.viewmodel.XunleiCloudViewModel
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.theme.ThemeController
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.ui.components.FileNameText
+import com.jiexiy.app.ui.components.GitHubMarkdownImageTransformer
+import com.jiexiy.app.ui.components.compactMarkdownTypography
+import com.jiexiy.app.ui.items.logoRes
+import com.jiexiy.app.ui.resolve.DownloadLinkDialog
+import com.jiexiy.app.ui.resolve.ShareDetailScreen
+import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel
+import com.jiexiy.app.ui.viewmodel.BookmarkViewModel
+import com.jiexiy.app.ui.viewmodel.C139CloudViewModel
+import com.jiexiy.app.ui.viewmodel.GuangYaCloudViewModel
+import com.jiexiy.app.ui.viewmodel.Pan115CloudViewModel
+import com.jiexiy.app.ui.viewmodel.Pan123CloudViewModel
+import com.jiexiy.app.ui.viewmodel.QuarkCloudViewModel
+import com.jiexiy.app.ui.viewmodel.ResolveUiState
+import com.jiexiy.app.ui.viewmodel.ResolveViewModel
+import com.jiexiy.app.ui.viewmodel.UCCoudViewModel
+import com.jiexiy.app.ui.viewmodel.XunleiCloudViewModel
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.theme.ThemeController
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /**
  * 解析页：输入分享链接与提取码 → 解析 → 展示分享详情 → 获取下载直链。
@@ -347,7 +347,7 @@ fun ResolveScreen(
                                     }
                                     // 注入自定义图片加载器（OkHttp 自研，无 Coil）
                                     GitHubMarkdownImageTransformer.mirrorPrefix = remember {
-                                        com.解析云.app.data.prefs.SettingsRepository(context)
+                                        com.jiexiy.app.data.prefs.SettingsRepository(context)
                                             .githubMirrorPrefix?.ifBlank { null }
                                     }
                                     // 紧凑字号：与更新说明共用同一份排版（见 ui/components/MarkdownTypography.kt）

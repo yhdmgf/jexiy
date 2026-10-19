@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -25,12 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.download.DownloadManager
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.QuarkApi
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareInfo
+import com.jiexiy.app.data.download.DownloadManager
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.QuarkApi
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.Flow
@@ -268,8 +268,8 @@ class QuarkCloudViewModel(
     /** 夸克下载直链的请求头（Cookie + 网盘 UA + 防盗链 Referer，对齐 AList quark_uc） */
     private fun downloadHeaders(cookie: String): Map<String, String> = mapOf(
         "Cookie" to cookie,
-        "User-Agent" to com.解析云.app.data.network.QuarkConstants.API_USER_AGENT,
-        "Referer" to com.解析云.app.data.network.QuarkConstants.DOWNLOAD_REFERER
+        "User-Agent" to com.jiexiy.app.data.network.QuarkConstants.API_USER_AGENT,
+        "Referer" to com.jiexiy.app.data.network.QuarkConstants.DOWNLOAD_REFERER
     )
 
     /**
@@ -319,7 +319,7 @@ class QuarkCloudViewModel(
                     folderProgress = "正在加入下载 ${index + 1}/${tasks.size}"
                     runCatching {
                         val link = api.getDownloadLink(file.fid, cookie) ?: return@runCatching
-                        val effectiveUrl = com.解析云.app.data.network.QuarkCdn.fastest(link.downloadUrl, cookie)
+                        val effectiveUrl = com.jiexiy.app.data.network.QuarkCdn.fastest(link.downloadUrl, cookie)
                         downloadManager.enqueue(
                             url = effectiveUrl,
                             fileName = relPath, // 相对路径：Download/文件夹A/子目录/文件.mp4
@@ -368,15 +368,15 @@ class QuarkCloudViewModel(
                 val link = api.getDownloadLink(file.fid, cookie)
                     ?: throw IllegalStateException("获取下载链接失败")
                 // 直链原样使用（关闭 CDN 节点改写/探测，避免消耗直链额度与节点签名 412）
-                val effectiveUrl = com.解析云.app.data.network.QuarkCdn.fastest(link.downloadUrl, cookie)
+                val effectiveUrl = com.jiexiy.app.data.network.QuarkCdn.fastest(link.downloadUrl, cookie)
                 pendingDownload = PendingDownload(
                     url = effectiveUrl,
                     fileName = link.filename.ifBlank { file.fname },
                     size = link.size,
                     headers = mapOf(
                         "Cookie" to cookie,
-                        "User-Agent" to com.解析云.app.data.network.QuarkConstants.API_USER_AGENT,
-                        "Referer" to com.解析云.app.data.network.QuarkConstants.DOWNLOAD_REFERER
+                        "User-Agent" to com.jiexiy.app.data.network.QuarkConstants.API_USER_AGENT,
+                        "Referer" to com.jiexiy.app.data.network.QuarkConstants.DOWNLOAD_REFERER
                     )
                 )
                 downloadLink = link // 弹下载确认弹窗（长按直链可复制）
@@ -590,7 +590,7 @@ class QuarkCloudViewModel(
                     folderProgress = "正在加入下载 ${index + 1}/${tasks.size}"
                     runCatching {
                         val link = api.getDownloadLink(file.fid, cookie) ?: return@runCatching
-                        val effectiveUrl = com.解析云.app.data.network.QuarkCdn.fastest(link.downloadUrl, cookie)
+                        val effectiveUrl = com.jiexiy.app.data.network.QuarkCdn.fastest(link.downloadUrl, cookie)
                         downloadManager.enqueue(
                             url = effectiveUrl,
                             fileName = if (relPath.contains('/')) relPath else link.filename.ifBlank { relPath },

@@ -16,19 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.download
+package com.jiexiy.app.data.download
 
 import android.content.Context
 import android.util.Log
-import com.解析云.app.util.DiagnosticLog
-import com.解析云.app.util.LogRedactor
-import com.解析云.app.data.db.DownloadTaskDao
-import com.解析云.app.data.db.DownloadTaskEntity
-import com.解析云.app.data.gopeed.GopeedEngine
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.data.security.AndroidKeystoreCredentialCipher
-import com.解析云.app.data.security.CredentialCipher
-import com.解析云.app.data.network.HttpClients
+import com.jiexiy.app.util.DiagnosticLog
+import com.jiexiy.app.util.LogRedactor
+import com.jiexiy.app.data.db.DownloadTaskDao
+import com.jiexiy.app.data.db.DownloadTaskEntity
+import com.jiexiy.app.data.gopeed.GopeedEngine
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.data.security.AndroidKeystoreCredentialCipher
+import com.jiexiy.app.data.security.CredentialCipher
+import com.jiexiy.app.data.network.HttpClients
 import okhttp3.Request
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -2401,7 +2401,7 @@ class DownloadManager(
         }
     }
 
-    /** 下载临时文件缓存根目录：外部缓存（/storage/emulated/0/Android/data/com.解析云.app/cache），
+    /** 下载临时文件缓存根目录：外部缓存（/storage/emulated/0/Android/data/com.jiexiy.app/cache），
      *  与最终保存目录解耦，系统可自动清理；外部存储不可用时回退内部缓存目录。 */
     private fun cacheBase(): File = context.externalCacheDir ?: context.cacheDir
 

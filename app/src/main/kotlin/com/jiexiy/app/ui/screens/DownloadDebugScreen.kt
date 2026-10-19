@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -67,16 +67,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.db.DownloadTaskEntity
-import com.解析云.app.data.download.ChunkDebug
-import com.解析云.app.data.download.DownloadDebugLog
-import com.解析云.app.data.download.DownloadResourceDebug
-import com.解析云.app.data.download.DownloadStats
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.components.FileNameText
-import com.解析云.app.ui.components.解析云WavyProgress
-import com.解析云.app.ui.viewmodel.DownloadViewModel
-import com.解析云.app.util.LogExporter
+import com.jiexiy.app.data.db.DownloadTaskEntity
+import com.jiexiy.app.data.download.ChunkDebug
+import com.jiexiy.app.data.download.DownloadDebugLog
+import com.jiexiy.app.data.download.DownloadResourceDebug
+import com.jiexiy.app.data.download.DownloadStats
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.components.FileNameText
+import com.jiexiy.app.ui.components.解析云WavyProgress
+import com.jiexiy.app.ui.viewmodel.DownloadViewModel
+import com.jiexiy.app.util.LogExporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect

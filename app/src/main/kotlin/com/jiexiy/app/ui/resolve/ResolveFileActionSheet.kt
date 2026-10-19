@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.resolve
+package com.jiexiy.app.ui.resolve
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -37,8 +37,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import com.解析云.app.ui.components.rememberOperationSheetState
-import com.解析云.app.ui.components.OperationSheet
+import com.jiexiy.app.ui.components.rememberOperationSheetState
+import com.jiexiy.app.ui.components.OperationSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,11 +47,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.ui.screens.ActionItem
-import com.解析云.app.ui.screens.FileSheetHeader
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.ui.screens.ActionItem
+import com.jiexiy.app.ui.screens.FileSheetHeader
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
 import kotlinx.coroutines.launch
 
 /** 解析页文件操作弹窗内的步骤：主菜单 / 转存目录选择 */
@@ -60,7 +60,7 @@ private enum class ResolveActionStep { MENU, SAVE }
 /**
  * 解析页文件操作弹窗（点击文件行打开；文件夹行由行尾「更多」按钮打开）。
  *
- * 与网盘页的 [com.解析云.app.ui.screens.FileActionSheet] 保持同一形态与过渡：
+ * 与网盘页的 [com.jiexiy.app.ui.screens.FileActionSheet] 保持同一形态与过渡：
  * 同为 M3 [ModalBottomSheet] + 顶部文件信息（[FileSheetHeader]）+ [ActionItem] 操作项，
  * 区别只在可做的事 —— 分享里的文件不属于自己，没有分享/移动/重命名/删除。
  *

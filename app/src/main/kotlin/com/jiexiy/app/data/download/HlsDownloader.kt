@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.download
+package com.jiexiy.app.data.download
 
 import android.util.Log
-import com.解析云.app.data.network.HttpClients
+import com.jiexiy.app.data.network.HttpClients
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext

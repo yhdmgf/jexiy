@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,7 +25,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.ui.SnackbarController
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import android.graphics.Bitmap
 import android.util.Log
@@ -32,7 +32,7 @@ import androidx.webkit.UserAgentMetadata
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
-import com.解析云.app.util.DiagnosticLog
+import com.jiexiy.app.util.DiagnosticLog
 
 /**
  * 登录页 WebView 的诊断版客户端：**只记日志、不改变任何行为**（每个回调都先/后调 `super`）。
@@ -139,7 +139,7 @@ internal open class DiagnosticWebChromeClient : WebChromeClient() {
  * 发送，但该计划**已被取消**（androidx.webkit 1.14.0 起 `REQUESTED_WITH_HEADER_ALLOW_LIST` 的
  * allowlist API 已被废弃），该头重新**默认发给所有请求**且无法通过公开 API 关闭。
  *
- * 实测确认：设成空 allow list 后，Pixiv 登录页的 XHR 仍然带着 `x-requested-with: com.解析云.app`。
+ * 实测确认：设成空 allow list 后，Pixiv 登录页的 XHR 仍然带着 `x-requested-with: com.jiexiy.app`。
  * 保留调用只是「不支持的版本上静默跳过、支持的版本上尽力而为」，不要再指望它能摘掉这个头。
  */
 internal fun WebSettings.suppressRequestedWithHeader() {

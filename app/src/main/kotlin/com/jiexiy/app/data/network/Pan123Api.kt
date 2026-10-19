@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
 import android.util.Base64
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.QuotaInfo
-import com.解析云.app.data.network.model.ShareExpire
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareInfo
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.QuotaInfo
+import com.jiexiy.app.data.network.model.ShareExpire
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -546,7 +546,7 @@ class Pan123Api(
      * 创建分享：POST /b/api/share/create（文档 §5.10）。
      * @param fileIds 文件/目录 ID 列表（单文件抓包为标量 int，多文件用数组）
      * @param expiration 过期时间 ISO**绝对时间**（永久用 Pan123Constants.EXPIRATION_FOREVER，其余 =
-     *   now + 天数）。⚠️ 必须先用 [com.解析云.app.data.network.model.ShareExpire.daysOrNull] 把 UI
+     *   now + 天数）。⚠️ 必须先用 [com.jiexiy.app.data.network.model.ShareExpire.daysOrNull] 把 UI
      *   中性码转成天数——直接把中性码当天数会让「永久」变成 now+1 天、「7 天」变成 now+3 天（Agent.md §3.20）。
      * @param sharePwd 提取码（null/空 = 无提取码）
      */

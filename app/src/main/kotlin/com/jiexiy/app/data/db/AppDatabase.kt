@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.db
+package com.jiexiy.app.data.db
 
 import android.content.Context
 import androidx.room.Database
@@ -24,10 +24,10 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.解析云.app.data.security.AndroidKeystoreCredentialCipher
-import com.解析云.app.data.security.CredentialCipher
-import com.解析云.app.data.security.CredentialStore
-import com.解析云.app.util.DiagnosticLog
+import com.jiexiy.app.data.security.AndroidKeystoreCredentialCipher
+import com.jiexiy.app.data.security.CredentialCipher
+import com.jiexiy.app.data.security.CredentialStore
+import com.jiexiy.app.util.DiagnosticLog
 
 @Database(
     entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, Pan115AccountEntity::class, GuangYaAccountEntity::class, ILanzouAccountEntity::class, LanzouAccountEntity::class, BookmarkEntity::class, VideoAccountEntity::class],

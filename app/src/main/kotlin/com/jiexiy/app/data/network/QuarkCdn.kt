@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
 /**
  * 夸克 CDN 节点处理（修复 AlistGo/alist#830 下载 412 的一部分）：

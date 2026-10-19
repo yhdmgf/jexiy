@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.backup
+package com.jiexiy.app.data.backup
 
 import android.content.ContentValues
 import android.content.Context
@@ -24,27 +24,27 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import com.解析云.app.data.db.BaiduAccountDao
-import com.解析云.app.data.db.BaiduAccountEntity
-import com.解析云.app.data.db.C139AccountDao
-import com.解析云.app.data.db.C139AccountEntity
-import com.解析云.app.data.db.GuangYaAccountDao
-import com.解析云.app.data.db.GuangYaAccountEntity
-import com.解析云.app.data.db.ILanzouAccountDao
-import com.解析云.app.data.db.ILanzouAccountEntity
-import com.解析云.app.data.db.LanzouAccountDao
-import com.解析云.app.data.db.LanzouAccountEntity
-import com.解析云.app.data.db.Pan115AccountDao
-import com.解析云.app.data.db.Pan115AccountEntity
-import com.解析云.app.data.db.Pan123AccountDao
-import com.解析云.app.data.db.Pan123AccountEntity
-import com.解析云.app.data.db.QuarkAccountDao
-import com.解析云.app.data.db.QuarkAccountEntity
-import com.解析云.app.data.db.UCAccountDao
-import com.解析云.app.data.db.UCAccountEntity
-import com.解析云.app.data.db.XunleiAccountDao
-import com.解析云.app.data.db.XunleiAccountEntity
-import com.解析云.app.data.network.GitHubTokenStore
+import com.jiexiy.app.data.db.BaiduAccountDao
+import com.jiexiy.app.data.db.BaiduAccountEntity
+import com.jiexiy.app.data.db.C139AccountDao
+import com.jiexiy.app.data.db.C139AccountEntity
+import com.jiexiy.app.data.db.GuangYaAccountDao
+import com.jiexiy.app.data.db.GuangYaAccountEntity
+import com.jiexiy.app.data.db.ILanzouAccountDao
+import com.jiexiy.app.data.db.ILanzouAccountEntity
+import com.jiexiy.app.data.db.LanzouAccountDao
+import com.jiexiy.app.data.db.LanzouAccountEntity
+import com.jiexiy.app.data.db.Pan115AccountDao
+import com.jiexiy.app.data.db.Pan115AccountEntity
+import com.jiexiy.app.data.db.Pan123AccountDao
+import com.jiexiy.app.data.db.Pan123AccountEntity
+import com.jiexiy.app.data.db.QuarkAccountDao
+import com.jiexiy.app.data.db.QuarkAccountEntity
+import com.jiexiy.app.data.db.UCAccountDao
+import com.jiexiy.app.data.db.UCAccountEntity
+import com.jiexiy.app.data.db.XunleiAccountDao
+import com.jiexiy.app.data.db.XunleiAccountEntity
+import com.jiexiy.app.data.network.GitHubTokenStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray

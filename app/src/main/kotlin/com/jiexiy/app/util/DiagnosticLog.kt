@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.util
+package com.jiexiy.app.util
 
 import android.content.Context
 import android.util.Log
-import com.解析云.app.data.prefs.SettingsRepository
+import com.jiexiy.app.data.prefs.SettingsRepository
 import java.io.BufferedOutputStream
 import java.io.BufferedWriter
 import java.io.File

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.db
+package com.jiexiy.app.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -35,7 +35,7 @@ data class XunleiAccountEntity(
     override val nickname: String = "",
     /**
      * 登录方式：空串 = App 通道（账号密码 / 短信，用 App OAuth 客户端刷新）；
-     * [com.解析云.app.data.network.XunleiWebCredential.AUTH_TYPE] = 网页登录，
+     * [com.jiexiy.app.data.network.XunleiWebCredential.AUTH_TYPE] = 网页登录，
      * 刷新必须换成网页 OAuth 客户端（否则刷新必失败，用户会看到「刚登录就过期」）。
      */
     val authType: String = "",

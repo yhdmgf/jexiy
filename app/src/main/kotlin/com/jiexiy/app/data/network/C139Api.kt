@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
 import android.util.Base64
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.QuotaInfo
-import com.解析云.app.data.network.model.ShareExpire
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareInfo
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.QuotaInfo
+import com.jiexiy.app.data.network.model.ShareExpire
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -527,7 +527,7 @@ class C139Api(
     /** 创建分享（getOutLink，需 Cookie + mcloud-skey；提取码系统自动生成）
      *
      *  @param period 有效期**天数**：null=永久（不传 period 字段）、1/7/30=天数。
-     *    ⚠️ 这里不是 UI 中性码（1/2/3/4），调用方必须先用 [com.解析云.app.data.network.model.ShareExpire.daysOrNull]
+     *    ⚠️ 这里不是 UI 中性码（1/2/3/4），调用方必须先用 [com.jiexiy.app.data.network.model.ShareExpire.daysOrNull]
      *    转换——否则「永久」会变成 1 天、「7 天」会变成 3 天（Agent.md §3.20）。
      */
     suspend fun createShare(

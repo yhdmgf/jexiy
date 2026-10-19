@@ -42,11 +42,11 @@ val releaseSigningReady: Boolean = releaseKeystorePath != null &&
     !System.getenv("YUNX_KEY_PASSWORD").isNullOrBlank()
 
 android {
-    namespace = "com.解析云.app"
+    namespace = "com.jiexiy.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.解析云.app"
+        applicationId = "com.jiexiy.app"
         // minSdk 24：AGP 8.13 的 D8 在 minSdk < 24 时必须脱糖接口静态方法，它把接口的 $default 桥方法
         // （如 RowScope.weight$default）搬进 $-CC 伴生类，却不改写第三方库字节码里的调用点，
         // 未混淆（debug）的包渲染 README 表格时必崩 NoSuchMethodError；24 起系统原生支持，不再脱糖。

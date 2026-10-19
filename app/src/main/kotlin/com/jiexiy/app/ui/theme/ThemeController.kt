@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.theme
+package com.jiexiy.app.ui.theme
 
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.解析云.app.data.prefs.SettingsRepository
+import com.jiexiy.app.data.prefs.SettingsRepository
 
 /**
  * 主题控制器（单例）：

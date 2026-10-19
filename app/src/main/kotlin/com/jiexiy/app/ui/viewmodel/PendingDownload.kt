@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 /**
  * 待确认下载参数：网盘页「单文件下载」先弹下载确认弹窗（对齐解析页行为），

@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.components
+package com.jiexiy.app.ui.components
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.解析云.app.data.network.HttpClients
-import com.解析云.app.data.update.UpdateChecker
+import com.jiexiy.app.data.network.HttpClients
+import com.jiexiy.app.data.update.UpdateChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit

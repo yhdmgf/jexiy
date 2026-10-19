@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.backup
+package com.jiexiy.app.data.backup
 
 import android.util.Base64
 import java.security.SecureRandom

@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.db.C139AccountEntity
-import com.解析云.app.data.repository.C139AccountRepository
+import com.jiexiy.app.data.db.C139AccountEntity
+import com.jiexiy.app.data.repository.C139AccountRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

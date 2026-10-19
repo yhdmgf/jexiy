@@ -16,15 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.announcement.AnnouncementApi
-import com.解析云.app.data.announcement.AnnouncementReadStore
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.data.announcement.AnnouncementApi
+import com.jiexiy.app.data.announcement.AnnouncementReadStore
+import com.jiexiy.app.ui.SnackbarController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

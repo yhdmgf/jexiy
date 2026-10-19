@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.download
+package com.jiexiy.app.data.download
 
 /**
  * 下载来源平台标识（用于按平台独立设置下载线程数）。

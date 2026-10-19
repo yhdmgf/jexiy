@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.network.BaiduApi
-import com.解析云.app.data.network.BaiduConstants
-import com.解析云.app.data.network.ShareLinkParser
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareSession
+import com.jiexiy.app.data.network.BaiduApi
+import com.jiexiy.app.data.network.BaiduConstants
+import com.jiexiy.app.data.network.ShareLinkParser
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareSession
 
 /**
  * 百度分享解析仓库：verify 拿 sekey → xpan/share 列文件 → 转存临时目录（自动创建，失败回退根目录）→ locatedownload 拿 appall 高速链 → 立即删除临时转存。
@@ -64,7 +64,7 @@ class BaiduResolveRepository(private val api: BaiduApi) : ShareResolveRepository
             // 顶层 dirFid 为空/"/"；子目录 dirFid 为目录 path（如 /folder）
             val all = mutableListOf<ShareFile>()
             var page = 1
-            var result: com.解析云.app.data.network.BaiduShareList
+            var result: com.jiexiy.app.data.network.BaiduShareList
             do {
                 result = api.listShare(session.shareId, sekey, dirFid, cookie, page)
                 all += result.files

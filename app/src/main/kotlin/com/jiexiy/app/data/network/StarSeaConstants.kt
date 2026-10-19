@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
 /**
  * 星海「中文口令解析」服务常量（夸克 / UC）。

@@ -16,17 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.network.HttpClients
-import com.解析云.app.data.network.video.DetectedVideoLink
-import com.解析云.app.data.network.video.VideoHttp
-import com.解析云.app.data.network.video.VideoLinkParser
-import com.解析云.app.data.network.video.VideoParseErrorKind
-import com.解析云.app.data.network.video.VideoParseException
-import com.解析云.app.data.network.video.VideoParseResult
-import com.解析云.app.data.network.video.VideoParsers
-import com.解析云.app.data.network.video.VideoPlatform
+import com.jiexiy.app.data.network.HttpClients
+import com.jiexiy.app.data.network.video.DetectedVideoLink
+import com.jiexiy.app.data.network.video.VideoHttp
+import com.jiexiy.app.data.network.video.VideoLinkParser
+import com.jiexiy.app.data.network.video.VideoParseErrorKind
+import com.jiexiy.app.data.network.video.VideoParseException
+import com.jiexiy.app.data.network.video.VideoParseResult
+import com.jiexiy.app.data.network.video.VideoParsers
+import com.jiexiy.app.data.network.video.VideoPlatform
 import okhttp3.OkHttpClient
 
 /**

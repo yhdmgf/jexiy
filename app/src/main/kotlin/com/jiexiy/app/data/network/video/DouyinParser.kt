@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.video
+package com.jiexiy.app.data.network.video
 
-import com.解析云.app.data.download.DownloadPathPolicy
-import com.解析云.app.data.network.HttpClients
-import com.解析云.app.util.DiagnosticLog
+import com.jiexiy.app.data.download.DownloadPathPolicy
+import com.jiexiy.app.data.network.HttpClients
+import com.jiexiy.app.util.DiagnosticLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType

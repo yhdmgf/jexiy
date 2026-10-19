@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.video
+package com.jiexiy.app.data.network.video
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -28,9 +28,9 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.解析云.app.ui.login.alignClientHintsWith
-import com.解析云.app.util.DiagnosticLog
-import com.解析云.app.util.LogRedactor
+import com.jiexiy.app.ui.login.alignClientHintsWith
+import com.jiexiy.app.util.DiagnosticLog
+import com.jiexiy.app.util.LogRedactor
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import java.lang.ref.WeakReference
@@ -109,7 +109,7 @@ object HeadlessWebView {
     ): String? = withContext(Dispatchers.Main.immediate) {
         val activity = resumedActivity?.get()
         if (activity == null) {
-            DiagnosticLog.warn(DiagnosticLog.NETWORK, "headless_no_activity", "url=${com.解析云.app.util.LogRedactor.url(url)}")
+            DiagnosticLog.warn(DiagnosticLog.NETWORK, "headless_no_activity", "url=${com.jiexiy.app.util.LogRedactor.url(url)}")
             return@withContext null
         }
         val started = System.currentTimeMillis()

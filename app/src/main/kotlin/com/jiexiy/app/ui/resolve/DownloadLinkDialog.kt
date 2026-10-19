@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.resolve
+package com.jiexiy.app.ui.resolve
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -52,9 +52,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 
 /**
  * 下载直链弹窗：展示文件名与直链（长按直链复制），支持「开始下载」（分片多线程下载）。

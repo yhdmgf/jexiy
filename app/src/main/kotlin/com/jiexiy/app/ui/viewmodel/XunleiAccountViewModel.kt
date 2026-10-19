@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,10 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.db.XunleiAccountEntity
-import com.解析云.app.data.network.XunleiApi
-import com.解析云.app.data.network.XunleiLoginStep
-import com.解析云.app.data.repository.XunleiAccountRepository
+import com.jiexiy.app.data.db.XunleiAccountEntity
+import com.jiexiy.app.data.network.XunleiApi
+import com.jiexiy.app.data.network.XunleiLoginStep
+import com.jiexiy.app.data.repository.XunleiAccountRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.components
+package com.jiexiy.app.ui.components
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image

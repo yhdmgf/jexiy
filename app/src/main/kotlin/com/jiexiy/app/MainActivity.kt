@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app
+package com.jiexiy.app
 
 import android.content.Intent
 import android.os.Bundle
@@ -24,12 +24,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
-import com.解析云.app.crash.CrashHandler
-import com.解析云.app.ui.MainScreen
-import com.解析云.app.ui.navigation.MainTab
-import com.解析云.app.ui.screens.SafetyNoticeDialog
-import com.解析云.app.ui.theme.ComposeEmptyActivityTheme
-import com.解析云.app.util.ArchiveProbe
+import com.jiexiy.app.crash.CrashHandler
+import com.jiexiy.app.ui.MainScreen
+import com.jiexiy.app.ui.navigation.MainTab
+import com.jiexiy.app.ui.screens.SafetyNoticeDialog
+import com.jiexiy.app.ui.theme.ComposeEmptyActivityTheme
+import com.jiexiy.app.util.ArchiveProbe
 
 class MainActivity : ComponentActivity() {
 
@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         /** 「点击后打开哪个 Tab」的 intent extra 键（由 DownloadService 的通知 contentIntent 写入） */
-        const val EXTRA_OPEN_TAB = "com.解析云.app.extra.OPEN_TAB"
+        const val EXTRA_OPEN_TAB = "com.jiexiy.app.extra.OPEN_TAB"
 
         /** [EXTRA_OPEN_TAB] 的取值：打开「下载」Tab */
         const val TAB_DOWNLOAD = "download"

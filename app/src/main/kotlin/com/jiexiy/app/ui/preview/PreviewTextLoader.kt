@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.preview
+package com.jiexiy.app.ui.preview
 
-import com.解析云.app.data.network.HttpClients
-import com.解析云.app.data.network.video.VideoHttp
+import com.jiexiy.app.data.network.HttpClients
+import com.jiexiy.app.data.network.video.VideoHttp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request

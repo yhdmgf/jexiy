@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.video
+package com.jiexiy.app.data.network.video
 
 /**
  * 单个视频平台的解析器。

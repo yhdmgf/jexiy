@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.components
+package com.jiexiy.app.ui.components
 
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.material3.LocalTextStyle
@@ -28,7 +28,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import com.解析云.app.ui.theme.ThemeController
+import com.jiexiy.app.ui.theme.ThemeController
 
 /** 多行模式下文件名最多显示的行数（再多会把行撑得很高，反而更难扫读） */
 private const val FILE_NAME_MAX_LINES = 3

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
 /**
  * 123 云盘登录的纯逻辑（错误映射 + 令牌校验），单独放一处是为了能脱离网络做单测。

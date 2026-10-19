@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.UCAccountDao
-import com.解析云.app.data.db.UCAccountEntity
-import com.解析云.app.data.db.resolveAccountSlot
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.UCApi
-import com.解析云.app.data.network.UCConstants
+import com.jiexiy.app.data.db.UCAccountDao
+import com.jiexiy.app.data.db.UCAccountEntity
+import com.jiexiy.app.data.db.resolveAccountSlot
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.UCApi
+import com.jiexiy.app.data.network.UCConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

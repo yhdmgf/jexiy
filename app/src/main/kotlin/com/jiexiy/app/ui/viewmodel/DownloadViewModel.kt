@@ -16,18 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.db.DownloadTaskEntity
-import com.解析云.app.data.download.ChunkDebug
-import com.解析云.app.data.download.DownloadDebugLog
-import com.解析云.app.data.download.DownloadManager
-import com.解析云.app.data.download.DownloadResourceDebug
-import com.解析云.app.data.download.DownloadStats
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.data.db.DownloadTaskEntity
+import com.jiexiy.app.data.download.ChunkDebug
+import com.jiexiy.app.data.download.DownloadDebugLog
+import com.jiexiy.app.data.download.DownloadManager
+import com.jiexiy.app.data.download.DownloadResourceDebug
+import com.jiexiy.app.data.download.DownloadStats
+import com.jiexiy.app.ui.SnackbarController
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.util
+package com.jiexiy.app.util
 
 import android.content.Intent
 
@@ -25,7 +25,7 @@ import android.content.Intent
  *
  * 只负责「从 intent 里取出待处理的文本」，不碰网络也不碰组件状态：
  * 拿到的文本是分享链接、中文口令还是一整句带链接的文案都行 —— 后面统一交给解析链路
- * （[com.解析云.app.data.network.ShareLinkParser] / GitHub / 迅雷与星海口令兜底）自己认。
+ * （[com.jiexiy.app.data.network.ShareLinkParser] / GitHub / 迅雷与星海口令兜底）自己认。
  *
  * ★ 一律不用 `android.net.Uri`：JVM 单测里它是空壳（见 Agent.md §4），所以手写串解析。
  */

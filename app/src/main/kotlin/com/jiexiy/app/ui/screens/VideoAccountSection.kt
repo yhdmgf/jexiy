@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -41,10 +41,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.db.VideoAccountEntity
-import com.解析云.app.data.network.video.VideoParsers
-import com.解析云.app.data.network.video.VideoPlatform
-import com.解析云.app.ui.items.logoRes
+import com.jiexiy.app.data.db.VideoAccountEntity
+import com.jiexiy.app.data.network.video.VideoParsers
+import com.jiexiy.app.data.network.video.VideoPlatform
+import com.jiexiy.app.ui.items.logoRes
 
 /**
  * 账号页分组小标题。
@@ -99,7 +99,7 @@ internal fun VideoAccountSection(
 }
 
 /**
- * 单个视频平台的卡片外壳：刻意与 [com.解析云.app.ui.screens.DriveScreen] 里的 `DriveAccountCard` 同款
+ * 单个视频平台的卡片外壳：刻意与 [com.jiexiy.app.ui.screens.DriveScreen] 里的 `DriveAccountCard` 同款
  * （shape = large、containerColor = surfaceContainerLow、可点则用带 onClick 的 Card）。
  * 免登录平台没有任何可操作项，所以用不带 onClick 的 Card（不是「可点但无动作」）。
  */

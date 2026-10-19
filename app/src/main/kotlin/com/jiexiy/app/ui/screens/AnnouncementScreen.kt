@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -72,11 +72,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.解析云.app.data.announcement.AnnouncementApi
-import com.解析云.app.data.announcement.relativeTime
-import com.解析云.app.ui.components.RemoteImage
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.viewmodel.AnnouncementViewModel
+import com.jiexiy.app.data.announcement.AnnouncementApi
+import com.jiexiy.app.data.announcement.relativeTime
+import com.jiexiy.app.ui.components.RemoteImage
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.viewmodel.AnnouncementViewModel
 import kotlinx.coroutines.launch
 
 /** 公告的共享元素 key：列表项（源）与详情页容器（目标）必须用同一个 key，形变才会发生 */

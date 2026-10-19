@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
 import android.content.Context
-import com.解析云.app.data.security.AndroidKeystoreCredentialCipher
-import com.解析云.app.data.security.CredentialStore
+import com.jiexiy.app.data.security.AndroidKeystoreCredentialCipher
+import com.jiexiy.app.data.security.CredentialStore
 
 /**
  * GitHub Token 加密存储。

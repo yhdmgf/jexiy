@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.components
+package com.jiexiy.app.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Modifier
@@ -34,7 +34,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 
 internal val LocalFileOperationBusy = staticCompositionLocalOf { false }
 

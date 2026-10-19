@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.prefs
+package com.jiexiy.app.data.prefs
 
 import android.content.Context
-import com.解析云.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.download.DownloadPlatform
 
 /**
  * 应用设置（SharedPreferences 持久化）。
@@ -264,7 +264,7 @@ class SettingsRepository(context: Context) {
      * 某个深链接注册项是否启用（默认开）。
      *
      * ★ 这里只存「用户意愿」，真正的生效方式是启停清单里对应的 activity-alias ——
-     *   改完必须立刻调 [com.解析云.app.util.LinkOpener.apply]，否则要等下次启动才同步。
+     *   改完必须立刻调 [com.jiexiy.app.util.LinkOpener.apply]，否则要等下次启动才同步。
      */
     fun linkOpen(target: LinkOpenTarget): Boolean = prefs.getBoolean(target.prefKey, true)
 

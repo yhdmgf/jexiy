@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.download
+package com.jiexiy.app.data.download
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -36,8 +36,8 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Build
 import android.os.IBinder
-import com.解析云.app.MainActivity
-import com.解析云.app.R
+import com.jiexiy.app.MainActivity
+import com.jiexiy.app.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -156,7 +156,7 @@ class DownloadService : Service() {
     companion object {
         private const val CHANNEL_ID = "解析云_download"
         private const val NOTIFICATION_ID = 1001
-        private const val ACTION_STOP = "com.解析云.app.action.STOP_DOWNLOAD"
+        private const val ACTION_STOP = "com.jiexiy.app.action.STOP_DOWNLOAD"
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_PROGRESS = "progress"
         private const val EXTRA_SPEED = "speed"

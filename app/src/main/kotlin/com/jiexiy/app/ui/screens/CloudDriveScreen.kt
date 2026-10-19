@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.ui.SnackbarController
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -82,22 +82,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.解析云.app.ui.items.MultiSelectAction
-import com.解析云.app.ui.items.MultiSelectBar
-import com.解析云.app.ui.components.ScrollToTopButton
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.resolve.DownloadLinkDialog
-import com.解析云.app.ui.resolve.BackToParentItem
-import com.解析云.app.ui.resolve.CrumbBar
-import com.解析云.app.ui.resolve.ShareFileRow
-import com.解析云.app.ui.viewmodel.QuarkCloudUiState
-import com.解析云.app.ui.viewmodel.QuarkCloudViewModel
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.listGroupShape
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.ui.items.MultiSelectAction
+import com.jiexiy.app.ui.items.MultiSelectBar
+import com.jiexiy.app.ui.components.ScrollToTopButton
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.resolve.DownloadLinkDialog
+import com.jiexiy.app.ui.resolve.BackToParentItem
+import com.jiexiy.app.ui.resolve.CrumbBar
+import com.jiexiy.app.ui.resolve.ShareFileRow
+import com.jiexiy.app.ui.viewmodel.QuarkCloudUiState
+import com.jiexiy.app.ui.viewmodel.QuarkCloudViewModel
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.listGroupShape
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /**
  * 夸克云盘浏览页：展示个人网盘文件，支持进入文件夹 / 返回 / 面包屑回退。
@@ -144,7 +144,7 @@ fun CloudDriveScreen(
     // 避免 Loading 阶段（loadedState==null、key 变 ""）误触发导致返回后回顶
     // 批量操作弹窗（多选模式底部栏触发：分享/移动需要设置或选目录，下载/删除直接执行）
     var showBatchActions by remember { mutableStateOf(false) }
-    var batchInitial by remember { mutableStateOf(com.解析云.app.ui.screens.BatchStep.MENU) }
+    var batchInitial by remember { mutableStateOf(com.jiexiy.app.ui.screens.BatchStep.MENU) }
     // 批量删除二次确认
     var showDeleteConfirm by remember { mutableStateOf(false) }
     // 「+」菜单的「创建文件夹」弹窗（「上传文件」项目前是占位，见 CloudAddMenu）
@@ -422,11 +422,11 @@ fun CloudDriveScreen(
                                 viewModel.downloadSelected()
                             },
                             MultiSelectAction("分享", Icons.Outlined.Share, MaterialTheme.colorScheme.primary) {
-                                batchInitial = com.解析云.app.ui.screens.BatchStep.SHARE
+                                batchInitial = com.jiexiy.app.ui.screens.BatchStep.SHARE
                                 showBatchActions = true
                             },
                             MultiSelectAction("移动", Icons.Outlined.DriveFileMove, MaterialTheme.colorScheme.primary) {
-                                batchInitial = com.解析云.app.ui.screens.BatchStep.MOVE
+                                batchInitial = com.jiexiy.app.ui.screens.BatchStep.MOVE
                                 showBatchActions = true
                             },
                             MultiSelectAction("删除", Icons.Outlined.Delete, MaterialTheme.colorScheme.error) {

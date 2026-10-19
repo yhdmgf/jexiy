@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -55,7 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.db.MultiAccountEntity
+import com.jiexiy.app.data.db.MultiAccountEntity
 
 /**
  * 账号列表（多账号）：同一平台的多个账号、设主账号 / 改备注 / 退出，以及「添加账号」。

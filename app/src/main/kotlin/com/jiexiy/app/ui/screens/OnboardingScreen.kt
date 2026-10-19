@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -106,12 +106,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import com.解析云.app.R
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.util.AppLinks
-import com.解析云.app.util.PermissionState
+import com.jiexiy.app.R
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.util.AppLinks
+import com.jiexiy.app.util.PermissionState
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs

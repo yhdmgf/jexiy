@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.BaiduAccountDao
-import com.解析云.app.data.db.BaiduAccountEntity
-import com.解析云.app.data.db.resolveAccountSlot
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.BaiduApi
-import com.解析云.app.data.network.BaiduConstants
+import com.jiexiy.app.data.db.BaiduAccountDao
+import com.jiexiy.app.data.db.BaiduAccountEntity
+import com.jiexiy.app.data.db.resolveAccountSlot
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.BaiduApi
+import com.jiexiy.app.data.network.BaiduConstants
 import kotlinx.coroutines.flow.Flow
 
 /**

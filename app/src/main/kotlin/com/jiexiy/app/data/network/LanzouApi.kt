@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.network.model.ShareInfo
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.ShareInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -938,7 +938,7 @@ class LanzouApi(
             passcode = pwd,
             pwdId = raw,
             title = "蓝奏云分享",
-            expiredType = com.解析云.app.data.network.model.ShareExpire.UNKNOWN
+            expiredType = com.jiexiy.app.data.network.model.ShareExpire.UNKNOWN
         )
     }
 

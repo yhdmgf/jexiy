@@ -16,17 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.GuangYaAccountDao
-import com.解析云.app.data.db.GuangYaAccountEntity
-import com.解析云.app.data.db.resolveAccountSlot
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.GuangYaApi
-import com.解析云.app.data.network.GuangYaConstants
-import com.解析云.app.data.network.GuangYaDevice
-import com.解析云.app.data.network.GuangYaSmsChallenge
-import com.解析云.app.data.network.GuangYaTokens
+import com.jiexiy.app.data.db.GuangYaAccountDao
+import com.jiexiy.app.data.db.GuangYaAccountEntity
+import com.jiexiy.app.data.db.resolveAccountSlot
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.GuangYaApi
+import com.jiexiy.app.data.network.GuangYaConstants
+import com.jiexiy.app.data.network.GuangYaDevice
+import com.jiexiy.app.data.network.GuangYaSmsChallenge
+import com.jiexiy.app.data.network.GuangYaTokens
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -41,7 +41,7 @@ class GuangYaAccountRepository(
     fun observeAccount(): Flow<GuangYaAccountEntity?> = dao.observeAccount()
 
     /**
-     * 最近一次读到的 deviceId 缓存：供 [com.解析云.app.data.network.GuangYaApi.deviceIdProvider]
+     * 最近一次读到的 deviceId 缓存：供 [com.jiexiy.app.data.network.GuangYaApi.deviceIdProvider]
      * 同步取用（业务 API 的 did 头需要同步值，而 getAccount 是挂起函数）。
      */
     @Volatile

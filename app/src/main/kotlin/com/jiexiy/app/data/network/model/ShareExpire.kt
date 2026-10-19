@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.model
+package com.jiexiy.app.data.network.model
 
 /**
  * 分享有效期（UI 中性码，六大网盘页共用，详见 Agent.md §3.20）。

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -76,38 +76,38 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.db.BaiduAccountEntity
-import com.解析云.app.data.db.C139AccountEntity
-import com.解析云.app.data.db.GuangYaAccountEntity
-import com.解析云.app.data.db.ILanzouAccountEntity
-import com.解析云.app.data.db.LanzouAccountEntity
-import com.解析云.app.data.db.Pan115AccountEntity
-import com.解析云.app.data.db.Pan123AccountEntity
-import com.解析云.app.data.db.QuarkAccountEntity
-import com.解析云.app.data.db.UCAccountEntity
-import com.解析云.app.data.db.XunleiAccountEntity
-import com.解析云.app.data.db.VideoAccountEntity
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.model.QuotaInfo
-import com.解析云.app.data.network.video.VideoPlatform
-import com.解析云.app.ui.viewmodel.BaiduCloudViewModel
-import com.解析云.app.ui.viewmodel.C139CloudViewModel
-import com.解析云.app.ui.viewmodel.DriveQuotaViewModel
-import com.解析云.app.ui.viewmodel.GuangYaCloudViewModel
-import com.解析云.app.ui.viewmodel.ILanzouCloudViewModel
-import com.解析云.app.ui.viewmodel.LanzouCloudViewModel
-import com.解析云.app.ui.viewmodel.MultiAccountViewModel
-import com.解析云.app.ui.viewmodel.Pan115CloudViewModel
-import com.解析云.app.ui.viewmodel.Pan123CloudViewModel
-import com.解析云.app.ui.viewmodel.QuarkCloudViewModel
-import com.解析云.app.ui.viewmodel.UCCoudViewModel
-import com.解析云.app.ui.viewmodel.XunleiCloudViewModel
-import com.解析云.app.ui.components.解析云WavyProgress
-import com.解析云.app.ui.items.drivePlatformLogoRes
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.data.db.BaiduAccountEntity
+import com.jiexiy.app.data.db.C139AccountEntity
+import com.jiexiy.app.data.db.GuangYaAccountEntity
+import com.jiexiy.app.data.db.ILanzouAccountEntity
+import com.jiexiy.app.data.db.LanzouAccountEntity
+import com.jiexiy.app.data.db.Pan115AccountEntity
+import com.jiexiy.app.data.db.Pan123AccountEntity
+import com.jiexiy.app.data.db.QuarkAccountEntity
+import com.jiexiy.app.data.db.UCAccountEntity
+import com.jiexiy.app.data.db.XunleiAccountEntity
+import com.jiexiy.app.data.db.VideoAccountEntity
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.model.QuotaInfo
+import com.jiexiy.app.data.network.video.VideoPlatform
+import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel
+import com.jiexiy.app.ui.viewmodel.C139CloudViewModel
+import com.jiexiy.app.ui.viewmodel.DriveQuotaViewModel
+import com.jiexiy.app.ui.viewmodel.GuangYaCloudViewModel
+import com.jiexiy.app.ui.viewmodel.ILanzouCloudViewModel
+import com.jiexiy.app.ui.viewmodel.LanzouCloudViewModel
+import com.jiexiy.app.ui.viewmodel.MultiAccountViewModel
+import com.jiexiy.app.ui.viewmodel.Pan115CloudViewModel
+import com.jiexiy.app.ui.viewmodel.Pan123CloudViewModel
+import com.jiexiy.app.ui.viewmodel.QuarkCloudViewModel
+import com.jiexiy.app.ui.viewmodel.UCCoudViewModel
+import com.jiexiy.app.ui.viewmodel.XunleiCloudViewModel
+import com.jiexiy.app.ui.components.解析云WavyProgress
+import com.jiexiy.app.ui.items.drivePlatformLogoRes
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /**
  * 网盘账号展示模型。

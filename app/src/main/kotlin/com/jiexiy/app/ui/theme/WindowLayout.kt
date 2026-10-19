@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.theme
+package com.jiexiy.app.ui.theme
 
 /** 宽窗口使用侧栏；紧凑高度的横向窗口也保留侧栏，给正文让出空间。 */
 internal fun useNavigationRail(widthDp: Int, heightDp: Int): Boolean =

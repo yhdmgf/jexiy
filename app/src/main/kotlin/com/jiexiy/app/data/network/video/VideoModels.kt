@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.video
+package com.jiexiy.app.data.network.video
 
 /** 媒体类型：视频（mp4/flv/m3u8）、图片（图集/九宫格）、音频（网易云那类单文件） */
 enum class VideoMediaKind { VIDEO, IMAGE, AUDIO }

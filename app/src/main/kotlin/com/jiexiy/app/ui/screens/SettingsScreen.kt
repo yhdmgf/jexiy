@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.Manifest
 import android.content.ActivityNotFoundException
@@ -116,25 +116,25 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.解析云.app.data.backup.AuthBackupManager
-import com.解析云.app.data.backup.AuthCrypto
-import com.解析云.app.data.download.DownloadDebugLog
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.download.DownloadSaver
-import com.解析云.app.data.gopeed.GopeedEngine
-import com.解析云.app.data.network.HttpClients
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.data.update.UpdateChecker
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.ListGroupPos
-import com.解析云.app.ui.theme.ThemeController
-import com.解析云.app.ui.theme.listGroupShape
-import com.解析云.app.util.AppLinks
-import com.解析云.app.util.DiagnosticLog
-import com.解析云.app.util.LogExporter
-import com.解析云.app.util.StorageDirs
+import com.jiexiy.app.data.backup.AuthBackupManager
+import com.jiexiy.app.data.backup.AuthCrypto
+import com.jiexiy.app.data.download.DownloadDebugLog
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.download.DownloadSaver
+import com.jiexiy.app.data.gopeed.GopeedEngine
+import com.jiexiy.app.data.network.HttpClients
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.data.update.UpdateChecker
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.ListGroupPos
+import com.jiexiy.app.ui.theme.ThemeController
+import com.jiexiy.app.ui.theme.listGroupShape
+import com.jiexiy.app.util.AppLinks
+import com.jiexiy.app.util.DiagnosticLog
+import com.jiexiy.app.util.LogExporter
+import com.jiexiy.app.util.StorageDirs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

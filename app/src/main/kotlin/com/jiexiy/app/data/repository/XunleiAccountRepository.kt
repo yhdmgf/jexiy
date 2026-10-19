@@ -16,15 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.XunleiAccountDao
-import com.解析云.app.data.db.XunleiAccountEntity
-import com.解析云.app.data.db.resolveAccountSlot
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.XunleiApi
-import com.解析云.app.data.network.XunleiLoginStep
-import com.解析云.app.data.network.XunleiWebCredential
+import com.jiexiy.app.data.db.XunleiAccountDao
+import com.jiexiy.app.data.db.XunleiAccountEntity
+import com.jiexiy.app.data.db.resolveAccountSlot
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.XunleiApi
+import com.jiexiy.app.data.network.XunleiLoginStep
+import com.jiexiy.app.data.network.XunleiWebCredential
 import kotlinx.coroutines.flow.Flow
 
 /**

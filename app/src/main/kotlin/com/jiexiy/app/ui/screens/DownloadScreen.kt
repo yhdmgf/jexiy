@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.Manifest
 import android.content.ClipData
@@ -106,17 +106,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.解析云.app.data.db.DownloadTaskEntity
-import com.解析云.app.data.download.DownloadStats
-import com.解析云.app.data.download.MagnetLink
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.viewmodel.DownloadViewModel
-import com.解析云.app.ui.components.FileNameText
-import com.解析云.app.ui.components.解析云WavyProgress
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.data.db.DownloadTaskEntity
+import com.jiexiy.app.data.download.DownloadStats
+import com.jiexiy.app.data.download.MagnetLink
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.viewmodel.DownloadViewModel
+import com.jiexiy.app.ui.components.FileNameText
+import com.jiexiy.app.ui.components.解析云WavyProgress
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 import java.io.File
 
 /**

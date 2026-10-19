@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.items
+package com.jiexiy.app.ui.items
 
 import androidx.annotation.DrawableRes
-import com.解析云.app.R
-import com.解析云.app.data.network.SharePlatform
-import com.解析云.app.data.network.video.VideoPlatform
+import com.jiexiy.app.R
+import com.jiexiy.app.data.network.SharePlatform
+import com.jiexiy.app.data.network.video.VideoPlatform
 
 /**
  * 平台 Logo 表：网盘与视频平台 → drawable 资源。

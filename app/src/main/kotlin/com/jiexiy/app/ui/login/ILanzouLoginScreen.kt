@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -66,9 +66,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.viewmodel.ILanzouAccountViewModel
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.viewmodel.ILanzouAccountViewModel
 import kotlinx.coroutines.launch
 
 /**

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -97,25 +97,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.解析云.app.data.network.model.ShareExpire
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.components.OperationSheet
-import com.解析云.app.ui.components.LocalFileOperationBusy
-import com.解析云.app.ui.components.FileNameText
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.resolve.BackToParentItem
-import com.解析云.app.ui.resolve.CrumbBar
-import com.解析云.app.ui.resolve.ShareFileRow
-import com.解析云.app.ui.viewmodel.QuarkCloudUiState
-import com.解析云.app.ui.viewmodel.QuarkCloudViewModel
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.listGroupShape
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.data.network.model.ShareExpire
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.components.OperationSheet
+import com.jiexiy.app.ui.components.LocalFileOperationBusy
+import com.jiexiy.app.ui.components.FileNameText
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.resolve.BackToParentItem
+import com.jiexiy.app.ui.resolve.CrumbBar
+import com.jiexiy.app.ui.resolve.ShareFileRow
+import com.jiexiy.app.ui.viewmodel.QuarkCloudUiState
+import com.jiexiy.app.ui.viewmodel.QuarkCloudViewModel
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.listGroupShape
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /** 文件操作菜单类型（FileActionSheet 内切换） */
 private enum class ActionStep { MENU, MOVE, SHARE, RENAME, DELETE }
@@ -218,7 +218,7 @@ internal fun FileActionSheet(
 /**
  * 底部弹窗顶部：图标 + 文件名 + 类型（文件夹/文件）。
  * 网盘页文件操作弹窗（[FileActionSheet]）与解析页文件操作弹窗
- * （`com.解析云.app.ui.resolve.ResolveFileActionSheet`）共用，保证两处形态一致。
+ * （`com.jiexiy.app.ui.resolve.ResolveFileActionSheet`）共用，保证两处形态一致。
  */
 @Composable
 internal fun FileSheetHeader(file: ShareFile) {
@@ -918,7 +918,7 @@ internal fun ConfirmDeleteSheet(
 /** 分享结果：链接 + 提取码 + 复制 */
 @Composable
 internal fun ShareResultDialog(
-    info: com.解析云.app.data.network.model.ShareInfo,
+    info: com.jiexiy.app.data.network.model.ShareInfo,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current

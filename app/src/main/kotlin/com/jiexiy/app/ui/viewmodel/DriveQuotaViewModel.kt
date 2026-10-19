@@ -16,24 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.db.GuangYaAccountEntity
-import com.解析云.app.data.db.ILanzouAccountEntity
-import com.解析云.app.data.network.BaiduApi
-import com.解析云.app.data.network.C139Api
-import com.解析云.app.data.network.GuangYaApi
-import com.解析云.app.data.network.GuangYaDevice
-import com.解析云.app.data.network.ILanzouApi
-import com.解析云.app.data.network.Pan115Api
-import com.解析云.app.data.network.Pan123Api
-import com.解析云.app.data.network.QuarkApi
-import com.解析云.app.data.network.UCApi
-import com.解析云.app.data.network.XunleiApi
-import com.解析云.app.data.network.model.QuotaInfo
+import com.jiexiy.app.data.db.GuangYaAccountEntity
+import com.jiexiy.app.data.db.ILanzouAccountEntity
+import com.jiexiy.app.data.network.BaiduApi
+import com.jiexiy.app.data.network.C139Api
+import com.jiexiy.app.data.network.GuangYaApi
+import com.jiexiy.app.data.network.GuangYaDevice
+import com.jiexiy.app.data.network.ILanzouApi
+import com.jiexiy.app.data.network.Pan115Api
+import com.jiexiy.app.data.network.Pan123Api
+import com.jiexiy.app.data.network.QuarkApi
+import com.jiexiy.app.data.network.UCApi
+import com.jiexiy.app.data.network.XunleiApi
+import com.jiexiy.app.data.network.model.QuotaInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

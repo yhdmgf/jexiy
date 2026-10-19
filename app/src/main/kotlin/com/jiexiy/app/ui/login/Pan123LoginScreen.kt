@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -79,12 +79,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.解析云.app.data.network.Pan123Constants
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.components.解析云WavyLoading
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.viewmodel.Pan123AccountViewModel
-import com.解析云.app.util.DiagnosticLog
+import com.jiexiy.app.data.network.Pan123Constants
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.components.解析云WavyLoading
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.viewmodel.Pan123AccountViewModel
+import com.jiexiy.app.util.DiagnosticLog
 import kotlinx.coroutines.launch
 
 /** 登录方式：0=网页登录（WebView 提取 authorToken）、1=账号密码（原生 sign_in 接口） */

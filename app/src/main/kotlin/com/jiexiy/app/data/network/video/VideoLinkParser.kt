@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.video
+package com.jiexiy.app.data.network.video
 
 /**
  * 识别结果：一条链接属于哪个平台、是哪种资源。
@@ -36,7 +36,7 @@ data class DetectedVideoLink(
 /**
  * 从用户粘贴的任意文本里识别视频平台链接。
  *
- * 与 [com.解析云.app.data.network.ShareLinkParser] 同构（先抓 URL 再按平台正则顺序匹配），
+ * 与 [com.jiexiy.app.data.network.ShareLinkParser] 同构（先抓 URL 再按平台正则顺序匹配），
  * 但两套识别是**分开**的：网盘链接与视频链接互不干扰，解析页先试 GitHub、再试视频、
  * 最后才是网盘，任何一个命中就分流到对应页面。
  *

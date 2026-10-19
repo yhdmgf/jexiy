@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.video
+package com.jiexiy.app.data.network.video
 
 import android.util.Log
-import com.解析云.app.data.download.DownloadPathPolicy
-import com.解析云.app.util.LogRedactor
+import com.jiexiy.app.data.download.DownloadPathPolicy
+import com.jiexiy.app.util.LogRedactor
 import org.json.JSONArray
 import org.json.JSONObject
 

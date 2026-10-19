@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -25,13 +25,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.download.DownloadManager
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.ILanzouApi
-import com.解析云.app.data.network.ILanzouConstants
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.ShareFile
-import com.解析云.app.data.repository.ILanzouAccountRepository
+import com.jiexiy.app.data.download.DownloadManager
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.ILanzouApi
+import com.jiexiy.app.data.network.ILanzouConstants
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.repository.ILanzouAccountRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

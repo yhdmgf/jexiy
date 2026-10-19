@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.login
+package com.jiexiy.app.ui.login
 
 import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
-import com.解析云.app.util.DiagnosticLog
-import com.解析云.app.util.LogRedactor
+import com.jiexiy.app.util.DiagnosticLog
+import com.jiexiy.app.util.LogRedactor
 import android.webkit.CookieManager
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
@@ -33,8 +33,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.SnackbarHost
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,9 +74,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.解析云.app.data.network.C139Constants
-import com.解析云.app.ui.viewmodel.C139AccountViewModel
-import com.解析云.app.ui.components.解析云WavyLoading
+import com.jiexiy.app.data.network.C139Constants
+import com.jiexiy.app.ui.viewmodel.C139AccountViewModel
+import com.jiexiy.app.ui.components.解析云WavyLoading
 import kotlinx.coroutines.launch
 
 private const val TAG = "C139Login"

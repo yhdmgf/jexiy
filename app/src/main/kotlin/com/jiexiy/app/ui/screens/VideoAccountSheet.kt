@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -63,10 +63,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.db.VideoAccountEntity
-import com.解析云.app.data.network.video.VideoPlatform
-import com.解析云.app.ui.items.logoRes
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.data.db.VideoAccountEntity
+import com.jiexiy.app.data.network.video.VideoPlatform
+import com.jiexiy.app.ui.items.logoRes
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 
 /**
  * 已登录视频平台的账号弹窗：账号列表（设主账号 / 改备注 / 退出）+ 添加账号 + 退出全部账号。

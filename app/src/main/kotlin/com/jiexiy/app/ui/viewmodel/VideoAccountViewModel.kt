@@ -16,17 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.viewmodel
+package com.jiexiy.app.ui.viewmodel
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.解析云.app.data.db.AppDatabase
-import com.解析云.app.data.db.VideoAccountEntity
-import com.解析云.app.data.network.video.VideoPlatform
-import com.解析云.app.data.repository.VideoAccountRepository
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.data.db.AppDatabase
+import com.jiexiy.app.data.db.VideoAccountEntity
+import com.jiexiy.app.data.network.video.VideoPlatform
+import com.jiexiy.app.data.repository.VideoAccountRepository
+import com.jiexiy.app.ui.SnackbarController
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

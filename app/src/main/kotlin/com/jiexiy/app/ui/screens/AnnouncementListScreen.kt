@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -73,14 +73,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.announcement.AnnouncementApi
-import com.解析云.app.data.announcement.relativeTime
-import com.解析云.app.ui.components.RemoteImage
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.listGroupShape
-import com.解析云.app.ui.viewmodel.AnnouncementViewModel
+import com.jiexiy.app.data.announcement.AnnouncementApi
+import com.jiexiy.app.data.announcement.relativeTime
+import com.jiexiy.app.ui.components.RemoteImage
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.listGroupShape
+import com.jiexiy.app.ui.viewmodel.AnnouncementViewModel
 
 /**
  * 公告列表页（全屏叠加页，从顶栏公告图标做容器变换进来）。

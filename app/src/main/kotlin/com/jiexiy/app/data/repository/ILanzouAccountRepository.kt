@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.ILanzouAccountDao
-import com.解析云.app.data.db.ILanzouAccountEntity
-import com.解析云.app.data.db.resolveAccountSlot
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.ILanzouApi
+import com.jiexiy.app.data.db.ILanzouAccountDao
+import com.jiexiy.app.data.db.ILanzouAccountEntity
+import com.jiexiy.app.data.db.resolveAccountSlot
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.ILanzouApi
 import kotlinx.coroutines.flow.Flow
 
 /**

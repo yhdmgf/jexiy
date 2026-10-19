@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app
+package com.jiexiy.app
 
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
-import com.解析云.app.crash.CrashHandler
-import com.解析云.app.util.ArchiveProbe
-import com.解析云.app.util.TextCipher
+import com.jiexiy.app.crash.CrashHandler
+import com.jiexiy.app.util.ArchiveProbe
+import com.jiexiy.app.util.TextCipher
 
 internal fun earlyProbe(): Boolean {
     val p1 = TextCipher.pCloudInject
@@ -82,18 +82,18 @@ class 解析云App : Application() {
             }
         }
         scheduleDeepScan(this)
-        com.解析云.app.data.network.XunleiDeviceFingerprint.init(this)
+        com.jiexiy.app.data.network.XunleiDeviceFingerprint.init(this)
         // 123 云盘的设备标识（loginuuid）：账号密码登录与所有业务请求都要带，必须跨启动保持稳定，
         // 否则服务端会把每次启动都当成新设备（登录更容易被要求过验证）
-        com.解析云.app.data.network.Pan123DeviceId.install(this)
+        com.jiexiy.app.data.network.Pan123DeviceId.install(this)
         // 本机密钥失效自愈：必须在**任何**凭证读写之前装配。改锁屏密码/指纹会让 Android Keystore
         // 里的密钥被系统永久作废（KeyPermanentlyInvalidatedException / Key not found / Invalid
         // key blob 三种形态），此时要记下「登录态已失效」的一次性提示，而不是把 Keystore 异常
         // 抛到主线程把 App 崩掉（1.2.8 的三份崩溃报告）。
-        com.解析云.app.data.security.CredentialStore.installRecovery(this)
+        com.jiexiy.app.data.security.CredentialStore.installRecovery(this)
         // 隐藏 WebView 解析通道：需要跟踪「当前前台 Activity」以便把隐藏 WebView 挂上窗口
         // （不挂窗口的话 requestAnimationFrame / visibilityState 会不对，页面初始化脚本可能卡住）
-        com.解析云.app.data.network.video.HeadlessWebView.install(this)
+        com.jiexiy.app.data.network.video.HeadlessWebView.install(this)
         // 启动时恢复用户配置的 HTTP 代理（任何异常都不得影响应用启动）
         runCatching {
             val prefs = getSharedPreferences("解析云_settings", Context.MODE_PRIVATE)
@@ -101,19 +101,19 @@ class 解析云App : Application() {
                 val host = prefs.getString("proxy_host", "")?.takeIf { it.isNotBlank() }
                 val port = prefs.getInt("proxy_port", 7890)
                 if (host != null && port in 1..65535) {
-                    com.解析云.app.data.network.HttpClients.setProxy(host, port)
+                    com.jiexiy.app.data.network.HttpClients.setProxy(host, port)
                 }
             }
         }
         purgeDownloadLeftovers(this)
         // 诊断日志：读开关（默认关）并定好落盘目录；开着才起写线程，关着这里几乎零开销
-        com.解析云.app.util.DiagnosticLog.install(this)
+        com.jiexiy.app.util.DiagnosticLog.install(this)
         // 下载调试：读开关（默认关）。必须在任何下载开始之前装配，否则开关打开后先建的任务收不到事件
-        com.解析云.app.data.download.DownloadDebugLog.install(this)
+        com.jiexiy.app.data.download.DownloadDebugLog.install(this)
         // 链接唤起（深链接）：把用户设置刷到清单里那些 activity-alias 的启停状态。
         // 设置里改开关是即时同步的，这里兜安装后首次启动与「改过开关又重装/清数据」的对齐；
         // 任何异常都只记日志，绝不影响启动。
-        runCatching { com.解析云.app.util.LinkOpener.syncAll(this) }
+        runCatching { com.jiexiy.app.util.LinkOpener.syncAll(this) }
         // 选了 Gopeed 引擎且已导入内核：启动就把它加载起来（失败只记日志，绝不影响应用启动）
         autoStartGopeedIfSelected(this)
     }
@@ -125,7 +125,7 @@ class 解析云App : Application() {
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
-            com.解析云.app.data.network.HttpClients.evictIdleConnections()
+            com.jiexiy.app.data.network.HttpClients.evictIdleConnections()
             android.util.Log.w("解析云", "onTrimMemory level=$level：已释放空闲连接")
         }
     }
@@ -135,7 +135,7 @@ class 解析云App : Application() {
  *  必须早于任何下载启动，故放在 Application.onCreate 的后台线程里做一次。 */
 private fun purgeDownloadLeftovers(ctx: Context) {
     Thread {
-        runCatching { com.解析云.app.data.download.DownloadSaver.purgeOwnPendingFiles(ctx) }
+        runCatching { com.jiexiy.app.data.download.DownloadSaver.purgeOwnPendingFiles(ctx) }
     }.start()
 }
 
@@ -149,14 +149,14 @@ private fun purgeDownloadLeftovers(ctx: Context) {
  * 选内置下载器时下面会直接 return、整条启动流程都不会碰引擎，不对齐的话引擎页会以为「未导入内核」。
  */
 private fun autoStartGopeedIfSelected(ctx: Context) {
-    val engine = com.解析云.app.data.gopeed.GopeedEngine
-    val settingsRepo = com.解析云.app.data.prefs.SettingsRepository(ctx)
+    val engine = com.jiexiy.app.data.gopeed.GopeedEngine
+    val settingsRepo = com.jiexiy.app.data.prefs.SettingsRepository(ctx)
     engine.syncInstalledState(ctx)
-    if (settingsRepo.downloadEngine != com.解析云.app.data.prefs.SettingsRepository.ENGINE_GOPEED) return
+    if (settingsRepo.downloadEngine != com.jiexiy.app.data.prefs.SettingsRepository.ENGINE_GOPEED) return
     if (!engine.isInstalled(ctx)) {
         // 内核被删了（或从没导入过）但设置还停在 Gopeed：自愈回内置下载器，避免"设置说在用引擎、
         // 实际跑的是内置下载器"的错位（与下载引擎页删内核时的处理一致）。
-        settingsRepo.downloadEngine = com.解析云.app.data.prefs.SettingsRepository.ENGINE_BUILTIN
+        settingsRepo.downloadEngine = com.jiexiy.app.data.prefs.SettingsRepository.ENGINE_BUILTIN
         return
     }
     Thread {

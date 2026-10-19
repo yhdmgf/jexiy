@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.crash
+package com.jiexiy.app.crash
 
 import android.content.Context
 import android.content.Intent
@@ -87,7 +87,7 @@ class CrashHandler(private val context: Context) : Thread.UncaughtExceptionHandl
         val native = runCatching { android.os.Debug.getNativeHeapAllocatedSize() }.getOrDefault(0L)
         return "内存：java堆 used=${used / MB}MB / max=${rt.maxMemory() / MB}MB" +
             " native=${native / MB}MB" +
-            " 在飞分片上限=${com.解析云.app.data.download.DownloadManager.MAX_INFLIGHT_CHUNKS}"
+            " 在飞分片上限=${com.jiexiy.app.data.download.DownloadManager.MAX_INFLIGHT_CHUNKS}"
     }
 
     private fun saveCrashLog(log: String) {

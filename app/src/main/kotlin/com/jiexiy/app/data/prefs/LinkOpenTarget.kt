@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.prefs
+package com.jiexiy.app.data.prefs
 
 /**
  * 深链接（网盘分享链接一键唤起）的注册项。
  *
- * ★ [alias] 必须与 `AndroidManifest.xml` 里 `com.解析云.app.link.*` 的 activity-alias **逐字一致**：
+ * ★ [alias] 必须与 `AndroidManifest.xml` 里 `com.jiexiy.app.link.*` 的 activity-alias **逐字一致**：
  *   清单里的 intent-filter 改不了，用户在设置里改「哪些链接由云析接管」只能靠启停这些组件
- *   （见 [com.解析云.app.util.LinkOpener]），类名对不上就会静默失效。
+ *   （见 [com.jiexiy.app.util.LinkOpener]），类名对不上就会静默失效。
  *
  * 默认全部启用；[prefKey] 里存的是用户意愿（true/false）。
  */
@@ -35,19 +35,19 @@ enum class LinkOpenTarget(
     /** 设置页显示的链接样例 */
     val sample: String
 ) {
-    QUARK("com.解析云.app.link.QuarkLink", "夸克网盘", "pan.quark.cn/s/…"),
-    UC("com.解析云.app.link.UcLink", "UC 网盘", "drive.uc.cn/s/…"),
-    XUNLEI("com.解析云.app.link.XunleiLink", "迅雷网盘", "pan.xunlei.com/s/…"),
-    BAIDU("com.解析云.app.link.BaiduLink", "百度网盘", "pan.baidu.com/s/…"),
-    C139("com.解析云.app.link.C139Link", "139（和彩云）", "yun.139.com/shareweb/…"),
-    PAN123("com.解析云.app.link.Pan123Link", "123 云盘", "www.123pan.com/s/…"),
-    PAN115("com.解析云.app.link.Pan115Link", "115 网盘", "115.com/s/…"),
-    GUANGYA("com.解析云.app.link.GuangyaLink", "光鸭云盘", "www.guangyapan.com/s/…"),
-    LANZOU("com.解析云.app.link.LanzouLink", "蓝奏云 / 优享版", "lanzou*.com/…"),
-    MAGNET("com.解析云.app.link.MagnetLink", "磁力链接", "magnet:?xt=…"),
-    JIEXIY("com.解析云.app.link.YunxLink", "解析云:// 自有协议", "解析云://resolve?url=…"),
-    SHARE("com.解析云.app.link.ShareLink", "分享菜单", "其它 App「分享 → 云析」"),
-    PROCESS_TEXT("com.解析云.app.link.ProcessTextLink", "选中文本解析", "长按选中文字 →「用云析解析」");
+    QUARK("com.jiexiy.app.link.QuarkLink", "夸克网盘", "pan.quark.cn/s/…"),
+    UC("com.jiexiy.app.link.UcLink", "UC 网盘", "drive.uc.cn/s/…"),
+    XUNLEI("com.jiexiy.app.link.XunleiLink", "迅雷网盘", "pan.xunlei.com/s/…"),
+    BAIDU("com.jiexiy.app.link.BaiduLink", "百度网盘", "pan.baidu.com/s/…"),
+    C139("com.jiexiy.app.link.C139Link", "139（和彩云）", "yun.139.com/shareweb/…"),
+    PAN123("com.jiexiy.app.link.Pan123Link", "123 云盘", "www.123pan.com/s/…"),
+    PAN115("com.jiexiy.app.link.Pan115Link", "115 网盘", "115.com/s/…"),
+    GUANGYA("com.jiexiy.app.link.GuangyaLink", "光鸭云盘", "www.guangyapan.com/s/…"),
+    LANZOU("com.jiexiy.app.link.LanzouLink", "蓝奏云 / 优享版", "lanzou*.com/…"),
+    MAGNET("com.jiexiy.app.link.MagnetLink", "磁力链接", "magnet:?xt=…"),
+    JIEXIY("com.jiexiy.app.link.YunxLink", "解析云:// 自有协议", "解析云://resolve?url=…"),
+    SHARE("com.jiexiy.app.link.ShareLink", "分享菜单", "其它 App「分享 → 云析」"),
+    PROCESS_TEXT("com.jiexiy.app.link.ProcessTextLink", "选中文本解析", "长按选中文字 →「用云析解析」");
 
     /** SharedPreferences 键（默认开） */
     val prefKey: String

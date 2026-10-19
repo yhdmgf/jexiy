@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.Pan123AccountDao
-import com.解析云.app.data.db.Pan123AccountEntity
-import com.解析云.app.data.db.resolveAccountSlot
-import com.解析云.app.data.download.DownloadPlatform
-import com.解析云.app.data.network.Pan123Api
-import com.解析云.app.data.network.Pan123LoginResult
+import com.jiexiy.app.data.db.Pan123AccountDao
+import com.jiexiy.app.data.db.Pan123AccountEntity
+import com.jiexiy.app.data.db.resolveAccountSlot
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.Pan123Api
+import com.jiexiy.app.data.network.Pan123LoginResult
 import kotlinx.coroutines.flow.Flow
 
 /**

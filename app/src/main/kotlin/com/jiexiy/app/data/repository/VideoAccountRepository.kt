@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.repository
+package com.jiexiy.app.data.repository
 
-import com.解析云.app.data.db.VideoAccountDao
-import com.解析云.app.data.db.VideoAccountEntity
-import com.解析云.app.data.db.resolveAccountSlot
-import com.解析云.app.data.network.video.VideoParsers
-import com.解析云.app.data.network.video.VideoPlatform
+import com.jiexiy.app.data.db.VideoAccountDao
+import com.jiexiy.app.data.db.VideoAccountEntity
+import com.jiexiy.app.data.db.resolveAccountSlot
+import com.jiexiy.app.data.network.video.VideoParsers
+import com.jiexiy.app.data.network.video.VideoPlatform
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

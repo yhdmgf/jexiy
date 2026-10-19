@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network.model
+package com.jiexiy.app.data.network.model
 
 /**
  * 分享解析会话（一次解析流程的凭证）。

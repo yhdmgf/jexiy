@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
-import com.解析云.app.data.network.model.QuotaInfo
-import com.解析云.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.QuotaInfo
+import com.jiexiy.app.data.network.model.ShareFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -515,7 +515,7 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
      *
      *  @param period 百度 API 的有效期**字面值**：0=永久、1=一天、7=七天、30=三十天。
      *    ⚠️ 不是 UI 中性码（1/2/3/4），调用方必须先用
-     *    [com.解析云.app.data.network.model.ShareExpire.baiduPeriod] 转换（Agent.md §3.20）。
+     *    [com.jiexiy.app.data.network.model.ShareExpire.baiduPeriod] 转换（Agent.md §3.20）。
      */
     suspend fun createShare(
         fsIds: List<String>,

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.ContentValues
 import android.content.Context
@@ -97,8 +97,8 @@ import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
-import com.解析云.app.R
-import com.解析云.app.ui.SnackbarController
+import com.jiexiy.app.R
+import com.jiexiy.app.ui.SnackbarController
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.sign

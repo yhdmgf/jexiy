@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -66,10 +66,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.解析云.app.data.db.GuangYaAccountEntity
-import com.解析云.app.data.db.MultiAccountEntity
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.data.db.GuangYaAccountEntity
+import com.jiexiy.app.data.db.MultiAccountEntity
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

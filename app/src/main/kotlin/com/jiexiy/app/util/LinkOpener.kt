@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.util
+package com.jiexiy.app.util
 
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
-import com.解析云.app.data.prefs.LinkOpenTarget
-import com.解析云.app.data.prefs.SettingsRepository
+import com.jiexiy.app.data.prefs.LinkOpenTarget
+import com.jiexiy.app.data.prefs.SettingsRepository
 
 /**
  * 深链接注册项的启停。

@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.network
+package com.jiexiy.app.data.network
 
-import com.解析云.app.data.network.model.DownloadLink
-import com.解析云.app.data.network.model.QuotaInfo
-import com.解析云.app.data.network.model.ShareFile
+import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.QuotaInfo
+import com.jiexiy.app.data.network.model.ShareFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType

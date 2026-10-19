@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.gopeed
+package com.jiexiy.app.data.gopeed
 
 import android.content.Context
 import android.net.Uri
@@ -26,10 +26,10 @@ import android.provider.DocumentsContract
 import android.util.Log
 import com.gopeed.libgopeed.InvokeResultListener
 import com.gopeed.libgopeed.Libgopeed
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.util.LogRedactor
-import com.解析云.app.util.PermissionState
-import com.解析云.app.util.StorageDirs
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.util.LogRedactor
+import com.jiexiy.app.util.PermissionState
+import com.jiexiy.app.util.StorageDirs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

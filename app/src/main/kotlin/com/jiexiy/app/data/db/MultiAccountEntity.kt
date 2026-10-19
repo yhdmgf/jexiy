@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.db
+package com.jiexiy.app.data.db
 
 /**
  * 多账号：各平台账号表的凭证字段各不相同（cookie / access token / 设备号…），

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -52,19 +52,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.解析云.app.ui.SnackbarController
-import com.解析云.app.ui.rememberGlobalSnackbarHostState
-import com.解析云.app.ui.resolve.BackToParentItem
-import com.解析云.app.ui.resolve.CrumbBar
-import com.解析云.app.ui.resolve.ShareFileRow
-import com.解析云.app.ui.viewmodel.Pan123CloudUiState
-import com.解析云.app.ui.viewmodel.Pan123CloudViewModel
-import com.解析云.app.ui.viewmodel.ResolveViewModel
-import com.解析云.app.ui.components.解析云Loading
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.ListGroupGap
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.listGroupShape
+import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
+import com.jiexiy.app.ui.resolve.BackToParentItem
+import com.jiexiy.app.ui.resolve.CrumbBar
+import com.jiexiy.app.ui.resolve.ShareFileRow
+import com.jiexiy.app.ui.viewmodel.Pan123CloudUiState
+import com.jiexiy.app.ui.viewmodel.Pan123CloudViewModel
+import com.jiexiy.app.ui.viewmodel.ResolveViewModel
+import com.jiexiy.app.ui.components.解析云Loading
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.ListGroupGap
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.listGroupShape
 
 /**
  * 「转存到123云盘」步骤内容：浏览 123 个人网盘目录（只进文件夹），确认后转存到当前目录。

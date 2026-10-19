@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -27,8 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.解析云.app.data.db.MultiAccountEntity
-import com.解析云.app.data.db.XunleiAccountEntity
+import com.jiexiy.app.data.db.MultiAccountEntity
+import com.jiexiy.app.data.db.XunleiAccountEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

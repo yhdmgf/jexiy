@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.data.download
+package com.jiexiy.app.data.download
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -25,9 +25,9 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
-import com.解析云.app.data.db.DownloadTaskEntity
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.util.LogRedactor
+import com.jiexiy.app.data.db.DownloadTaskEntity
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.util.LogRedactor
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.ArrayDeque

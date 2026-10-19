@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.解析云.app.ui.screens
+package com.jiexiy.app.ui.screens
 
 import android.content.ComponentName
 import android.content.pm.PackageManager
@@ -120,14 +120,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.解析云.app.R
-import com.解析云.app.data.prefs.SettingsRepository
-import com.解析云.app.ui.theme.ThemeController
-import com.解析云.app.ui.theme.effectsDefault
-import com.解析云.app.ui.theme.effectsFast
-import com.解析云.app.ui.theme.readableSeedForeground
-import com.解析云.app.ui.theme.spatialDefault
-import com.解析云.app.ui.theme.spatialFast
+import com.jiexiy.app.R
+import com.jiexiy.app.data.prefs.SettingsRepository
+import com.jiexiy.app.ui.theme.ThemeController
+import com.jiexiy.app.ui.theme.effectsDefault
+import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.theme.readableSeedForeground
+import com.jiexiy.app.ui.theme.spatialDefault
+import com.jiexiy.app.ui.theme.spatialFast
 
 /** 预置主题色（Material 风格种子色） */
 private val presetColors = listOf(
@@ -191,8 +191,8 @@ fun ThemeScreen(
     var iconExpanded by rememberSaveable { mutableStateOf(true) }
     val switchAppIcon: (Int) -> Unit = { variant ->
         val pm = context.packageManager
-        val main = ComponentName(context, "com.解析云.app.MainActivity")
-        val alias = ComponentName(context, "com.解析云.app.MainActivityIcon2")
+        val main = ComponentName(context, "com.jiexiy.app.MainActivity")
+        val alias = ComponentName(context, "com.jiexiy.app.MainActivityIcon2")
         if (variant == 1) {
             pm.setComponentEnabledSetting(alias, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
             pm.setComponentEnabledSetting(main, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
