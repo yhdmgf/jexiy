@@ -49,19 +49,20 @@ jobs:
 
       # 防重复：若 master 自上次成功构建以来没有新提交，则跳过本次 nightly，
       # 避免每天定时跑出完全相同的包。手动 workflow_dispatch 也会受此保护（无新提交即跳过）。
-      - name: Skip if master has no new commit since last successful build
+      - name: Skip if main has no new commit since last successful build
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          git fetch origin master --quiet
-          HEAD_SHA=$(git rev-parse origin/master)
-          echo "当前 master HEAD: $HEAD_SHA"
+          BRANCH="${{ github.ref_name }}"
+          git fetch origin "$BRANCH" --quiet
+          HEAD_SHA=$(git rev-parse "origin/$BRANCH")
+          echo "当前 $BRANCH HEAD: $HEAD_SHA"
 
           # 最近一次本 workflow 成功 run 的 headSha（gh CLI 已预安装并带 GITHUB_TOKEN）
           LAST_SUCCESS=$(gh run list \
             --workflow "${{ github.workflow }}" \
-            --branch master \
+            --branch "$BRANCH" \
             --status success \
             --limit 1 \
             --json headSha \
@@ -69,7 +70,7 @@ jobs:
           echo "上次成功构建 SHA: ${LAST_SUCCESS:-（无）}"
 
           if [ -n "$LAST_SUCCESS" ] && [ "$LAST_SUCCESS" = "$HEAD_SHA" ]; then
-            echo "::notice::master 自上次成功构建后无新提交，跳过本次 nightly"
+            echo "::notice::$BRANCH 自上次成功构建后无新提交，跳过本次 nightly"
             echo "SKIP_BUILD=1" >> "$GITHUB_ENV"
           fi
 
