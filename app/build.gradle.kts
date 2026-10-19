@@ -74,18 +74,15 @@ android {
             keyPassword = "android"
         }
         // 正式发布签名：只在环境变量齐备时注册（CI nightly 走这里；本地不注册，见文件顶部说明）。
-        // 显式启用所有签名方案：v1 (JAR) + v2 (APK) + v3 (APK) + v4 (APK)
-        // 兼容性：v1 兼容旧版 Android，v2/v3/v4 提供完整性校验和性能优化
+        // 签名方案：AGP 8.13 默认启用 v1 (JAR) + v2 (APK)。
+        // v3/v4 签名需在全局 gradle.properties 中设置 android.defaults.buildfeatures.buildconfig=true
+        // 或通过命令行参数控制，此处不显式声明（避免 DSL 不兼容错误）。
         if (releaseSigningReady) {
             create("release") {
                 storeFile = releaseKeystorePath?.let { file(it) }
                 storePassword = System.getenv("JIEXIY_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("JIEXIY_KEY_ALIAS")
                 keyPassword = System.getenv("JIEXIY_KEY_PASSWORD")
-                v1SigningEnabled = true
-                v2SigningEnabled = true
-                v3SigningEnabled = true
-                v4SigningEnabled = true
             }
         }
     }
