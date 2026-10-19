@@ -98,15 +98,7 @@ jobs:
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
 
-      - name: Inject version into build.gradle.kts
-        if: env.SKIP_BUILD != '1'
-        run: |
-          set -e
-          sed -i "s/versionCode = [0-9]*/versionCode = ${VERSION_CODE}/" app/build.gradle.kts
-          sed -i 's/versionName = "[^"]*"/versionName = "${VERSION_NAME}"/' app/build.gradle.kts
-          echo "已更新版本：$VERSION_NAME ($VERSION_CODE)"
-
-            # 从 Secrets 还原正式签名证书：KEYSTORE_BASE64 解码到 runner 临时目录
+      # 从 Secrets 还原正式签名证书：KEYSTORE_BASE64 解码到 runner 临时目录
       # （不落仓库、不进 Artifacts，runner 销毁即消失）。四项 Secrets 缺一即报错退出，
       # 避免 nightly 悄悄产出未签名包（本地构建不经过这里 ⇒ release 仍是未签名包）。
       # 用 printf 而不是 echo 解码，防止个别 shell 对长字符串加换行/截断。

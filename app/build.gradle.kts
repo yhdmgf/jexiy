@@ -53,8 +53,15 @@ android {
         // 原因与实测证据见 Agent.md §3.11，勿降回 23。
         minSdk = 24
         targetSdk = 34
-        versionCode = 14
-        versionName = "1.3.0"
+        // 版本号：CI 手动触发时从环境变量读取（VERSION_NAME / VERSION_CODE），
+        // 定时任务或未设置时回退到默认值（1.3.0 / 103000）。
+        // 规则：versionCode = major + "0" + minor + "0" + patch + "0"（例如 1.1.1 → 101010）
+        val versionNameEnv = System.getenv("VERSION_NAME")
+        val versionCodeEnv = System.getenv("VERSION_CODE")
+        val defaultVersionName = "1.3.0"
+        val defaultVersionCode = 103000
+        versionCode = versionCodeEnv?.toIntOrNull() ?: defaultVersionCode
+        versionName = versionNameEnv ?: defaultVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
