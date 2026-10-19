@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -308,7 +308,7 @@ object DouyinParser : VideoParser {
     }
 
     /**
-     * 「文档开始前」注入的 XHR 钩子：把页面**自己发出的**作品详情响应原文存到 `window.__jihexiyAwemeDetail`。
+     * 「文档开始前」注入的 XHR 钩子：把页面**自己发出的**作品详情响应原文存到 `window.__jexiyAwemeDetail`。
      *
      * ★ 为什么不再抓 DOM（实测 2026-10 的教训）：详情接口的响应才是干净的结构化数据 ——
      *   图文页 `body.innerText` 只有 186 字（8 张图全在轮播里，`<img>` 上抓不到），
@@ -320,12 +320,12 @@ object DouyinParser : VideoParser {
     private const val XHR_DETAIL_HOOK_JS = """
 (function () {
   try {
-    if (window.__jihexiyDetailHookInstalled) return;
-    window.__jihexiyDetailHookInstalled = true;
+    if (window.__jexiyDetailHookInstalled) return;
+    window.__jexiyDetailHookInstalled = true;
     var rawOpen = XMLHttpRequest.prototype.open;
     var rawSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = function (method, url) {
-      try { this.__jihexiyUrl = String(url || ''); } catch (e) { this.__jihexiyUrl = ''; }
+      try { this.__jexiyUrl = String(url || ''); } catch (e) { this.__jexiyUrl = ''; }
       return rawOpen.apply(this, arguments);
     };
     XMLHttpRequest.prototype.send = function () {
@@ -333,7 +333,7 @@ object DouyinParser : VideoParser {
       try {
         xhr.addEventListener('load', function () {
           try {
-            var url = xhr.__jihexiyUrl || '';
+            var url = xhr.__jexiyUrl || '';
             if (url.indexOf('aweme/v1/web/aweme/detail') < 0) return;
             if (xhr.status !== 200) return;
             // ★ 不能只读 responseText：页面若把 responseType 设成 'json'，读 responseText 会抛
@@ -346,7 +346,7 @@ object DouyinParser : VideoParser {
                 if (r) text = (typeof r === 'string') ? r : JSON.stringify(r);
               } catch (e) { text = ''; }
             }
-            if (text) window.__jihexiyAwemeDetail = text;
+            if (text) window.__jexiyAwemeDetail = text;
           } catch (e) {}
         });
       } catch (e) {}
@@ -365,7 +365,7 @@ object DouyinParser : VideoParser {
      */
     private fun readyCheckJs(type: String): String = if (type == "video") """
 (function () {
-  var raw = window.__jihexiyAwemeDetail;
+  var raw = window.__jexiyAwemeDetail;
   return (typeof raw === 'string' && raw.length > 0) ? 'true' : 'false';
 })()
 """ else """
@@ -395,7 +395,7 @@ object DouyinParser : VideoParser {
     private const val EXTRACT_JS = """
 (function () {
   try {
-    var raw = window.__jihexiyAwemeDetail || '';
+    var raw = window.__jexiyAwemeDetail || '';
     var d = null;
     if (raw) {
       try {

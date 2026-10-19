@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 import kotlin.math.min
 
-private const val TAG = "jihexiy-DL"
+private const val TAG = jexiy-DL"
 
 /** 分片下载单次失败后的瞬时 IO 重试次数 */
 private const val CHUNK_RETRIES = 3

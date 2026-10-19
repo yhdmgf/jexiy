@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -174,7 +174,7 @@ fun OnboardingScreen(
 
     // ★ 整页铺一层 Surface：引导页是 MainScreen 里提前 return 的全屏覆盖页，**不在 Scaffold 里**，
     //   没有 Surface/Scaffold 就没人提供 LocalContentColor（其默认值是黑色）——
-    //   于是没写 color 的文本（第 1 页「jihexiy」、第 2 页「使用前请阅读」）在深色模式下会变成黑字。
+    //   于是没写 color 的文本（第 1 页「解析云」、第 2 页「使用前请阅读」）在深色模式下会变成黑字。
     //   底色用 scheme.surface，与 BlobBackground 自己铺的 base 完全一致，观感不变。
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -324,7 +324,7 @@ private fun WelcomePage(context: Context) {
         ) {
             Image(
                 painter = painterResource(R.drawable.icon),
-                contentDescription = "jihexiy图标",
+                contentDescription = "解析云图标",
                 modifier = Modifier
                     .size(112.dp)
                     .clip(RoundedCornerShape(30.dp)),
@@ -334,7 +334,7 @@ private fun WelcomePage(context: Context) {
 
         Spacer(modifier = Modifier.height(26.dp))
         Text(
-            text = "jihexiy",
+            text = "jexiy",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold,
             // 显式给色：全屏覆盖页里不依赖 LocalContentColor（默认黑色，深色模式下会变黑字）
@@ -342,7 +342,7 @@ private fun WelcomePage(context: Context) {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "jihexiy · v$versionName",
+            text = "解析云 · v$versionName",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -446,7 +446,7 @@ private fun GitHubCard(context: Context) {
 /** 复制文本到剪贴板（写剪贴板不受「自动识别剪贴板」开关约束，见 Agent.md §3.22） */
 private fun copyToClipboard(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("jihexiy_qq_group", text))
+    cm.setPrimaryClip(ClipData.newPlainText("jexiy_qq_group", text))
 }
 
 // ==================== 第 2 页：协议与声明 ====================
@@ -468,7 +468,7 @@ private fun TermsPage() {
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "jihexiy是开源工具，以下是使用条款与免责说明",
+            text = "解析云是开源工具，以下是使用条款与免责说明",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

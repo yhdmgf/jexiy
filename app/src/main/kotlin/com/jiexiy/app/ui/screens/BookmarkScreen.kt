@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -864,5 +864,5 @@ internal fun bookmarkPlatformLabel(platform: String): String = when (platform) {
 
 private fun copyToClipboard(context: Context, text: String) {
     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("jihexiy_bookmark", text))
+    cm.setPrimaryClip(ClipData.newPlainText("jexiy_bookmark", text))
 }

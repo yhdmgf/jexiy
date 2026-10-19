@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -122,7 +122,7 @@ object Pan115Constants {
     const val MOVE_POLL_INTERVAL_MS = 400L
 
     /** 临时转存根目录名（分享直链被拒时，先转存到这里再用电脑端接口取链，下载完删掉子目录） */
-    const val TEMP_DIR_NAME = "jihexiy临时转存"
+    const val TEMP_DIR_NAME = "解析云临时转存"
 
     /** 每次转存用的唯一子目录前缀（同名文件不会互相覆盖） */
     const val TEMP_SUBDIR_PREFIX = "tr_"

@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -96,7 +96,7 @@ internal open class DiagnosticWebViewClient : WebViewClient() {
     }
 
     private companion object {
-        const val TAG = "jihexiy-WebView"
+        const val TAG = jexiy-WebView"
     }
 }
 
@@ -128,7 +128,7 @@ internal open class DiagnosticWebChromeClient : WebChromeClient() {
     }
 
     private companion object {
-        const val TAG = "jihexiy-WebView"
+        const val TAG = jexiy-WebView"
     }
 }
 

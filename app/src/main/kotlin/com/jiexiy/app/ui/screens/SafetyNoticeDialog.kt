@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -168,14 +168,14 @@ fun SafetyNoticeDialog() {
 
 private fun isAcknowledged(context: Context): Boolean {
     return runCatching {
-        context.getSharedPreferences("jihexiy_settings", Context.MODE_PRIVATE)
+        context.getSharedPreferences("jexiy_settings", Context.MODE_PRIVATE)
             .getBoolean(TextCipher.pNoticeFlag, false)
     }.getOrDefault(false)
 }
 
 private fun acknowledge(context: Context) {
     runCatching {
-        context.getSharedPreferences("jihexiy_settings", Context.MODE_PRIVATE)
+        context.getSharedPreferences("jexiy_settings", Context.MODE_PRIVATE)
             .edit()
             .putBoolean(TextCipher.pNoticeFlag, true)
             .apply()

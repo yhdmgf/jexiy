@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -137,7 +137,7 @@ object GopeedEngine {
      * 把内存里的状态与真实文件对齐一次。
      *
      * `_state` 只在导入 / 启动 / 停止 / 卸载时被写过，进程重启后它一律是 `NOT_INSTALLED`；
-     * 而**选内置下载器时启动流程根本不会去碰引擎**（见 jihexiyApp），于是内核明明还在、界面却显示
+     * 而**选内置下载器时启动流程根本不会去碰引擎**（见 JexiyApp），于是内核明明还在、界面却显示
      * 「未导入内核」。`state` 的读者都要先调一次这个（引擎页进页面时、应用启动时）。
      * 运行中的状态不动；只做一次 `stat`，很轻。
      */
@@ -212,7 +212,7 @@ object GopeedEngine {
      * 从 SAF 选的 tree Uri 反解真实文件系统路径（拿不到返回 null）。
      *
      * 只有系统「文件」应用里代表**本机存储**的位置才能反解：它们的 documentId 形如
-     * `primary:Download/jihexiy`（主存储 → `/storage/emulated/0/Download/jihexiy`）或
+     * `primary:Download/jexiy`（主存储 → `/storage/emulated/0/Download/jexiy`）或
      * `1A2B-3C4D:xxx`（SD 卡 / OTG，卷名就是那个 UUID → `/storage/1A2B-3C4D/xxx`）。
      * 第三方 provider（网盘、Google Drive 之类）的 documentId 不对应任何真实路径，一律返回 null ——
      * 调用方要退到手输路径，别把拿到的字符串当路径用。
@@ -240,7 +240,7 @@ object GopeedEngine {
     /** 这个目录现在是否真的能写：建目录 + 写一个探针文件再删掉 */
     private fun canWrite(dir: File): Boolean {
         if (!dir.isDirectory && !dir.mkdirs()) return false
-        val probe = File(dir, ".jihexiy_write_probe")
+        val probe = File(dir, ".jexiy_write_probe")
         return runCatching {
             probe.writeText("ok")
             probe.delete()
@@ -575,7 +575,7 @@ object GopeedEngine {
      *        网盘直链基本都要 UA / Referer / Cookie，缺了就 403
      * @param connections 分片并发连接数（`OptsExtra.connections`）；<=0 时用引擎默认值
      * @param name 文件名（`Options.name`）；空串时引擎自己从 URL 推导
-     * @param labels 自定义标签（`Request.Labels`），可塞 jihexiy 侧任务 id 做反查
+     * @param labels 自定义标签（`Request.Labels`），可塞 jexiy 侧任务 id 做反查
      */
     fun createTask(
         url: String,

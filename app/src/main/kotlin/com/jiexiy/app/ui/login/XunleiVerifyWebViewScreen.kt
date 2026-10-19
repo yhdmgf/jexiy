@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -57,7 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.jiexiy.app.data.network.XunleiConstants
 import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
-import com.jiexiy.app.ui.components.jihexiyWavyLoading
+import com.jiexiy.app.ui.components.jexiyWavyLoading
 import org.json.JSONObject
 import com.jiexiy.app.util.DiagnosticLog
 
@@ -195,7 +195,7 @@ fun XunleiVerifyWebViewScreen(
         Box(Modifier.fillMaxSize().padding(innerPadding)) {
             AndroidView(factory = { webView }, modifier = Modifier.fillMaxSize())
             if (isLoading) {
-                jihexiyWavyLoading(
+                jexiyWavyLoading(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopCenter)

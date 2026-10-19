@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -102,7 +102,7 @@ import com.jiexiy.app.ui.viewmodel.Pan123CloudViewModel
 import com.jiexiy.app.ui.viewmodel.QuarkCloudViewModel
 import com.jiexiy.app.ui.viewmodel.UCCoudViewModel
 import com.jiexiy.app.ui.viewmodel.XunleiCloudViewModel
-import com.jiexiy.app.ui.components.jihexiyWavyProgress
+import com.jiexiy.app.ui.components.jexiyWavyProgress
 import com.jiexiy.app.ui.items.drivePlatformLogoRes
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
@@ -973,7 +973,7 @@ private fun QuotaInlineBar(quota: QuotaInfo) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(4.dp))
-        jihexiyWavyProgress(
+        jexiyWavyProgress(
             progress = { ratio },
             modifier = Modifier
                 .fillMaxWidth()

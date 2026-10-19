@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -624,7 +624,7 @@ class ResolveViewModel(
                         failCount++
                         val reason = e.message ?: e.javaClass.simpleName
                         if (firstFailReason == null) firstFailReason = reason
-                        android.util.Log.w("jihexiy-Resolve", "批量下载跳过 ${file.fname}：$reason")
+                        android.util.Log.w(jexiy-Resolve", "批量下载跳过 ${file.fname}：$reason")
                     }
                 }
                 if (!interrupted) {

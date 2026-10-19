@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -52,7 +52,7 @@ import java.util.Locale
  *     + 整段 `Usage: logcat`，被 `redirectErrorStream(true)` 混进日志流，导出文件里就只剩 usage 文本。
  *   不加过滤时 logd 本来就按 uid 隔离（应用只读得到自己的日志），拿到的正好是本应用**所有进程**
  *   （含闪退那一次）的日志——最全也最简单。
- *   文件名 `jihexiy_log_<yyyyMMdd_HHmmss>.txt` 只按时间命名，与进程无关。
+ *   文件名 `jexiy_log_<yyyyMMdd_HHmmss>.txt` 只按时间命名，与进程无关。
  */
 object LogExporter {
 
@@ -64,7 +64,7 @@ object LogExporter {
     /** 生成日志文件（cacheDir 内）并返回；失败返回 null（不抛异常） */
     fun export(context: Context): File? = runCatching {
         val dir = File(context.cacheDir, EXPORT_DIR).apply { mkdirs() }
-        val out = File(dir, "jihexiy_log_${timestamp()}.txt")
+        val out = File(dir, "jexiy_log_${timestamp()}.txt")
         FileOutputStream(out).use { exportTo(context, it) }
         out
     }.getOrNull()
@@ -76,7 +76,7 @@ object LogExporter {
      * 不经过 FileProvider / 跨进程分享，彻底规避「保存到下载」时系统 UI 读取 uri 被拒的问题。
      */
     fun saveToDownloads(context: Context): Boolean = runCatching {
-        val fileName = "jihexiy_log_${timestamp()}.txt"
+        val fileName = "jexiy_log_${timestamp()}.txt"
         val ok = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, fileName)
@@ -103,7 +103,7 @@ object LogExporter {
         OutputStreamWriter(output, StandardCharsets.UTF_8).use { writer ->
             // ---------- 头部：应用与设备信息 ----------
             val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
-            writer.write("jihexiy（jihexiy）日志导出\n")
+            writer.write("解析云日志导出\n")
             writer.write("导出时间：${now()}\n")
             writer.write("应用版本：${pkg.versionName}（${pkg.versionCode}）\n")
             writer.write("设备：${Build.MANUFACTURER} ${Build.MODEL}\n")
@@ -141,7 +141,7 @@ object LogExporter {
     }.getOrDefault(false)
 
     /**
-     * 打包全部诊断日志（`jihexiy_diagnostic_logs_yyyyMMdd_HHmmss.zip`）；诊断模式没开或还没写过返回 null。
+     * 打包全部诊断日志（`jexiy_diagnostic_logs_yyyyMMdd_HHmmss.zip`）；诊断模式没开或还没写过返回 null。
      *
      * 真正的打包在 [DiagnosticLog.exportZip]（它先 flush 再压，保证最后几行也在包里），
      * 这里只是把「日志导出」这套对外 API 收在同一个对象里，调用方不用同时认识两个工具。

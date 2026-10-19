@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -66,7 +66,7 @@ object AnnouncementApi {
     const val PAGE_SIZE = 100
 
     /** 公告相关日志统一走这个标签，失败原因一律 E 级打印，方便直接看 logcat 定位 */
-    private const val TAG = "jihexiy-Announce"
+    private const val TAG = jexiy-Announce"
 
     /** 发布者（服务端 `publisher` 对象） */
     data class Publisher(val name: String, val avatarUrl: String?)
@@ -141,7 +141,7 @@ object AnnouncementApi {
                 val call = Request.Builder()
                     .url(url)
                     .header("Accept", "application/json")
-                    .header("User-Agent", "jihexiy")
+                    .header("User-Agent", "jexiy")
                     .get()
                     .build()
                 HttpClients.apiClient().newCall(call).execute().use { resp ->

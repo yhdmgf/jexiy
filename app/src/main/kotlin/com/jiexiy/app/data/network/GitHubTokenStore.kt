@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,7 +32,7 @@ import com.jiexiy.app.data.security.CredentialStore
  */
 object GitHubTokenStore {
 
-    private const val PREFS_NAME = "jihexiy_settings"
+    private const val PREFS_NAME = "jexiy_settings"
     private const val KEY_TOKEN = "github_token_encrypted"
     private const val PURPOSE = "github_token"
 

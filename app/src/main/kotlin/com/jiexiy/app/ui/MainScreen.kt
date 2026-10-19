@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -304,11 +304,11 @@ fun MainScreen(
     // 首次启动引导页（context 声明后检测）
     var showOnboarding by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        val prefs = context.getSharedPreferences("jihexiy_prefs", android.content.Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("jexiy_prefs", android.content.Context.MODE_PRIVATE)
         showOnboarding = !prefs.getBoolean("onboarding_shown", false)
     }
 
-    // 更新检测：请求 GitHub 最新 Release（仓库无 Release / 网络失败则不提示，失败原因看 jihexiy-Update 日志）
+    // 更新检测：请求 GitHub 最新 Release（仓库无 Release / 网络失败则不提示，失败原因看 解析云-Update 日志）
     var showUpdateSheet by remember { mutableStateOf(false) }
     // 最近一次成功拿到的真实 Release：既用于「发现新版本」弹窗，也供设置页的开发调试入口直接预览
     var latestRelease by remember { mutableStateOf<UpdateChecker.Release?>(null) }
@@ -319,7 +319,7 @@ fun MainScreen(
                 val release = result.release
                 latestRelease = release
                 val current = UpdateChecker.currentVersion(context)
-                val prefs = context.getSharedPreferences("jihexiy_prefs", android.content.Context.MODE_PRIVATE)
+                val prefs = context.getSharedPreferences("jexiy_prefs", android.content.Context.MODE_PRIVATE)
                 val ignored = prefs.getString("ignored_version", "")
                 if (UpdateChecker.compareVersions(release.tagName, current) > 0 &&
                     release.tagName != ignored
@@ -812,7 +812,7 @@ fun MainScreen(
     if (showOnboarding) {
         OnboardingScreen(
             onFinish = {
-                context.getSharedPreferences("jihexiy_prefs", android.content.Context.MODE_PRIVATE)
+                context.getSharedPreferences("jexiy_prefs", android.content.Context.MODE_PRIVATE)
                     .edit()
                     .putBoolean("onboarding_shown", true)
                     .apply()
@@ -1480,7 +1480,7 @@ fun MainScreen(
                             OVERLAY_KEY_ABOUT -> AboutScreen(
                                 onBack = { showAbout = false },
                                 onPreviewOnboarding = {
-                                    context.getSharedPreferences("jihexiy_prefs", android.content.Context.MODE_PRIVATE)
+                                    context.getSharedPreferences("jexiy_prefs", android.content.Context.MODE_PRIVATE)
                                         .edit()
                                         .putBoolean("onboarding_shown", false)
                                         .apply()
@@ -1576,7 +1576,7 @@ fun MainScreen(
                 },
                 onLater = { showUpdateSheet = false },
                 onIgnore = {
-                    context.getSharedPreferences("jihexiy_prefs", android.content.Context.MODE_PRIVATE)
+                    context.getSharedPreferences("jexiy_prefs", android.content.Context.MODE_PRIVATE)
                         .edit()
                         .putString("ignored_version", release.tagName)
                         .apply()
@@ -1735,7 +1735,7 @@ fun MainScreen(
 
 
 /**
- * 叠加页容器（关于jihexiy / 支持开发 / 主题与外观 / 收藏）：整屏 + 不透明底色 + 可选的 sharedBounds 形变。
+ * 叠加页容器（关于解析云 / 支持开发 / 主题与外观 / 收藏）：整屏 + 不透明底色 + 可选的 sharedBounds 形变。
  *
  * ★ 它与主界面的关系是「互斥」而不是「叠加」：两者是同一个 SharedTransitionLayout 下两个
  *   `AnimatedVisibility`，叠加页打开时**主界面会被移出组合**。这一点是硬要求，不是洁癖——

@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -76,7 +76,7 @@ import androidx.compose.ui.unit.dp
 import com.jiexiy.app.data.announcement.AnnouncementApi
 import com.jiexiy.app.data.announcement.relativeTime
 import com.jiexiy.app.ui.components.RemoteImage
-import com.jiexiy.app.ui.components.jihexiyLoading
+import com.jiexiy.app.ui.components.jexiyLoading
 import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 import com.jiexiy.app.ui.theme.ListGroupGap
 import com.jiexiy.app.ui.theme.listGroupShape
@@ -183,7 +183,7 @@ fun AnnouncementListPage(
                 }
 
                 // 首屏加载（刷新也算）：只有一条数据都没有时才占满页面
-                state.loading || state.refreshing -> jihexiyLoading(
+                state.loading || state.refreshing -> jexiyLoading(
                     modifier = Modifier.align(Alignment.Center)
                 )
 

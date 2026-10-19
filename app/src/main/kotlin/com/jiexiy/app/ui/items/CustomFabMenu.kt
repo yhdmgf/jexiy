@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -71,7 +71,7 @@ data class FabMenuItem(
 )
 
 /**
- * 浮动操作菜单（jihexiy原创实现，Material3 风格）：
+ * 浮动操作菜单（解析云原创实现，Material3 风格）：
  * - 右下角 FAB，点击展开/收起菜单，图标伴随旋转动画（＋ → ✕）；
  * - 菜单项从 FAB 上方滑入淡出，选中项高亮并带勾选标记；
  * - 展开时点击菜单外区域自动收起；

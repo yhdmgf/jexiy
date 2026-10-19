@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -60,7 +60,7 @@ import com.jiexiy.app.ui.resolve.ShareFileRow
 import com.jiexiy.app.ui.viewmodel.BaiduCloudUiState
 import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel
 import com.jiexiy.app.ui.viewmodel.ResolveViewModel
-import com.jiexiy.app.ui.components.jihexiyLoading
+import com.jiexiy.app.ui.components.jexiyLoading
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.ListGroupGap
 import com.jiexiy.app.ui.theme.effectsFast
@@ -137,7 +137,7 @@ internal fun BaiduSaveContent(
                         .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    jihexiyLoading()
+                    jexiyLoading()
                 }
 
                 is BaiduCloudUiState.Error -> Box(

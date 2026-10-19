@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -116,7 +116,7 @@ object UCConstants {
     const val DELETE_URL = "$API_BASE/1/clouddrive/file/delete?pr=UCBrowser&fr=pc"
 
     /** 临时转存目录名 */
-    const val TEMP_DIR_NAME = "jihexiy临时转存"
+    const val TEMP_DIR_NAME = "解析云临时转存"
 
     /** 会话刷新探测接口：任意接口均可，用于重新下发 __puus（AList quark_uc util.go:224 用 /config，UC/夸克通用） */
     const val CONFIG_URL = "$API_BASE/1/clouddrive/config?pr=UCBrowser&fr=pc"

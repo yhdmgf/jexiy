@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -41,7 +41,7 @@ import kotlinx.coroutines.withContext
  * **任何失败都只返回 null、绝不删凭证** —— 删数据换不来任何好处，却可能一次抖动就清空用户账号。
  */
 internal object SecureAccountDaos {
-    private const val TAG = "jihexiy"
+    private const val TAG = "jexiy"
 
     fun quark(raw: QuarkAccountDao, cipher: CredentialCipher): QuarkAccountDao = object : QuarkAccountDao {
         override fun observeAccount(): Flow<QuarkAccountEntity?> = raw.observeAccount().map { value ->

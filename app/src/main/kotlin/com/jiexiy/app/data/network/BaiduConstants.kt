@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -41,7 +41,7 @@ object BaiduConstants {
     const val APP_ID = "250528"
 
     /** 临时转存目录名（对齐抓包） */
-    const val TEMP_DIR_NAME = "jihexiy临时转存"
+    const val TEMP_DIR_NAME = "解析云临时转存"
 
     /** 关键 Cookie 字段，缺失 BDUSS 则视为未登录 */
     fun isValidCookie(cookie: String?): Boolean =

@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -85,7 +85,7 @@ import com.jiexiy.app.ui.items.logoRes
 import com.jiexiy.app.util.AppLinks
 
 /**
- * 关于jihexiy页：应用介绍、支持平台、功能特性、技术栈与免责声明。
+ * 关于解析云页：应用介绍、支持平台、功能特性、技术栈与免责声明。
  * Material3 风格：卡片分区 + 主题色 + 动态色适配。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,7 +108,7 @@ fun AboutScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("关于jihexiy", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("关于解析云", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -135,7 +135,7 @@ fun AboutScreen(
             InfoCard(
                 icon = Icons.Outlined.Cloud,
                 title = "应用简介",
-                description = "jihexiy（jihexiy）是一款网盘 / 视频分享链接解析与高速下载工具。" +
+                description = "解析云是一款网盘 / 视频分享链接解析与高速下载工具。" +
                     "粘贴链接即可：网盘分享能浏览内容并高速下载，视频链接能解析出直链与原图，" +
                     "图片 / 视频 / 音频都支持在线预览播放。"
             )
@@ -170,7 +170,7 @@ fun AboutScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "jihexiy v$versionName · Made with ❤ and deepseek",
+                text = "解析云 v$versionName · Made with ❤ and deepseek",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
@@ -207,7 +207,7 @@ private fun AppHeader(versionName: String, versionCode: Int) {
         ) {
             Image(
                 painter = painterResource(R.drawable.icon),
-                contentDescription = "jihexiy图标",
+                contentDescription = "解析云图标",
                 modifier = Modifier
                     .size(88.dp)
                     .clip(RoundedCornerShape(24.dp)),
@@ -216,13 +216,13 @@ private fun AppHeader(versionName: String, versionCode: Int) {
         }
         Spacer(modifier = Modifier.height(14.dp))
         Text(
-            text = "jihexiy",
+            text = "jexiy",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "jihexiy · v$versionName ($versionCode)",
+            text = "解析云 · v$versionName ($versionCode)",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

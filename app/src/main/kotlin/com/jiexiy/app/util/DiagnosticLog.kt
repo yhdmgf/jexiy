@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -35,7 +35,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
- * 诊断日志（设置 → 关于jihexiy → 长按 → 开发调试 → 诊断模式）。
+ * 诊断日志（设置 → 关于解析云 → 长按 → 开发调试 → 诊断模式）。
  *
  * 与 [LogExporter] 的区别：那边导的是 **logcat**（系统缓冲，重启/闪退后按 pid 过滤会丢历史），
  * 这边是**应用自己写文件**，落在私有目录、按模块分文件、跨重启保留，专门用来复现疑难问题。
@@ -59,7 +59,7 @@ object DiagnosticLog {
     const val NETWORK = "network"
     const val OPERATION = "operation"
 
-    private const val TAG = "jihexiy-Diag"
+    private const val TAG = jexiy-Diag"
     private const val DIR_NAME = "diagnostic_logs"
 
     /** 单文件上限 2MB */
@@ -114,7 +114,7 @@ object DiagnosticLog {
     private val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
     private val fileTimeFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
 
-    /** 冷启动装配（`jihexiyApp.onCreate` 调）：读开关、定目录，开着就把写线程拉起来 */
+    /** 冷启动装配（`JexiyApp.onCreate` 调）：读开关、定目录，开着就把写线程拉起来 */
     fun install(context: Context) {
         dir = resolveDir(context)
         enabled = SettingsRepository(context).diagnosticMode
@@ -276,7 +276,7 @@ object DiagnosticLog {
         )
     }
 
-    /** 导出 zip：`jihexiy_diagnostic_logs_yyyyMMdd_HHmmss.zip`（先 flush，确保最新日志在里面） */
+    /** 导出 zip：`jexiy_diagnostic_logs_yyyyMMdd_HHmmss.zip`（先 flush，确保最新日志在里面） */
     fun exportZip(context: Context): File? = runCatching {
         flush(3000)
         val src = dirOf(context)
@@ -284,7 +284,7 @@ object DiagnosticLog {
         if (files.isEmpty()) return@runCatching null
         val outDir = File(context.cacheDir, "logs").apply { mkdirs() }
         val stamp = synchronized(timeFormatLock) { fileTimeFormat.format(Date()) }
-        val out = File(outDir, "jihexiy_diagnostic_logs_$stamp.zip")
+        val out = File(outDir, "jexiy_diagnostic_logs_$stamp.zip")
         ZipOutputStream(BufferedOutputStream(FileOutputStream(out))).use { zip ->
             files.forEach { f ->
                 zip.putNextEntry(ZipEntry(f.name))
@@ -337,7 +337,7 @@ object DiagnosticLog {
         if (worker?.isAlive == true) return
         synchronized(lock) {
             if (worker?.isAlive == true) return
-            worker = Thread({ runWorker() }, "jihexiy-diagnostic-log").apply {
+            worker = Thread({ runWorker() }, jexiy-diagnostic-log").apply {
                 isDaemon = true
                 priority = Thread.MIN_PRIORITY
                 start()

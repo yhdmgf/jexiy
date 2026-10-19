@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -102,7 +102,7 @@ import com.jiexiy.app.data.network.model.ShareSession
 import com.jiexiy.app.data.prefs.SettingsRepository
 import com.jiexiy.app.ui.components.FileNameText
 import com.jiexiy.app.ui.components.ScrollToTopButton
-import com.jiexiy.app.ui.components.jihexiyLoading
+import com.jiexiy.app.ui.components.jexiyLoading
 import com.jiexiy.app.ui.items.MultiSelectAction
 import com.jiexiy.app.ui.items.MultiSelectBar
 import com.jiexiy.app.ui.preview.PreviewTypes
@@ -526,7 +526,7 @@ fun ShareDetailScreen(
             title = { Text("批量处理中") },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    jihexiyLoading(modifier = Modifier.size(24.dp))
+                    jexiyLoading(modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = viewModel.batchProgress?.let { "正在获取下载链接 $it" }

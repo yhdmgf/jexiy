@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -98,7 +98,7 @@ import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.ui.items.MultiSelectAction
 import com.jiexiy.app.ui.items.MultiSelectBar
 import com.jiexiy.app.ui.components.ScrollToTopButton
-import com.jiexiy.app.ui.components.jihexiyLoading
+import com.jiexiy.app.ui.components.jexiyLoading
 import com.jiexiy.app.ui.resolve.DownloadLinkDialog
 import com.jiexiy.app.ui.resolve.BackToParentItem
 import com.jiexiy.app.ui.resolve.CrumbBar
@@ -204,7 +204,7 @@ fun UCCoudScreen(
             is UCCloudUiState.Loading -> Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
-            ) { jihexiyLoading() }
+            ) { jexiyLoading() }
 
             is UCCloudUiState.Error -> Box(
                 modifier = Modifier.fillMaxSize(),
@@ -561,7 +561,7 @@ fun UCCoudScreen(
             title = { Text("处理中") },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    jihexiyLoading(modifier = Modifier.size(24.dp))
+                    jexiyLoading(modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = viewModel.folderProgress ?: "正在处理，请稍候…",
@@ -612,7 +612,7 @@ private fun UCMoveStep(
                 is UCCloudUiState.Loading -> Box(
                     modifier = Modifier.fillMaxWidth().height(180.dp),
                     contentAlignment = Alignment.Center
-                ) { jihexiyLoading() }
+                ) { jexiyLoading() }
 
                 is UCCloudUiState.Error -> Box(
                     modifier = Modifier.fillMaxWidth().height(140.dp),

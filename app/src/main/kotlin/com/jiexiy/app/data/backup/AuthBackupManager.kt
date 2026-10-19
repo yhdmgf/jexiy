@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -73,7 +73,7 @@ class AuthBackupManager(
 ) {
 
     private companion object {
-        const val APP_TAG = "jihexiy_auth_backup"
+        const val APP_TAG = "jexiy_auth_backup"
         const val VERSION = 1
     }
 
@@ -231,7 +231,7 @@ class AuthBackupManager(
     suspend fun importJson(json: String, context: Context): Int = withContext(Dispatchers.IO) {
         val root = JSONObject(json)
         if (root.optString("app") != APP_TAG) {
-            throw IllegalArgumentException("不是有效的jihexiy认证备份文件")
+            throw IllegalArgumentException("不是有效的解析云认证备份文件")
         }
         val accounts = root.optJSONArray("accounts") ?: return@withContext 0
         var count = 0
@@ -388,15 +388,15 @@ class AuthBackupManager(
 
     /**
      * 把备份内容保存到公共下载目录（Android 10+ 走 MediaStore 无需权限）。
-     * @param encrypted true 时文件名为 .jihexiy（加密备份），否则 .json（明文）
+     * @param encrypted true 时文件名为 .jexiy（加密备份），否则 .json（明文）
      */
     suspend fun saveToDownloads(context: Context, content: String, encrypted: Boolean = false): Boolean =
         withContext(Dispatchers.IO) {
             runCatching {
                 val fileName = if (encrypted) {
-                    "jihexiy_auth_backup_${timestamp()}.jihexiy"
+                    "jexiy_auth_backup_${timestamp()}.jexiy"
                 } else {
-                    "jihexiy_auth_backup_${timestamp()}.json"
+                    "jexiy_auth_backup_${timestamp()}.json"
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     val values = ContentValues().apply {

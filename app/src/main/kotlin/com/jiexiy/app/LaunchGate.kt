@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,7 +26,6 @@ import android.net.Uri
 class LaunchGate : ContentProvider() {
 
     override fun onCreate(): Boolean {
-        android.util.Log.d("jihexiy", "LaunchGate.onCreate started")  // 调试日志
         // 防篡改检测已移除：不再检查 ArchiveProbe 或类名匹配
         return true
     }

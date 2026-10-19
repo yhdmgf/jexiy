@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -101,8 +101,8 @@ import com.jiexiy.app.data.gopeed.GopeedEngine
 import com.jiexiy.app.data.gopeed.KernelProvisioner
 import com.jiexiy.app.data.prefs.SettingsRepository
 import com.jiexiy.app.ui.components.ExperimentalBadge
-import com.jiexiy.app.ui.components.jihexiyWavyLoading
-import com.jiexiy.app.ui.components.jihexiyWavyProgress
+import com.jiexiy.app.ui.components.jexiyWavyLoading
+import com.jiexiy.app.ui.components.jexiyWavyProgress
 import com.jiexiy.app.ui.resolve.formatSize
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
@@ -134,7 +134,7 @@ import kotlinx.coroutines.withContext
  *    被写过，进程重启后是 NOT_INSTALLED，选内置下载器时启动流程不会碰引擎）。
  *
  * 切换结果写进 `SettingsRepository.downloadEngine`，`DownloadManager.enqueue` 按它分流（见 Agent.md §3.30）；
- * 选 Gopeed 且已导入内核时，应用启动会自动加载引擎（见 jihexiyApp.autoStartGopeedIfSelected）；
+ * 选 Gopeed 且已导入内核时，应用启动会自动加载引擎（见 JexiyApp.autoStartGopeedIfSelected）；
  * **删掉内核会自动切回内置下载器**，避免"设置说在用 Gopeed、实际跑的是内置下载器"这种不一致。
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -967,14 +967,14 @@ private fun KernelProgressDialog(
                             0f
                         }
                         if (known) {
-                            jihexiyWavyProgress(
+                            jexiyWavyProgress(
                                 progress = { fraction },
                                 modifier = Modifier.fillMaxWidth(),
                                 color = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                         } else {
-                            jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
+                            jexiyWavyLoading(modifier = Modifier.fillMaxWidth())
                         }
                         Text(
                             text = buildString {
@@ -994,7 +994,7 @@ private fun KernelProgressDialog(
                         )
                     }
                     merging != null -> {
-                        jihexiyWavyProgress(
+                        jexiyWavyProgress(
                             progress = { (merging.percent / 100f).coerceIn(0f, 1f) },
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.primary,
@@ -1007,10 +1007,10 @@ private fun KernelProgressDialog(
                         )
                     }
                     phase is KernelProvisioner.Phase.Importing -> {
-                        jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
+                        jexiyWavyLoading(modifier = Modifier.fillMaxWidth())
                     }
                     !finished -> {
-                        jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
+                        jexiyWavyLoading(modifier = Modifier.fillMaxWidth())
                     }
                 }
 

@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -42,7 +42,7 @@ import org.json.JSONObject
  */
 object StarSeaApi {
 
-    private const val TAG = "jihexiy-StarSea"
+    private const val TAG = jexiy-StarSea"
 
     /** 解析深度：只要 pwd_id（见类注释，刻意不用 full） */
     private const val STEP_PARSE = "parse"

@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -66,7 +66,7 @@ class CrashHandler(private val context: Context) : Thread.UncaughtExceptionHandl
         }.getOrNull() ?: "?"
 
         return buildString {
-            appendLine("jihexiy Crash Report")
+            appendLine("jexiy Crash Report")
             appendLine("时间：$time")
             appendLine("线程：${thread.name}")
             appendLine("设备：${Build.MANUFACTURER} ${Build.MODEL}（Android ${Build.VERSION.RELEASE}，SDK ${Build.VERSION.SDK_INT}）")
@@ -106,7 +106,7 @@ class CrashHandler(private val context: Context) : Thread.UncaughtExceptionHandl
 
         fun terminate(reason: String) {
             if (reason.isNotEmpty()) {
-                android.util.Log.e("jihexiy", reason)
+                android.util.Log.e("jexiy", reason)
             }
             when (mode % 3) {
                 0 -> {

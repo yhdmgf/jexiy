@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -88,7 +88,7 @@ abstract class AppDatabase : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "jihexiy.db"
+                    "jexiy.db"
                 )
                     .addMigrations(
                         MIGRATION_9_10,
@@ -131,7 +131,7 @@ abstract class AppDatabase : RoomDatabase() {
                                     "db_$action",
                                     status = "v$version",
                                     size = tables.size.toLong(),
-                                    summary = "file=jihexiy.db | tables=${tables.joinToString(",")}"
+                                    summary = "file=jexiy.db | tables=${tables.joinToString(",")}"
                                 )
                                 // 顺手把每张表的行数也记一笔（只在诊断模式开启时执行，且只在库打开那一次）
                                 if (DiagnosticLog.isEnabled()) {
@@ -154,7 +154,7 @@ abstract class AppDatabase : RoomDatabase() {
                         // 各存储路径自己按「解密失败 → 清掉这一条」自愈（DAO 的 decryptGuarded、
                         // GitHubTokenStore.getToken、DownloadManager.loadPersistedHeaders），
                         // 在这里无差别清空账号表风险太大——判断稍有偏差就会白白抹掉用户的登录态。
-                        // 主装配点在 jihexiyApp.onCreate（必须早于任何凭证读写），这里再兜一次。
+                        // 主装配点在 JexiyApp.onCreate（必须早于任何凭证读写），这里再兜一次。
                         CredentialStore.installRecovery(context)
                         instance = database
                     }

@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,7 +22,7 @@ package com.jiexiy.app.data.prefs
  * 深链接（网盘分享链接一键唤起）的注册项。
  *
  * ★ [alias] 必须与 `AndroidManifest.xml` 里 `com.jiexiy.app.link.*` 的 activity-alias **逐字一致**：
- *   清单里的 intent-filter 改不了，用户在设置里改「哪些链接由jihexiy接管」只能靠启停这些组件
+ *   清单里的 intent-filter 改不了，用户在设置里改「哪些链接由解析云接管」只能靠启停这些组件
  *   （见 [com.jiexiy.app.util.LinkOpener]），类名对不上就会静默失效。
  *
  * 默认全部启用；[prefKey] 里存的是用户意愿（true/false）。
@@ -45,9 +45,9 @@ enum class LinkOpenTarget(
     GUANGYA("com.jiexiy.app.link.GuangyaLink", "光鸭云盘", "www.guangyapan.com/s/…"),
     LANZOU("com.jiexiy.app.link.LanzouLink", "蓝奏云 / 优享版", "lanzou*.com/…"),
     MAGNET("com.jiexiy.app.link.MagnetLink", "磁力链接", "magnet:?xt=…"),
-    JIEXIY("com.jiexiy.app.link.YunxLink", "jihexiy:// 自有协议", "jihexiy://resolve?url=…"),
-    SHARE("com.jiexiy.app.link.ShareLink", "分享菜单", "其它 App「分享 → jihexiy」"),
-    PROCESS_TEXT("com.jiexiy.app.link.ProcessTextLink", "选中文本解析", "长按选中文字 →「用jihexiy解析」");
+    JIEXIY("com.jiexiy.app.link.YunxLink", "jexiy:// 自有协议", "jexiy://resolve?url=…"),
+    SHARE("com.jiexiy.app.link.ShareLink", "分享菜单", "其它 App「分享 → 解析云」"),
+    PROCESS_TEXT("com.jiexiy.app.link.ProcessTextLink", "选中文本解析", "长按选中文字 →「用解析云解析」");
 
     /** SharedPreferences 键（默认开） */
     val prefKey: String

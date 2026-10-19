@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,21 +25,17 @@ import com.jiexiy.app.crash.CrashHandler
 // 防篡改检测已移除：本项目为开源项目，无需防止二次打包。
 // 如需重新启用，可从 git 历史恢复 ArchiveProbe 和 entryMismatch 逻辑。
 
-class jihexiyApp : Application() {
+class JexiyApp : Application() {
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
-        android.util.Log.d("jihexiy", "attachBaseContext started")
         // 移除早期探测：不再检查可疑类加载
     }
 
     override fun onCreate() {
-        android.util.Log.d("jihexiy", "onCreate started before super")
         super.onCreate()
-        android.util.Log.d("jihexiy", "onCreate after super")
-        android.util.Log.d("jihexiy", "Setting crash handler")
+        // 移除调试日志
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
-        android.util.Log.d("jihexiy", "Crash handler set")
         // 移除防篡改检测：不再检查 ArchiveProbe 或类名匹配
         
         // 防篡改检测已移除：不再执行深度扫描
@@ -58,7 +54,7 @@ class jihexiyApp : Application() {
         com.jiexiy.app.data.network.video.HeadlessWebView.install(this)
         // 启动时恢复用户配置的 HTTP 代理（任何异常都不得影响应用启动）
         runCatching {
-            val prefs = getSharedPreferences("jihexiy_settings", Context.MODE_PRIVATE)
+            val prefs = getSharedPreferences("jexiy_settings", Context.MODE_PRIVATE)
             if (prefs.getBoolean("proxy_enabled", false)) {
                 val host = prefs.getString("proxy_host", "")?.takeIf { it.isNotBlank() }
                 val port = prefs.getInt("proxy_port", 7890)
@@ -88,7 +84,7 @@ class jihexiyApp : Application() {
         super.onTrimMemory(level)
         if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             com.jiexiy.app.data.network.HttpClients.evictIdleConnections()
-            android.util.Log.w("jihexiy", "onTrimMemory level=$level：已释放空闲连接")
+            android.util.Log.w("jexiy", "onTrimMemory level=$level：已释放空闲连接")
         }
     }
 }
@@ -125,7 +121,7 @@ private fun autoStartGopeedIfSelected(ctx: Context) {
         runCatching {
             engine.start(ctx, engine.resolveDownloadDir(ctx))
         }.onFailure {
-            android.util.Log.e("jihexiy", "启动时自动加载 Gopeed 引擎失败：${it.message}", it)
+            android.util.Log.e("jexiy", "启动时自动加载 Gopeed 引擎失败：${it.message}", it)
         }
     }.start()
 }

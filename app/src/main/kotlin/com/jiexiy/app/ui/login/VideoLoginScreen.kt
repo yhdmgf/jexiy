@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -77,7 +77,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.jiexiy.app.data.network.video.VideoPlatform
 import com.jiexiy.app.ui.SnackbarController
-import com.jiexiy.app.ui.components.jihexiyWavyLoading
+import com.jiexiy.app.ui.components.jexiyWavyLoading
 import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
 import com.jiexiy.app.ui.viewmodel.VideoAccountViewModel
 import com.jiexiy.app.util.DiagnosticLog
@@ -358,7 +358,7 @@ fun VideoLoginScreen(
             )
             if (isLoading) {
                 // 首次加载白屏时给个波浪进度提示（深色模式下同样可见）
-                jihexiyWavyLoading(modifier = Modifier.fillMaxWidth())
+                jexiyWavyLoading(modifier = Modifier.fillMaxWidth())
             }
             // 主文档加载失败：给一张能看懂、能重试的卡片（网络不通 / 被墙是常态）
             loadError?.let { message ->

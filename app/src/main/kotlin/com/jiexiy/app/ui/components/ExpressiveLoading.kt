@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,15 +32,15 @@ import androidx.compose.ui.graphics.Color
  * 调用点统一走这里，将来升级 alpha 或退回稳定版只需要改本文件，不用动几十个调用点。
  *
  * 选型约定（避免同一页面里两种加载指示器风格混杂）：
- * - 独立加载态、或尺寸 ≥ 24dp 的行内加载 → [jihexiyLoading]（MaterialShapes 形变动画）
+ * - 独立加载态、或尺寸 ≥ 24dp 的行内加载 → [jexiyLoading]（MaterialShapes 形变动画）
  * - 尺寸 < 24dp 的行内小 spinner（通常与 18dp 图标并排）→ 继续用 `CircularProgressIndicator`：
  *   形变动画在该尺寸下读不出来，细描边转圈的观感反而更协调
- * - 确定进度（下载 / 容量占比等）→ [jihexiyWavyProgress]；不确定进度 → [jihexiyWavyLoading]
+ * - 确定进度（下载 / 容量占比等）→ [jexiyWavyProgress]；不确定进度 → [jexiyWavyLoading]
  */
 
 /** Expressive 加载指示器（MaterialShapes 形变）。尺寸由 [modifier] 决定，默认 48dp。 */
 @Composable
-fun jihexiyLoading(modifier: Modifier = Modifier) {
+fun jexiyLoading(modifier: Modifier = Modifier) {
     LoadingIndicator(modifier = modifier)
 }
 
@@ -55,7 +55,7 @@ fun jihexiyLoading(modifier: Modifier = Modifier) {
  *   所以前几秒看不到起伏，属于组件本身的绘制逻辑，不是参数问题。
  */
 @Composable
-fun jihexiyWavyProgress(
+fun jexiyWavyProgress(
     progress: () -> Float,
     modifier: Modifier = Modifier,
     color: Color,
@@ -73,6 +73,6 @@ fun jihexiyWavyProgress(
 
 /** 波浪进度条（不确定进度）：用于"正在加载但无进度"的场景，如 WebView 页面加载。 */
 @Composable
-fun jihexiyWavyLoading(modifier: Modifier = Modifier) {
+fun jexiyWavyLoading(modifier: Modifier = Modifier) {
     LinearWavyProgressIndicator(modifier = modifier)
 }

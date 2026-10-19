@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -115,7 +115,7 @@ object XunleiConstants {
     const val TASKS_URL = "$PAN_BASE/drive/v1/tasks"
 
     /** 转存目标目录名 */
-    const val TEMP_DIR_NAME = "jihexiy临时转存"
+    const val TEMP_DIR_NAME = "解析云临时转存"
 
     /** 移动文件（batchMove：ids + to.parent_id） */
     const val MOVE_URL = "$PAN_BASE/drive/v1/files:batchMove"

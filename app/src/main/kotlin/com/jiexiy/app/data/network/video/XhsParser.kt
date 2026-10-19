@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,7 +54,7 @@ object XhsParser : VideoParser {
 
     override val platform: VideoPlatform = VideoPlatform.XHS
 
-    private const val TAG = "jihexiy"
+    private const val TAG = "jexiy"
 
     /** 分享页请求头（参考实现 xhs 的 `headers`，桌面 UA 才会下发完整的 SSR 数据） */
     private const val ACCEPT =

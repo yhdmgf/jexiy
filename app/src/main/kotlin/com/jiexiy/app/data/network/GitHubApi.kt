@@ -1,6 +1,6 @@
 /*
- * jihexiy (jihexiy) - A network drive share-link parser and high-speed downloader for Android.
- * Copyright (C) 2026 jihexiy
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -186,7 +186,7 @@ class GitHubApi(
         runCatching {
             val request = Request.Builder()
                 .url("https://api.github.com/user")
-                .header("User-Agent", "jihexiy")
+                .header("User-Agent", "jexiy")
                 .header("Accept", "application/vnd.github+json")
                 .header("Authorization", "Bearer $token")
                 .get()
@@ -219,7 +219,7 @@ class GitHubApi(
                     // 1) API readme 接口（原始 Markdown）
                     val apiRequest = Request.Builder()
                         .url("https://api.github.com/repos/$owner/$repo/readme")
-                        .header("User-Agent", "jihexiy")
+                        .header("User-Agent", "jexiy")
                         .header("Accept", "application/vnd.github.raw")
                         .get()
                         .also { b ->
@@ -354,7 +354,7 @@ class GitHubApi(
     private fun buildRequest(url: String): Request {
         val builder = Request.Builder()
             .url(url)
-            .header("User-Agent", "jihexiy")
+            .header("User-Agent", "jexiy")
             .header("Accept", "application/vnd.github+json")
             .get()
         // Token 非空时携带 Authorization: Bearer（仅提升限额，不打印）
