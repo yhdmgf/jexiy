@@ -1,5 +1,5 @@
 /*
- * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
+ * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// 国内镜像开关：CI（GitHub Actions，阿里云镜像 502 不可达）设 YUNX_USE_MIRROR=false 走官方源；
+// 国内镜像开关：CI（GitHub Actions，阿里云镜像 502 不可达）设 JIEXIY_USE_MIRROR=false 走官方源；
 // 本地（AndroidIDE）不设置该变量时默认用阿里云镜像加速。注意：pluginManagement 块作用域独立，不能引用顶层 val，故内联读取。
 pluginManagement {
     repositories {
-        if (System.getenv("YUNX_USE_MIRROR") != "false") {
+        if (System.getenv("JIEXIY_USE_MIRROR") != "false") {
             // 阿里云镜像：国内可直连，优先使用，避免去连被墙的 Gradle Plugin Portal
             maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") } // 镜像 Gradle Plugin Portal（KSP 插件标记在这里）
             maven { url = uri("https://maven.aliyun.com/repository/google") }         // 镜像 Google Maven
@@ -36,7 +36,7 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        if (System.getenv("YUNX_USE_MIRROR") != "false") {
+        if (System.getenv("JIEXIY_USE_MIRROR") != "false") {
             maven { url = uri("https://maven.aliyun.com/repository/google") }
             maven { url = uri("https://maven.aliyun.com/repository/public") }
         }
@@ -45,6 +45,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "YunX"
+rootProject.name = "解析云"
 
 include(":app")

@@ -1,5 +1,5 @@
 /*
- * YunX (云析) - A network drive share-link parser and high-speed downloader for Android.
+ * 解析云 (云析) - A network drive share-link parser and high-speed downloader for Android.
  * Copyright (C) 2026 CYQawa
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,10 +27,10 @@ plugins {
 
 // ---- 发布签名：CI 从 GitHub Secrets 注入，本地（没有这些变量时）构建未签名包 ----
 // 四项环境变量齐备且证书文件真实存在，才注册 release 签名配置：
-//   YUNX_KEYSTORE_FILE      证书文件路径（.github/workflows/build-apk.yml 把 secrets.KEYSTORE_BASE64 解码到 $RUNNER_TEMP）
-//   YUNX_KEYSTORE_PASSWORD  密钥库口令
-//   YUNX_KEY_ALIAS          密钥别名
-//   YUNX_KEY_PASSWORD       密钥口令
+//   JIEXIY_KEYSTORE_FILE      证书文件路径（.github/workflows/build-apk.yml 把 secrets.KEYSTORE_BASE64 解码到 $RUNNER_TEMP）
+//   JIEXIY_KEYSTORE_PASSWORD  密钥库口令
+//   JIEXIY_KEY_ALIAS          密钥别名
+//   JIEXIY_KEY_PASSWORD       密钥口令
 // 缺任意一项（本地开发、ci.yml 的编译校验）⇒ release 的 signingConfig 为 null，
 // 产物是 app-release-unsigned.apk，本地不需要任何配置就能 `assembleRelease`；
 // 想在本地出正式签名包，自己导出这四个变量再构建即可（证书别提交进仓库，.gitignore 已挡 *.jks）。
@@ -42,11 +42,11 @@ val releaseSigningReady: Boolean = releaseKeystorePath != null &&
     !System.getenv("YUNX_KEY_PASSWORD").isNullOrBlank()
 
 android {
-    namespace = "com.yunx.app"
+    namespace = "com.解析云.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.yunx.app"
+        applicationId = "com.解析云.app"
         // minSdk 24：AGP 8.13 的 D8 在 minSdk < 24 时必须脱糖接口静态方法，它把接口的 $default 桥方法
         // （如 RowScope.weight$default）搬进 $-CC 伴生类，却不改写第三方库字节码里的调用点，
         // 未混淆（debug）的包渲染 README 表格时必崩 NoSuchMethodError；24 起系统原生支持，不再脱糖。
@@ -73,9 +73,9 @@ android {
         if (releaseSigningReady) {
             create("release") {
                 storeFile = releaseKeystorePath?.let { file(it) }
-                storePassword = System.getenv("YUNX_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("YUNX_KEY_ALIAS")
-                keyPassword = System.getenv("YUNX_KEY_PASSWORD")
+                storePassword = System.getenv("JIEXIY_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("JIEXIY_KEY_ALIAS")
+                keyPassword = System.getenv("JIEXIY_KEY_PASSWORD")
                 v3SigningEnabled = true
             }
         }

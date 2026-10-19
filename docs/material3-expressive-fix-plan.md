@@ -54,12 +54,12 @@ Lint 的全部错误位于未修改文件：`Theme.kt` 142 项 RestrictedApi、`
 构建使用 JDK 17、Gradle 9.0.0、compileSdk 36 和 build-tools 35.0.0。受环境 8GiB 内存和 2 核 CPU 限制，使用以下选项限制并发：
 
 ```sh
-YUNX_USE_MIRROR=false ./gradlew --no-daemon --max-workers=2 --no-parallel \
+JIEXIY_USE_MIRROR=false ./gradlew --no-daemon --max-workers=2 --no-parallel \
   -Pkotlin.compiler.execution.strategy=in-process \
   assembleDebug testDebugUnitTest assembleDebugAndroidTest lintDebug
 ```
 
-该组合命令最终因 Lint 失败退出；前三项的构建/测试结果由任务日志及 JUnit XML 单独确认。仓库要求的 `~/.yunx-bal/ktcheck.py`、`impcheck.py`、`vischeck.py` 在此环境不存在，无法执行。
+该组合命令最终因 Lint 失败退出；前三项的构建/测试结果由任务日志及 JUnit XML 单独确认。仓库要求的 `~/.解析云-bal/ktcheck.py`、`impcheck.py`、`vischeck.py` 在此环境不存在，无法执行。
 
 ### 待设备验收
 
