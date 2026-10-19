@@ -29,13 +29,17 @@ class jihexiyApp : Application() {
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
+        android.util.Log.d("jihexiy", "attachBaseContext started")
         // 移除早期探测：不再检查可疑类加载
     }
 
     override fun onCreate() {
+        android.util.Log.d("jihexiy", "onCreate started before super")
         super.onCreate()
-        android.util.Log.d("jihexiy", "Application.onCreate started")  // 调试日志
+        android.util.Log.d("jihexiy", "onCreate after super")
+        android.util.Log.d("jihexiy", "Setting crash handler")
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
+        android.util.Log.d("jihexiy", "Crash handler set")
         // 移除防篡改检测：不再检查 ArchiveProbe 或类名匹配
         
         // 防篡改检测已移除：不再执行深度扫描
