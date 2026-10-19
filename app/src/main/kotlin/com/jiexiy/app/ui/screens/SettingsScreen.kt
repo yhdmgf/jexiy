@@ -771,14 +771,6 @@ fun SettingsScreen(
             onClick = { openUrl(context, AppLinks.GITHUB_REPO) }
         )
     }
-        SettingsItem(
-            icon = Icons.Outlined.Code,
-            shape = listGroupShape(ListGroupPos.LAST),
-            title = "GitHub 仓库",
-            description = "${AppLinks.GITHUB_REPO_DISPLAY} · 查看源码与反馈问题",
-            onClick = { openUrl(context, AppLinks.GITHUB_REPO) }
-        )
-    }
 
     // Gopeed 下载目录手输弹窗：SAF 反解不到真实路径（第三方 provider / 选择器不可用）时的兜底。
     // 校验（建目录 + 试写探针）统一交给 GopeedEngine.prepareDownloadDir，失败原文直接提示、不关弹窗。
