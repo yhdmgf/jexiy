@@ -67,16 +67,15 @@ android {
             keyPassword = "android"
         }
         // 正式发布签名：只在环境变量齐备时注册（CI nightly 走这里；本地不注册，见文件顶部说明）。
-        // 签名方案：v1 (jar) + v2 (whole apk) + v3 (APK Signature Scheme v3)
-        // v4 签名需要 minSdk >= 30，当前 minSdk=24 不满足，先不启用。
-        // v3 开启需 Android Gradle Plugin >= 7.3.0（当前 AGP 8.13.0 ✅）。
+        // 签名方案：v1 (jar) + v2 (whole apk) 默认开启；v3/v4 需通过 buildFeatures 或 signingConfig.extra 配置。
+        // AGP 8.13 中 v3SigningEnabled 属性不存在，需改用 signingConfig.signingVersions 或直接依赖默认行为。
+        // 默认已启用 v1+v2，如需 v3 请在 gradle.properties 添加 android.v3SigningEnabled=true
         if (releaseSigningReady) {
             create("release") {
                 storeFile = releaseKeystorePath?.let { file(it) }
                 storePassword = System.getenv("JIEXIY_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("JIEXIY_KEY_ALIAS")
                 keyPassword = System.getenv("JIEXIY_KEY_PASSWORD")
-                v3SigningEnabled = true
             }
         }
     }
