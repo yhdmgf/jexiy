@@ -1,0 +1,131 @@
+name: Debug Crash Log
+
+on:
+  workflow_dispatch:
+    inputs:
+      device_serial:
+        description: 'ADB 设备序列号（adb devices 查看）'
+        required: true
+        default: ''
+      log_days:
+        description: '回滚日志天数（默认 1）'
+        required: false
+        default: '1'
+
+permissions:
+  contents: read
+
+jobs:
+  debug-crash:
+    name: Grab crash logs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check ADB connection
+        run: |
+          echo "=== USB 设备列表 ==="
+          # 如果用户没填设备号，尝试列出所有已连接设备
+          if [ -z "${{ github.event.inputs.device_serial }}" ]; then
+            echo "未提供设备序列号，尝试获取已连接设备..."
+            adb devices -l || echo "ADB 不可用或无设备"
+            echo "请在 'device_serial' 参数中填写设备序列号"
+            exit 1
+          fi
+          echo "目标设备: ${{ github.event.inputs.device_serial }}"
+          adb -s ${{ github.event.inputs.device_serial }} devices
+          adb -s ${{ github.event.inputs.device_serial }} shell getprop ro.build.version.release
+
+      - name: Clear old logs
+        run: adb -s ${{ github.event.inputs.device_serial }} logcat -c
+
+      - name: Wait for app launch
+        run: |
+          echo "正在等待应用启动（30秒）..."
+          # 等待应用进程启动
+          for i in $(seq 1 30); do
+            if adb -s ${{ github.event.inputs.device_serial }} shell ps | grep -q com.jiexiy.app; then
+              echo "应用已启动（进程 PID: $(adb -s ${{ github.event.inputs.device_serial }} shell pidof com.jiexiy.app)）"
+              break
+            fi
+            echo "等待 ${i}s..."
+            sleep 1
+          done
+
+      - name: Capture crash logs
+        run: |
+          DEVICE="${{ github.event.inputs.device_serial }}"
+          PACKAGE="com.jiexiy.app"
+          TAGS="jihexiy AndroidRuntime PackageManager ActivityManager dalvikvm"
+          LOG_FILE="crash-diagnosis.log"
+          
+          echo "=== 开始抓取日志 ==="
+          echo "时间: $(date)"
+          echo "包名: $PACKAGE"
+          echo "标签过滤: $TAGS"
+          echo ""
+          
+          # 抓取 logcat，按标签过滤，输出到文件
+          adb -s $DEVICE logcat -d -s $TAGS > "$LOG_FILE" 2>&1 &
+          LOGCAT_PID=$!
+          
+          # 等待 10 秒让日志充分积累
+          sleep 10
+          
+          # 停止抓取
+          kill $LOGCAT_PID 2>/dev/null
+          wait $LOGCAT_PID 2>/dev/null
+          
+          echo "=== 日志已保存到 $LOG_FILE ==="
+          echo ""
+          
+          # 分析日志
+          echo "=== 崩溃分析 ==="
+          if grep -q "FATAL EXCEPTION" "$LOG_FILE"; then
+            echo "⚠️ 检测到 FATAL EXCEPTION！"
+            echo ""
+            echo "--- AndroidRuntime 崩溃栈 ---"
+            grep -A 50 "FATAL EXCEPTION" "$LOG_FILE" | head -60
+            echo ""
+            echo "--- RuntimeException / Error ---"
+            grep -B 5 -A 20 "RuntimeException\|Error:" "$LOG_FILE" | head -80
+          else
+            echo "✅ 未检测到 FATAL EXCEPTION"
+          fi
+          
+          echo ""
+          echo "=== jihexiy 自定义日志 ==="
+          grep "jihexiy" "$LOG_FILE" | tail -50
+          
+          echo ""
+          echo "=== PackageManager 相关 ==="
+          grep -i "package\|provider\|manifest" "$LOG_FILE" | tail -20
+          
+          echo ""
+          echo "=== ActivityManager 相关 ==="
+          grep "ActivityManager" "$LOG_FILE" | grep -E "CRASH|Kill\|Force stop" | tail -20
+
+      - name: Upload diagnosis log
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-diagnosis-$(date +%Y%m%d-%H%M%S)
+          path: crash-diagnosis.log
+          retention-days: 7
+
+      - name: Check for recent crashes
+        run: |
+          DEVICE="${{ github.event.inputs.device_serial }}"
+          DAYS="${{ github.event.inputs.log_days }}"
+          
+          echo "=== 最近 ${DAYS} 天的系统崩溃历史 ==="
+          adb -s $DEVICE bugreport | grep -A 5 "com.jiexiy.app" || \
+          adb -s $DEVICE shell dumpsys crash | grep -A 10 "com.jiexiy.app" || \
+          echo "未找到 com.jiexiy.app 的崩溃历史"
+          
+          echo ""
+          echo "=== 检查应用是否被系统终止 ==="
+          adb -s $DEVICE shell dumpsys activity processes | grep -A 5 "com.jiexiy.app" || \
+          echo "应用进程未运行"
+          
+          echo ""
+          echo "=== 应用安装信息 ==="
+          adb -s $DEVICE shell pm list packages | grep com.jiexiy
+          adb -s $DEVICE shell dumpsys package com.jiexiy.app | grep -E "versionName|versionCode|firstInstallTime|lastUpdateTime"
