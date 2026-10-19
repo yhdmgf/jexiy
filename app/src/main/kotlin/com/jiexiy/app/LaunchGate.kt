@@ -22,20 +22,11 @@ import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
-import com.jiexiy.app.crash.CrashHandler
-import com.jiexiy.app.util.ArchiveProbe
 
 class LaunchGate : ContentProvider() {
 
     override fun onCreate(): Boolean {
-        val ctx = context ?: return true
-        runCatching {
-            val hits = ArchiveProbe.fast(ctx.applicationContext).toMutableList()
-            if (entryMismatch(ctx.applicationContext)) hits.add(4)
-            if (hits.isNotEmpty()) {
-                CrashHandler.terminate(hits.joinToString(","))
-            }
-        }
+        // 防篡改检测已移除：不再检查 ArchiveProbe 或类名匹配
         return true
     }
 

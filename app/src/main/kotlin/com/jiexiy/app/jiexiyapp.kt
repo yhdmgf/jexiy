@@ -20,68 +20,25 @@ package com.jiexiy.app
 
 import android.app.Application
 import android.content.Context
-import android.content.pm.PackageManager
 import com.jiexiy.app.crash.CrashHandler
-import com.jiexiy.app.util.ArchiveProbe
-import com.jiexiy.app.util.TextCipher
 
-internal fun earlyProbe(): Boolean {
-    val p1 = TextCipher.pCloudInject
-    val p2 = TextCipher.pSadfxg
-    val p3 = TextCipher.pPx
-    val p4 = TextCipher.pHelper
-    val suffixes = arrayOf(TextCipher.pSpoof, TextCipher.pKillPm, TextCipher.pKillPath, TextCipher.pFasfg)
-    for (pkg in arrayOf(p1, p2, p3, p4)) {
-        if (pkg.isEmpty()) continue
-        for (sfx in suffixes) {
-            if (sfx.isEmpty()) continue
-            runCatching { Class.forName(pkg + "." + sfx) }.getOrNull()?.let { return true }
-            runCatching { Class.forName(pkg + "." + sfx + ".App") }.getOrNull()?.let { return true }
-        }
-    }
-    return false
-}
-
-internal fun entryMismatch(ctx: Context): Boolean {
-    val app = TextCipher.pYunxApp
-    val main = TextCipher.pMainAct
-    val main2 = TextCipher.pMainAct2
-    return try {
-        val pm = ctx.packageManager
-        val info = pm.getPackageInfo(ctx.packageName, PackageManager.GET_ACTIVITIES)
-        val appName = info.applicationInfo?.className.orEmpty()
-        if (appName.isNotEmpty() && !appName.endsWith(app)) return true
-        val launch = pm.getLaunchIntentForPackage(ctx.packageName)
-        val comp = launch?.resolveActivity(pm)?.className.orEmpty()
-        if (comp.isNotEmpty() && !comp.endsWith(main) && !comp.endsWith(main2)) return true
-        false
-    } catch (t: Throwable) {
-        false
-    }
-}
+// 防篡改检测已移除：本项目为开源项目，无需防止二次打包。
+// 如需重新启用，可从 git 历史恢复 ArchiveProbe 和 entryMismatch 逻辑。
 
 class jihexiyApp : Application() {
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
-        runCatching {
-            if (earlyProbe()) {
-                CrashHandler.terminate("0")
-            }
-        }
+        // 移除早期探测：不再检查可疑类加载
     }
 
     override fun onCreate() {
         super.onCreate()
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
-        runCatching {
-            val hits = ArchiveProbe.fast(this).toMutableList()
-            if (entryMismatch(this)) hits.add(4)
-            if (hits.isNotEmpty()) {
-                CrashHandler.terminate(hits.joinToString(","))
-            }
-        }
-        scheduleDeepScan(this)
+        // 移除防篡改检测：不再检查 ArchiveProbe 或类名匹配
+        
+        // 防篡改检测已移除：不再执行深度扫描
+        // scheduleDeepScan(this)
         com.jiexiy.app.data.network.XunleiDeviceFingerprint.init(this)
         // 123 云盘的设备标识（loginuuid）：账号密码登录与所有业务请求都要带，必须跨启动保持稳定，
         // 否则服务端会把每次启动都当成新设备（登录更容易被要求过验证）
@@ -168,18 +125,5 @@ private fun autoStartGopeedIfSelected(ctx: Context) {
     }.start()
 }
 
-private fun scheduleDeepScan(ctx: Context) {
-    val prefs = ctx.getSharedPreferences("jihexiy_settings", Context.MODE_PRIVATE)
-    val key = TextCipher.pBootFlag
-    if (prefs.getBoolean(key, false)) return
-    Thread {
-        runCatching {
-            val hits = ArchiveProbe.deep(ctx.applicationContext)
-            if (hits.isNotEmpty()) {
-                CrashHandler.terminate(hits.joinToString(","))
-            } else {
-                prefs.edit().putBoolean(key, true).apply()
-            }
-        }
-    }.start()
-}
+// 防篡改检测已移除：scheduleDeepScan 函数已删除
+// 如需恢复，可从 git 历史找回 ArchiveProbe.deep 相关逻辑

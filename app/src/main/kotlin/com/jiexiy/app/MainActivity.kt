@@ -29,7 +29,6 @@ import com.jiexiy.app.ui.MainScreen
 import com.jiexiy.app.ui.navigation.MainTab
 import com.jiexiy.app.ui.screens.SafetyNoticeDialog
 import com.jiexiy.app.ui.theme.ComposeEmptyActivityTheme
-import com.jiexiy.app.util.ArchiveProbe
 
 class MainActivity : ComponentActivity() {
 
@@ -58,13 +57,7 @@ class MainActivity : ComponentActivity() {
             android.webkit.WebView.setWebContentsDebuggingEnabled(true)
         }
         enableEdgeToEdge()
-        runCatching {
-            val hits = ArchiveProbe.fast(this).toMutableList()
-            if (entryMismatch(this)) hits.add(4)
-            if (hits.isNotEmpty()) {
-                CrashHandler.terminate(hits.joinToString(","))
-            }
-        }
+        // 防篡改检测已移除：不再检查 ArchiveProbe 或类名匹配
         // 实况通知点击进来：直接把初始 Tab 落成「下载」页
         pendingTab.value = tabFromIntent(intent)
         setContent {
