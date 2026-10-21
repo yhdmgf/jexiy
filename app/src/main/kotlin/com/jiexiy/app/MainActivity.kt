@@ -27,7 +27,6 @@ import androidx.compose.runtime.mutableStateOf
 import com.jiexiy.app.crash.CrashHandler
 import com.jiexiy.app.ui.MainScreen
 import com.jiexiy.app.ui.navigation.MainTab
-import com.jiexiy.app.ui.screens.SafetyNoticeDialog
 import com.jiexiy.app.ui.theme.ComposeEmptyActivityTheme
 
 class MainActivity : ComponentActivity() {
@@ -66,7 +65,6 @@ class MainActivity : ComponentActivity() {
                     openTab = pendingTab.value,
                     onOpenTabConsumed = { pendingTab.value = null }
                 )
-                SafetyNoticeDialog()
             }
         }
     }

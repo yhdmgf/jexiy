@@ -64,16 +64,6 @@ internal object TextCipher {
     private const val P_LARKINJECT_PATH = "OiDOPhK5TvApmwZ39TnDIys="
     private const val P_LARKSHADOW_PATH = "OiDOPhK5TvApgQB89DXA"
     private const val P_BOOT_FLAG = "IDz8cxG3SA=="
-    private const val P_NOTICE_FLAG = "IDz8fxGsVfhjrQl++w=="
-    private const val D_TITLE = "vOEq9Ptw2hSWFcyn"
-    private const val D_BODY = "v9MP9MRM2w+uF8aRdd8fqdzCS6XHN4AX407o+yrKUtDpqj6RkWSm83KGGG6qdZgrMDvLZBz2X/Rr3StEwTvALXYW1n8mO7wZ7nnN+xLyU/fXpj6Pm3akfZBLjqUwszbfscEU9PFO2SKwGsq2ePw2qujNR6rmMIgi6U7k9T/uUdTXqSG5mmC3c7tPjKcWshXnvuAC9+ph2wGCFeGVdsYbo+XDS77JP5cQ43/b+B3iX/HkrCOT"
-    private const val D_BTN = "v8cy9uF91RqVFtKb"
-    private const val D_VERIFYING = "v+IA9OJw1TGKGsecdeAjq83nRr/yPqkv4HLP/xD8"
-    private const val D_COUNTDOWN = "fCuD9tlK2QuIF+eydd8Epc7i"
-    private const val D_OFFICIAL = "vOE79+hh2SeGFNKNd9M/"
-    private const val D_URL = "MTvXYQ3iE7Rhmxx15TiZLzYijFIniV3sZ90xaP4C"
-    private const val D_COPIED = "vPgR9NpV2ROw"
-    private const val D_COPY = "vOsu9PZu1Qi4FOa4"
 
     val assetDecl get() = dec(A_ASSET_DECL)
     val assetDeclMd5 get() = dec(A_ASSET_DECL_MD5)
@@ -102,14 +92,4 @@ internal object TextCipher {
     val pLarkInjectPath get() = dec(P_LARKINJECT_PATH)
     val pLarkShadowPath get() = dec(P_LARKSHADOW_PATH)
     val pBootFlag get() = dec(P_BOOT_FLAG)
-    val pNoticeFlag get() = dec(P_NOTICE_FLAG)
-    val dTitle get() = dec(D_TITLE)
-    val dBody get() = dec(D_BODY)
-    val dBtn get() = dec(D_BTN)
-    val dVerifying get() = dec(D_VERIFYING)
-    val dCountdown get() = dec(D_COUNTDOWN)
-    val dOfficial get() = dec(D_OFFICIAL)
-    val dUrl get() = dec(D_URL)
-    val dCopied get() = dec(D_COPIED)
-    val dCopy get() = dec(D_COPY)
 }
