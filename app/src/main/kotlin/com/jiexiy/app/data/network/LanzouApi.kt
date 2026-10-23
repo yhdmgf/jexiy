@@ -34,6 +34,7 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URI
+import java.util.concurrent.TimeUnit
 
 /** 个人盘登录态参数（文档 §B1）。 */
 data class LanzouLoginParams(val uid: String, val vei: String)
@@ -53,6 +54,13 @@ data class LanzouSharePage(
     val folderParams: LanzouFolderParams?,
     val html: String,
     val singleFile: ShareFile?
+)
+
+/** 新版蓝奏域（lanzn…，ESA 校验）新流程解析结果（对齐文档步骤 9 的 ResultOk）。 */
+data class LanzouNewResult(
+    val name: String,
+    val filesizeLabel: String,
+    val downUrl: String
 )
 
 /**
@@ -557,6 +565,156 @@ class LanzouApi(
             )
         }
 
+    // ---------- 新版蓝奏域（lanzn…，ESA 校验）新流程（文档《蓝奏解析 PHP → Kotlin App 完整流程》） ----------
+
+    /**
+     * 新版蓝奏分享解析（如 wow2333.lanzn.com）：**独立于老流程的全新链路**，无页面缓存。
+     * 步骤对齐文档：URL 校验/标准化 → GET 分享页（ESA arg1 挑战自动算 cookie 重试）→ 失效判断
+     * → 提取文件名/大小 → 密码页/普通页二分（down_p / iframe）→ downprocess POST → zt 校验
+     * → dom/url 拼 CDN → HEAD 探测直链 → 移除 pid 参数。
+     *
+     * @param type "down"：解析完直接供下载器使用；其他值语义同为返回直链（App 内固定 down）。
+     * @param n 可选：修改 query 参数里 fileName=/fn= 的文件名后缀（ReplaceUrlSuffix），null 不处理。
+     */
+    suspend fun resolveNewShare(
+        shareUrl: String,
+        pwd: String?,
+        type: String = "down",
+        n: String? = null
+    ): LanzouNewResult = withContext(Dispatchers.IO) {
+        // 步骤1：URL 校验与标准化
+        val raw = shareUrl.trim()
+        if (raw.isEmpty()) throw IllegalStateException("请输入URL")
+        val uri = runCatching { URI(raw) }.getOrNull()
+            ?: throw IllegalStateException("URL格式错误")
+        val scheme = uri.scheme?.lowercase()
+        if (scheme != "http" && scheme != "https") throw IllegalStateException("URL格式错误")
+        val shareHost = uri.host ?: throw IllegalStateException("URL格式错误")
+        val origin = "https://$shareHost"
+        val normalized = buildString {
+            append(origin)
+            append(uri.path ?: "")
+            if (!uri.query.isNullOrBlank()) append("?").append(uri.query)
+        }
+
+        // 步骤2：GET 分享页（MloocCurlGetWithChallenge：ESA arg1 自动处理）
+        var shareHtml = newFlowGet(normalized, "")
+        var arg1 = newArg1(shareHtml)
+        if (arg1 != null) {
+            setCookie(shareHost, "acw_sc__v2", acwScV2(arg1))
+            shareHtml = newFlowGet(normalized, "")
+        }
+
+        // 步骤3：失效判断
+        if (shareHtml.contains("文件取消分享了") || shareHtml.contains("文件不存在")) {
+            throw IllegalStateException("文件取消分享了")
+        }
+
+        // 步骤4：提取文件名 / 大小（多正则轮流）
+        var softName = extractNewName(shareHtml)
+        val softFilesize = extractNewSize(shareHtml)
+
+        // 步骤5：密码分享页 / 普通分享页分支
+        val postResp: String
+        if (shareHtml.contains("function down_p(){")) {
+            // 分支5-1：密码分享页
+            val code = pwd?.trim().orEmpty()
+            if (code.isEmpty()) throw IllegalStateException("请输入分享密码")
+            val sign = extractNewSign(shareHtml)
+            val ajaxUrl = extractNewAjaxUrl(shareHtml, origin) ?: throw IllegalStateException("未找到密码页 sign 或下载接口参数")
+            postResp = newFormPostRaw(
+                ajaxUrl,
+                listOf("action" to "downprocess", "sign" to sign, "p" to code, "kd" to "1"),
+                referer = normalized,
+                origin = origin
+            )
+        } else {
+            // 分支5-2：普通无密码分享页（iframe 下载入口）
+            val iframeSrc = Regex("""<iframe[^>]+src=["']([^"']+)["']""").find(shareHtml)?.groupValues?.getOrNull(1)
+                ?: throw IllegalStateException("未找到下载入口，请检查链接是否有效")
+            val iframeUrl = if (iframeSrc.startsWith("http")) iframeSrc else "$origin/${iframeSrc.trimStart('/')}"
+            // iframe 页同样可能触发 ESA 挑战：算 cookie 后重试（cookie 写 iframe 所在 host）
+            var iframeHtml = newFlowGet(iframeUrl, normalized)
+            val iframeArg1 = newArg1(iframeHtml)
+            if (iframeArg1 != null) {
+                val iframeHost = runCatching { URI(iframeUrl).host }.getOrNull() ?: shareHost
+                setCookie(iframeHost, "acw_sc__v2", acwScV2(iframeArg1))
+                iframeHtml = newFlowGet(iframeUrl, normalized)
+            }
+            val wpSign = jsVar(iframeHtml, "wp_sign") ?: jsVar(iframeHtml, "sign")
+                ?: throw IllegalStateException("未找到下载接口参数，请检查链接是否有效")
+            val ajaxData = jsVar(iframeHtml, "ajaxdata").orEmpty()
+            val ajaxUrl = extractNewAjaxUrl(iframeHtml, origin)
+                ?: throw IllegalStateException("未找到下载接口参数，请检查链接是否有效")
+            postResp = newFormPostRaw(
+                ajaxUrl,
+                listOf(
+                    "action" to "downprocess",
+                    "websignkey" to ajaxData,
+                    "sign" to wpSign,
+                    "websign" to "",
+                    "kd" to "1",
+                    "ves" to "1"
+                ),
+                referer = iframeUrl,
+                origin = origin
+            )
+        }
+
+        // 步骤6：校验 downprocess 返回状态
+        val postJson = runCatching { JSONObject(postResp) }.getOrElse {
+            throw IllegalStateException("解析失败，蓝奏云返回异常，请稍后重试")
+        }
+        if (postJson.optInt("zt", 0) != 1) {
+            val inf = postJson.optString("inf")
+            throw IllegalStateException(inf.ifBlank { "解析失败，蓝奏云返回异常，请稍后重试" })
+        }
+        val dom = postJson.optString("dom")
+        val rel = postJson.optString("url")
+        if (dom.isBlank() || rel.isBlank() || rel.startsWith("/") || rel.contains("://")) {
+            throw IllegalStateException("解析失败，蓝奏云返回异常，请稍后重试")
+        }
+        // inf 字段可能携带真实文件名（覆盖页面提取值）
+        val infName = postJson.optString("inf").trim()
+        if (infName.isNotEmpty()) softName = infName
+
+        // 步骤7：CDN 直链 + HEAD 探测（MloocCurlHead：最多3次，Location 优先，ESA 自动）
+        val downUrl1 = "${dom.trimEnd('/')}/file/$rel"
+        var tempDownUrl = downUrl1
+        val challenged = mutableSetOf<String>()
+        for (attempt in 0 until 3) {
+            val uriT = runCatching { URI(tempDownUrl) }.getOrNull() ?: break
+            val hostT = uriT.host ?: break
+            val resp = newFlowHead(tempDownUrl)
+            val location = resp.location
+            val body = resp.body
+            resp.close()
+            if (location.isNullOrBlank()) {
+                // 页面返回 ESA 挑战 → 算 cookie 重试 HEAD
+                val bodyArg1 = newArg1(body.orEmpty())
+                if (bodyArg1 != null && challenged.add(hostT)) {
+                    setCookie(hostT, "acw_sc__v2", acwScV2(bodyArg1))
+                    continue
+                }
+                break
+            }
+            tempDownUrl = if (location.startsWith("http")) location
+            else "${uriT.scheme}://${uriT.host}$location"
+        }
+
+        // 步骤8：链接后置处理（n 后缀替换 + 移除 pid 参数，防 IP 泄露）
+        var finalUrl = tempDownUrl
+        if (!n.isNullOrBlank()) finalUrl = newReplaceUrlSuffix(finalUrl, n)
+        finalUrl = removePidParam(finalUrl)
+
+        // 步骤9：type==down → 交给下载器；其他同样返回解析结果
+        LanzouNewResult(
+            name = softName.ifBlank { "蓝奏文件" },
+            filesizeLabel = softFilesize,
+            downUrl = finalUrl
+        )
+    }
+
     // ---------- 个人盘下载 ----------
 
     /**
@@ -965,6 +1123,145 @@ class LanzouApi(
         val arg1 = Regex("""\barg1\s*=\s*'([0-9A-Fa-f]{40})'""").find(source)?.groupValues?.getOrNull(1)
             ?: return null
         return acwScV2(arg1)
+    }
+
+    // ---------- 新版蓝奏域（lanzn…）新流程辅助 ----------
+
+    /** 新流程 GET：跟随重定向、带 UA/Referer/会话 Cookie，返回响应文本。 */
+    private fun newFlowGet(url: String, referer: String): String {
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", LanzouConstants.WEB_UA)
+            .apply { if (referer.isNotBlank()) header("Referer", referer) }
+            .apply {
+                val c = cookieHeader(hostOf(url))
+                if (c.isNotEmpty()) header("Cookie", c)
+            }
+            .get()
+            .build()
+        client.newCall(request).execute().use { resp ->
+            return resp.body?.string().orEmpty()
+        }
+    }
+
+    /** 新流程 HEAD 响应：Location 与 body（供 ESA 判断），用完必须 close。 */
+    private class NewFlowHeadResult(
+        val location: String?,
+        val body: String?,
+        private val closeAction: () -> Unit
+    ) {
+        fun close() = closeAction.invoke()
+    }
+
+    /** 新流程 HEAD：禁止自动跟随重定向；返回 Location 与响应体（HEAD 无 body 时为空串）。 */
+    private fun newFlowHead(url: String): NewFlowHeadResult {
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", LanzouConstants.WEB_UA)
+            .apply {
+                val c = cookieHeader(hostOf(url))
+                if (c.isNotEmpty()) header("Cookie", c)
+            }
+            .head()
+            .build()
+        val resp = noRedirect.newCall(request).execute()
+        return NewFlowHeadResult(
+            location = resp.header("Location"),
+            body = runCatching { resp.body?.string() }.getOrNull() ?: "",
+            closeAction = { resp.close() }
+        )
+    }
+
+    /** 新流程：页面脚本里 arg1 挑战参数（40 位 hex），没有返回 null。 */
+    private fun newArg1(html: String): String? =
+        Regex("""\barg1\s*=\s*'([0-9A-Fa-f]{40})'""").find(html)?.groupValues?.getOrNull(1)
+
+    /** 新流程：多正则轮流提取文件名（全部失败返回空串）。 */
+    private fun extractNewName(html: String): String {
+        Regex("""<title>\s*([^<]+?)\s*[-—|【】\u3000]*\s*蓝奏(?:云|网盘)?\s*</title>""")
+            .find(html)?.groupValues?.getOrNull(1)?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+        Regex("""class=["']n["'][^>]*>\s*([^<]+?)\s*<""")
+            .find(html)?.groupValues?.getOrNull(1)?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+        Regex("""var\s+filename\s*=\s*['"]([^'"]+)['"]""")
+            .find(html)?.groupValues?.getOrNull(1)?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+        jsVar(html, "filename")?.takeIf { it.isNotBlank() }?.let { return it }
+        return ""
+    }
+
+    /** 新流程：多正则轮流提取文件大小文本（如 “1.5 M”），全部失败返回空串。 */
+    private fun extractNewSize(html: String): String {
+        Regex("""(?:文件大小|大小)\s*[:：]\s*([\d.]+\s*[KMGT]?B?)""", RegexOption.IGNORE_CASE)
+            .find(html)?.groupValues?.getOrNull(1)?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+        Regex("""class=["']n_filesize["'][^>]*>\s*([^<]+?)\s*<""")
+            .find(html)?.groupValues?.getOrNull(1)?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+        jsVar(html, "filesize")?.takeIf { it.isNotBlank() }?.let { return it }
+        return ""
+    }
+
+    /**
+     * 新流程：提取 downprocess 的 sign（密码页用）。
+     * 优先级：data:{...sign:"xxx"} 字面量 → sign 为变量名时查 var 变量名 = "xxx" → 兜底旧正则 'sign':'(.*?)',
+     */
+    private fun extractNewSign(html: String): String {
+        Regex("""data\s*:\s*\{[^{}]*sign\s*:\s*['"]([^'"]+)['"]""").find(html)
+            ?.groupValues?.getOrNull(1)?.takeIf { it.isNotBlank() }?.let { return it }
+        Regex("""data\s*:\s*\{[^{}]*sign\s*:\s*([A-Za-z_$][\w$]*)""").find(html)
+            ?.groupValues?.getOrNull(1)?.takeIf { it.isNotBlank() }?.let { varName ->
+            jsVar(html, varName)?.takeIf { it.isNotBlank() }?.let { return it }
+        }
+        Regex("""'sign'\s*:\s*'([^']*)',?""").find(html)?.groupValues?.getOrNull(1)
+            ?.takeIf { it.isNotBlank() }?.let { return it }
+        throw IllegalStateException("未找到密码页 sign 或下载接口参数")
+    }
+
+    /** 新流程：提取 ajax 下载接口地址（页面里 ajaxm/ajaxfile.php?file=…），相对路径拼 origin。 */
+    private fun extractNewAjaxUrl(html: String, origin: String): String? {
+        val candidate = Regex("""(?:https?://[^'"\s]*?)?(?:/|\\./)?(?:ajaxm|ajaxfile)\.php\?file=\d+""")
+            .find(html)?.value
+        if (candidate.isNullOrBlank()) return null
+        if (candidate.startsWith("http")) return candidate
+        return "$origin/${candidate.trimStart('/').removePrefix("./")}"
+    }
+
+    /** 新流程 POST 表单（复用 formPostRaw 行为），referer 用分享页/iframe 页。 */
+    private fun newFormPostRaw(
+        url: String,
+        fields: List<Pair<String, String>>,
+        referer: String,
+        origin: String
+    ): String = formPostRaw(url, fields, referer, origin, null)
+
+    /** 新流程步骤8：替换 query 参数 fileName=/fn= 的文件名后缀（不碰路径，避免 sg 签名 403）。 */
+    private fun newReplaceUrlSuffix(url: String, n: String): String {
+        val suffix = n.trim().removePrefix(".")
+        if (suffix.isEmpty()) return url
+        val qIndex = url.indexOf('?')
+        if (qIndex < 0) return url
+        val base = url.substring(0, qIndex)
+        val query = url.substring(qIndex + 1)
+        val changed = query.split('&').joinToString("&") { part ->
+            val eq = part.indexOf('=')
+            if (eq <= 0) return@joinToString part
+            val key = part.substring(0, eq)
+            val value = part.substring(eq + 1)
+            if (key == "fileName" || key == "fn") {
+                val dot = value.lastIndexOf('.')
+                val stem = if (dot > 0) value.substring(0, dot) else value
+                "$key=$stem.$suffix"
+            } else {
+                part
+            }
+        }
+        return "$base?$changed"
+    }
+
+    /** 新流程步骤8：移除 url 里的 pid=xxx& 参数，避免 pid 泄露 IP。 */
+    private fun removePidParam(url: String): String {
+        val q = url.indexOf('?')
+        if (q < 0) return url
+        val base = url.substring(0, q)
+        val kept = url.substring(q + 1).split('&').filterNot { it.startsWith("pid=") }
+        return if (kept.isEmpty()) base else "$base?${kept.joinToString("&")}"
     }
 
     /**

@@ -55,9 +55,9 @@ object LanzouConstants {
     const val FOLDER_PREFIX = "d:"
     const val FILE_PREFIX = "f:"
 
-    /** 域名族：lanzou*、lan[zs]o[ux]，后缀 com/net/org/cn */
+    /** 域名族：lanzou*、lan[zs]o[ux]、lanzn，后缀 com/net/org/cn */
     private val HOST_REGEX =
-        Regex("""^(?:[a-z0-9-]+\.)*(?:lanzou[a-z]?|lan[zs]o[ux])\.(?:com|net|org|cn)$""", RegexOption.IGNORE_CASE)
+        Regex("""^(?:[a-z0-9-]+\.)*(?:lanzou[a-z]?|lan[zs]o[ux]|lanzn)\.(?:com|net|org|cn)$""", RegexOption.IGNORE_CASE)
 
     fun isLanzouHost(host: String): Boolean = HOST_REGEX.matches(host)
 
