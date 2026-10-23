@@ -761,8 +761,7 @@ class DownloadManager(
     private fun shouldUseEngine(platform: String, needMerge: Boolean = false): Boolean =
         !needMerge &&
             platform != DownloadPlatform.GITHUB &&
-            (settings.downloadEngine == SettingsRepository.ENGINE_GOPEED ||
-                settings.downloadEngine == SettingsRepository.ENGINE_SELF) &&
+            settings.downloadEngine == SettingsRepository.ENGINE_GOPEED &&
             GopeedEngine.isInstalled(context, engineKernel())
 
     /**
@@ -776,10 +775,8 @@ class DownloadManager(
         if (!GopeedEngine.isInstalled(context, engineKernel())) {
             return "磁力下载需要先在「设置 → 下载 → 下载引擎」里导入内核"
         }
-        if (settings.downloadEngine != SettingsRepository.ENGINE_GOPEED &&
-            settings.downloadEngine != SettingsRepository.ENGINE_SELF
-        ) {
-            return "磁力下载需要先在「设置 → 下载」里把下载引擎切换为 Gopeed 或自研内核"
+        if (settings.downloadEngine != SettingsRepository.ENGINE_GOPEED) {
+            return "磁力下载需要先在「设置 → 下载」里把下载引擎切换为 Gopeed"
         }
         return null
     }

@@ -103,7 +103,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jiexiy.app.data.download.SpeedTest
 import com.jiexiy.app.data.gopeed.GopeedEngine
 import com.jiexiy.app.data.gopeed.KernelProvisioner
-import com.jiexiy.app.data.gopeed.SelfKernelProvisioner
 import com.jiexiy.app.data.prefs.SettingsRepository
 import com.jiexiy.app.ui.components.ExperimentalBadge
 import com.jiexiy.app.ui.components.jexiyWavyLoading
@@ -160,12 +159,6 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var notice by remember { mutableStateOf("") }
     var failure by remember { mutableStateOf<String?>(null) }
 
-    // 自研内核（第二个内核槽位）：下载进度与安装状态
-    var selfBytes by remember { mutableStateOf(0L) }
-    var selfBusy by remember { mutableStateOf(false) }
-    var selfDone by remember { mutableStateOf(0L) }
-    var selfTotal by remember { mutableStateOf(0L) }
-
     // 顶部测速
     var speedTesting by remember { mutableStateOf(false) }
     var speedProgress by remember { mutableStateOf(0L) }
@@ -193,27 +186,19 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     val engineOn = engineChoice != SettingsRepository.ENGINE_BUILTIN
     val gopeedOn = engineChoice == SettingsRepository.ENGINE_GOPEED
-    val selfOn = engineChoice == SettingsRepository.ENGINE_SELF
     val installed = soBytes > 0L
     val running = engineState == GopeedEngine.State.RUNNING
     val engineLabel = when (engineChoice) {
-        SettingsRepository.ENGINE_SELF -> "自研内核"
         SettingsRepository.ENGINE_GOPEED -> "Gopeed 引擎"
         else -> "内置分片下载器"
     }
 
     // 引擎只有一个实例：状态要按「当前加载的是哪个内核」归属，
-    // 否则选中自研内核时 Gopeed 卡片也会跟着显示「运行中」。
+    // 否则切换内核时状态会错位。
     val gopeedState = when {
         engineState == GopeedEngine.State.RUNNING &&
             GopeedEngine.activeKernel == GopeedEngine.Kernel.GOPEED -> GopeedEngine.State.RUNNING
         soBytes > 0L -> GopeedEngine.State.INSTALLED
-        else -> GopeedEngine.State.NOT_INSTALLED
-    }
-    val selfState = when {
-        engineState == GopeedEngine.State.RUNNING &&
-            GopeedEngine.activeKernel == GopeedEngine.Kernel.SELF -> GopeedEngine.State.RUNNING
-        selfBytes > 0L -> GopeedEngine.State.INSTALLED
         else -> GopeedEngine.State.NOT_INSTALLED
     }
 
@@ -237,13 +222,9 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     // ---------- 更新公告（下载引擎页横幅） ----------
     var gopeedUpdate by remember { mutableStateOf<UpdateBanner?>(null) }
-    var selfUpdate by remember { mutableStateOf<UpdateBanner?>(null) }
-
     fun refreshSoInfo() {
         val so = GopeedEngine.soFile(context)
         soBytes = if (so.isFile) so.length() else 0L
-        val self = GopeedEngine.soFile(context, GopeedEngine.Kernel.SELF)
-        selfBytes = if (self.isFile) self.length() else 0L
     }
 
     /** 统一跑一个会阻塞的引擎动作：抢 busy、清掉上次错误、把异常原文显示出来 */
@@ -278,7 +259,7 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 notice = "已切换到内置分片下载器"
             }
             else -> {
-                notice = if (value == SettingsRepository.ENGINE_SELF) "已切换到自研内核" else "已切换到 Gopeed 引擎"
+                notice = "已切换到 Gopeed 引擎"
                 if (GopeedEngine.isInstalled(context, kernel) &&
                     (!running || GopeedEngine.activeKernel != kernel)
                 ) {
@@ -290,46 +271,6 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         failure = GopeedEngine.lastError
                     }
                 }
-            }
-        }
-    }
-
-    /** 下载并安装自研内核（发布物是裸 .so，不走 AAR 解压） */
-    fun installSelfKernel() {
-        if (selfBusy) return
-        selfBusy = true
-        failure = null
-        selfDone = 0L
-        selfTotal = 0L
-        scope.launch {
-            try {
-                // 安装要求引擎不在运行；先停掉，装完再按原来那个内核拉起来
-                val wasRunning = GopeedEngine.state.value == GopeedEngine.State.RUNNING
-                val previousKernel = GopeedEngine.activeKernel
-                if (wasRunning) withContext(Dispatchers.IO) { GopeedEngine.stop() }
-                val release = SelfKernelProvisioner.loadRelease().getOrThrow()
-                SelfKernelProvisioner.downloadAndInstall(context, release) { done, total ->
-                    selfDone = done
-                    selfTotal = total
-                }
-                refreshSoInfo()
-                notice = "自研内核已导入（${release.version}）"
-                failure = GopeedEngine.lastError
-                if (wasRunning) {
-                    runCatching {
-                        withContext(Dispatchers.IO) {
-                            GopeedEngine.start(
-                                context,
-                                downloadDir,
-                                previousKernel ?: GopeedEngine.Kernel.GOPEED
-                            )
-                        }
-                    }
-                }
-            } catch (e: Throwable) {
-                failure = e.message ?: e.toString()
-            } finally {
-                selfBusy = false
             }
         }
     }
@@ -347,20 +288,6 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             body = r.body,
                             panUrl = r.panUrl,
                             onDownload = { cloudRelease = r }
-                        )
-                    }
-                }
-            }
-            // 自研内核：云端版本与本地已装版本不同时才提示
-            launch {
-                SelfKernelProvisioner.loadRelease().onSuccess { r ->
-                    val local = settings.selfKernelVersion
-                    if (local.isNotBlank() && r.version != local) {
-                        selfUpdate = UpdateBanner(
-                            version = r.version,
-                            body = r.body,
-                            panUrl = r.panUrl,
-                            onDownload = { installSelfKernel() }
                         )
                     }
                 }
@@ -508,15 +435,11 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
                 // 更新公告横幅：只显示「当前选中内核」的更新（云端版本与本地已装不同才出现），
                 // 内置下载器没有对应内核公告，不显示；与右上角 qlyyz.xyz 公告互不相干。
-                val activeBanner = when {
-                    gopeedOn -> gopeedUpdate
-                    selfOn -> selfUpdate
-                    else -> null
-                }
+                val activeBanner = if (gopeedOn) gopeedUpdate else null
                 if (activeBanner != null) {
                     KernelUpdateBanner(
                         banner = activeBanner,
-                        engineLabel = if (selfOn) "自研内核" else "官方 Gopeed 内核",
+                        engineLabel = "官方 Gopeed 内核",
                         onDownload = activeBanner.onDownload
                     )
                 }
@@ -798,124 +721,6 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                     .height(1.dp)
                                     .background(MaterialTheme.colorScheme.outlineVariant)
                             )
-
-                            // ---------- 第 3 段：自研内核 ----------
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                EngineSectionHeader(
-                                    icon = Icons.Outlined.Speed,
-                                    title = "自研内核",
-                                    badge = null,
-                                    highlighted = selfOn
-                                )
-                                Text(
-                                    "自研下载内核：与 Gopeed 同接口的独立 .so，直接从官方 Release 下载（约 45MB）。",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    if (selfBytes > 0L) {
-                                        "内核：${formatSize(selfBytes)}" +
-                                            (if (selfState == GopeedEngine.State.RUNNING && engineVersion.isNotBlank()) {
-                                                "　·　核心版本 $engineVersion"
-                                            } else "")
-                                    } else {
-                                        "内核：未导入"
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    if (selfBusy) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(14.dp),
-                                            strokeWidth = 2.dp
-                                        )
-                                    }
-                                    Text(
-                                        "引擎状态：",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        gopeedStateLabel(selfState),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = if (selfState == GopeedEngine.State.RUNNING) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        }
-                                    )
-                                }
-                                if (selfBusy) {
-                                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                                    Text(
-                                        if (selfTotal > 0L) {
-                                            "${formatSize(selfDone)} / ${formatSize(selfTotal)}"
-                                        } else {
-                                            formatSize(selfDone)
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                EngineActionButton(
-                                    selected = selfOn,
-                                    icon = when {
-                                        selfBytes <= 0L -> Icons.Outlined.Cloud
-                                        storageBlocked -> Icons.Outlined.FolderOpen
-                                        else -> Icons.Outlined.SwapHoriz
-                                    },
-                                    label = when {
-                                        selfBusy -> "下载中…"
-                                        selfBytes <= 0L -> "下载内核"
-                                        selfOn -> "使用中"
-                                        storageBlocked -> "先授予存储权限"
-                                        else -> "切换到此引擎"
-                                    },
-                                    enabled = !selfBusy && (selfBytes <= 0L || !selfOn),
-                                    onClick = {
-                                        when {
-                                            selfBytes <= 0L -> installSelfKernel()
-                                            storageBlocked -> requestStoragePermission()
-                                            else -> chooseEngine(SettingsRepository.ENGINE_SELF)
-                                        }
-                                    }
-                                )
-                                if (selfBytes > 0L) {
-                                    TextButton(onClick = {
-                                        action {
-                                            withContext(Dispatchers.IO) {
-                                                // 与 Gopeed 内核一样：运行中不允许删，先停引擎
-                                                GopeedEngine.stop()
-                                                GopeedEngine.uninstall(context, GopeedEngine.Kernel.SELF)
-                                            }
-                                            refreshSoInfo()
-                                            if (engineChoice == SettingsRepository.ENGINE_SELF) {
-                                                settings.downloadEngine = SettingsRepository.ENGINE_BUILTIN
-                                                engineChoice = SettingsRepository.ENGINE_BUILTIN
-                                                notice = "自研内核已删除，已自动切回内置分片下载器"
-                                            } else {
-                                                notice = "自研内核已删除"
-                                            }
-                                            failure = GopeedEngine.lastError
-                                        }
-                                    }) {
-                                        Icon(
-                                            Icons.Outlined.Delete,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(Modifier.width(6.dp))
-                                        Text("删除内核")
-                                    }
-                                }
-                            }
 
                             if (notice.isNotBlank()) {
                                 Text(

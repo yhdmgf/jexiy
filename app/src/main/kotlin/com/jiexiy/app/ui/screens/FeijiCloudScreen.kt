@@ -30,6 +30,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -62,6 +65,7 @@ import com.jiexiy.app.data.db.FeijiAccountEntity
 import com.jiexiy.app.data.download.DownloadManager
 import com.jiexiy.app.data.download.DownloadPlatform
 import com.jiexiy.app.data.network.FeijiApi
+import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.data.network.model.ShareInfo
 import com.jiexiy.app.ui.items.MultiSelectAction
@@ -70,6 +74,7 @@ import com.jiexiy.app.ui.components.ScrollToTopButton
 import com.jiexiy.app.ui.components.jexiyLoading
 import com.jiexiy.app.ui.resolve.BackToParentItem
 import com.jiexiy.app.ui.resolve.CrumbBar
+import com.jiexiy.app.ui.resolve.DownloadLinkDialog
 import com.jiexiy.app.ui.resolve.ShareFileRow
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
@@ -162,7 +167,10 @@ fun FeijiCloudScreen(
     var batchInitial by remember { mutableStateOf(BatchStep.MENU) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showCreateFolder by remember { mutableStateOf(false) }
+    var showUploadDestination by remember { mutableStateOf(false) }
+    var uploadTargetFolderId by remember { mutableStateOf("0") }
     var shareResult by remember { mutableStateOf<ShareInfo?>(null) }
+    var downloadLink by remember { mutableStateOf<DownloadLink?>(null) }
 
     // 旧账号可能缺 uuid / userId：进页时补齐（会回写账号表）
     LaunchedEffect(account?.id, account?.uuid, account?.userId) {
@@ -193,7 +201,7 @@ fun FeijiCloudScreen(
                 uri = uri,
                 fileName = info.first,
                 size = info.second,
-                folderId = currentFolderId()
+                folderId = uploadTargetFolderId
             )
             added++
         }
@@ -236,6 +244,23 @@ fun FeijiCloudScreen(
             platform = DownloadPlatform.FEIJI,
             headers = spec.headers
         )
+    }
+
+    /** 显示下载直链弹窗（单文件下载用） */
+    fun showDownloadDialog(file: FeijiApi.File) {
+        scope.launch {
+            isOperating = true
+            runCatching {
+                val spec = FeijiApi.download(token, uuid, userId, file.id)
+                downloadLink = DownloadLink(
+                    fid = file.id,
+                    filename = file.name,
+                    downloadUrl = spec.url,
+                    size = file.size
+                )
+            }
+            isOperating = false
+        }
     }
 
     /** 收集文件夹下的全部文件（带相对路径），对齐其它网盘的文件夹下载 */
@@ -297,7 +322,9 @@ fun FeijiCloudScreen(
     BackHandler { goBack() }
 
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars),
         color = MaterialTheme.colorScheme.surface
     ) {
         PullToRefreshBox(
@@ -378,7 +405,7 @@ fun FeijiCloudScreen(
                                 }
                                 CloudAddMenu(
                                     onCreateFolder = { showCreateFolder = true },
-                                    onUploadFile = { uploadPicker.launch(arrayOf("*/*")) }
+                                    onUploadFile = { showUploadDestination = true }
                                 )
                             }
                         }
@@ -575,12 +602,7 @@ fun FeijiCloudScreen(
             operating = isOperating,
             onDownload = {
                 val f = actionFile ?: return@FileActionSheet
-                scope.launch {
-                    isOperating = true
-                    runCatching { downloadTargets(listOf(f), f.name) }
-                    isOperating = false
-                }
-                onDownloadStarted()
+                showDownloadDialog(f)
             },
             onDownloadFolder = {
                 val f = actionFile ?: return@FileActionSheet
@@ -748,6 +770,42 @@ fun FeijiCloudScreen(
         ShareResultDialog(
             info = info,
             onDismiss = { shareResult = null }
+        )
+    }
+
+    // 上传目标选择器：先选目录再选文件
+    if (showUploadDestination) {
+        FeijiMoveStep(
+            subtitle = "上传文件到",
+            uuid = uuid,
+            token = token,
+            onBack = { showUploadDestination = false },
+            onDone = { folderId ->
+                uploadTargetFolderId = folderId
+                showUploadDestination = false
+                uploadPicker.launch(arrayOf("*/*"))
+            }
+        )
+    }
+
+    // 下载直链弹窗
+    downloadLink?.let { link ->
+        DownloadLinkDialog(
+            link = link,
+            onDownload = {
+                scope.launch {
+                    downloadManager.enqueue(
+                        url = link.downloadUrl,
+                        fileName = link.filename,
+                        size = link.size,
+                        platform = DownloadPlatform.FEIJI
+                    )
+                }
+                downloadLink = null
+                SnackbarController.show("已加入下载")
+                onDownloadStarted()
+            },
+            onDismiss = { downloadLink = null }
         )
     }
 }

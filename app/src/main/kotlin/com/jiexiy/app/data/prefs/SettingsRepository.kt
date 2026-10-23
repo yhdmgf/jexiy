@@ -127,15 +127,15 @@ class SettingsRepository(context: Context) {
         }
 
     /**
-     * 下载引擎：`ENGINE_BUILTIN`（默认，项目自带的 Kotlin 分片下载器）、
-     * `ENGINE_GOPEED`（Gopeed 引擎，需先导入 AAR）或 `ENGINE_SELF`（自研内核，需先下载 .so）。
+     * 下载引擎：`ENGINE_BUILTIN`（默认，项目自带的 Kotlin 分片下载器）或
+     * `ENGINE_GOPEED`（Gopeed 引擎，需先导入 AAR）。
      *
      * 取值非法（手改 prefs 等）时按内置下载器处理；引擎没就绪时 DownloadManager 也会自动回退，
      * 不会因为设置项把下载功能弄坏。
      */
     var downloadEngine: String
         get() = prefs.getString("download_engine", ENGINE_BUILTIN)?.takeIf {
-            it == ENGINE_BUILTIN || it == ENGINE_GOPEED || it == ENGINE_SELF
+            it == ENGINE_BUILTIN || it == ENGINE_GOPEED
         } ?: ENGINE_BUILTIN
         set(value) {
             prefs.edit().putString("download_engine", value).apply()
@@ -146,13 +146,6 @@ class SettingsRepository(context: Context) {
         get() = prefs.getString("gopeed_kernel_version", "") ?: ""
         set(value) {
             prefs.edit().putString("gopeed_kernel_version", value).apply()
-        }
-
-    /** 已导入的自研内核版本（导入成功时写入；空串 = 还没导入过） */
-    var selfKernelVersion: String
-        get() = prefs.getString("self_kernel_version", "") ?: ""
-        set(value) {
-            prefs.edit().putString("self_kernel_version", value).apply()
         }
 
     /** 夸克取链方式：true=免转存（直接换下载直链，不写入网盘，默认）；false=先转存到临时目录再取链 */
@@ -353,8 +346,6 @@ class SettingsRepository(context: Context) {
         /** 下载引擎标识：内置 Gopeed 引擎（gomobile 核心，需用户导入 AAR） */
         const val ENGINE_GOPEED = "gopeed"
 
-        /** 下载引擎标识：自研内核（同一套 gomobile 接口的另一个 .so，需用户下载内核） */
-        const val ENGINE_SELF = "self"
         /**
          * 线程数上限 = 512（与设置页档位一致）。
          * 真正同时在飞的请求数另由 `DownloadManager.MAX_INFLIGHT_CHUNKS`（按最大堆预算推导、同样封顶 512）

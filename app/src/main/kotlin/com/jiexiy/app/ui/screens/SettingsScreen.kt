@@ -435,7 +435,6 @@ fun SettingsScreen(
             shape = listGroupShape(ListGroupPos.FIRST),
             title = "下载引擎",
             description = when (engineChoice) {
-                SettingsRepository.ENGINE_SELF -> "自研内核（独立 .so，按真实路径落盘）"
                 SettingsRepository.ENGINE_GOPEED -> "Gopeed 引擎（内置 gomobile 核心，按真实路径落盘）"
                 else -> "内置分片下载器（默认，走 SAF/MediaStore 保存）"
             },

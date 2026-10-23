@@ -68,20 +68,13 @@ object GopeedEngine {
     /** 引擎状态：未导入 / 已导入未启动 / 运行中 */
     enum class State { NOT_INSTALLED, INSTALLED, RUNNING }
 
-    /**
-     * 两套可互换的内核：JNI 接口都是 `libgopeed.Libgopeed`，只是 .so 不同。
-     *
-     * ★ 同一进程只能加载其中一个（dlopen 无法卸载）：先加载了 A 再启动 B 会直接报错，
-     *   必须重启应用才能换内核 —— 与「导入新内核需重启」是同一条限制。
-     */
+    /** 内核标识：官方 Gopeed 内核（JNI 接口 `libgopeed.Libgopeed`） */
     enum class Kernel(val id: String, val soName: String) {
-        GOPEED("gopeed", "libgojni.so"),
-        SELF("self", "libgojni_self.so");
+        GOPEED("gopeed", "libgojni.so");
 
         companion object {
             /** 由设置里的引擎标识（[SettingsRepository.downloadEngine]）映射到内核 */
-            fun of(engine: String): Kernel =
-                if (engine == SettingsRepository.ENGINE_SELF) SELF else GOPEED
+            fun of(engine: String): Kernel = GOPEED
         }
     }
 
@@ -131,23 +124,7 @@ object GopeedEngine {
     /** 本进程已加载的内核（null = 还没加载过）；切换内核前用它判断要不要提示重启 */
     val activeKernel: Kernel? get() = loadedKernel
 
-    /** 自研内核的本地 HTTP 端口与 apiToken（官方内核走进程内桥接，不用这两个） */
-    @Volatile
-    private var remotePort: Int = 0
-
-    @Volatile
-    private var remoteToken: String? = null
-
     private val jsonMedia = "application/json; charset=utf-8".toMediaType()
-
-    /** 本机回环客户端：显式不走代理（用户配了 HTTP 代理时，127.0.0.1 不能跟着走代理） */
-    private val localClient by lazy {
-        okhttp3.OkHttpClient.Builder()
-            .proxy(java.net.Proxy.NO_PROXY)
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
-    }
 
     /** 引擎库文件（导入后才有） */
     fun soFile(context: Context, kernel: Kernel = Kernel.GOPEED): File =
@@ -367,7 +344,7 @@ object GopeedEngine {
     }
 
     /**
-     * 导入一个裸 .so（自研内核的发布物就是 ELF，不是 AAR）。
+     * 导入一个裸 .so（ELF 文件，不是 AAR）。
      * 只做「ELF 魔数校验 + 原子替换」，与 AAR 导入共用同一套落盘/重启提示。
      */
     fun installFromFile(context: Context, source: File, kernel: Kernel): Long {
@@ -416,8 +393,7 @@ object GopeedEngine {
         val so = soFile(context, kernel)
         if (so.exists() && !so.delete()) throw IllegalStateException("删除失败：${so.absolutePath}")
         if (loadedKernel == null &&
-            !isInstalled(context, Kernel.GOPEED) &&
-            !isInstalled(context, Kernel.SELF)
+            !isInstalled(context, Kernel.GOPEED)
         ) {
             _state.value = State.NOT_INSTALLED
         }
@@ -438,51 +414,17 @@ object GopeedEngine {
         Log.d(TAG, "启动引擎（${kernel.id}）：${describe(so)} loaded=${loadedKernel?.id} 下载目录=${downloadDir.absolutePath}")
         if (!so.isFile) {
             Log.e(TAG, "启动失败：还没有导入引擎文件（缺少 ${so.absolutePath}）")
-            throw IllegalStateException("还没有导入 ${if (kernel == Kernel.SELF) "自研" else "Gopeed"} 引擎（缺少 ${so.absolutePath}）")
+            throw IllegalStateException("还没有导入 Gopeed 引擎（缺少 ${so.absolutePath}）")
         }
         lastError = null
         try {
             if (loadedKernel == null) {
                 loadLibrary(so)
                 loadedKernel = kernel
-            } else if (loadedKernel != kernel) {
-                throw IllegalStateException("本进程已加载另一个内核，切换内核需要重启应用")
             }
-            val cfg = if (kernel == Kernel.SELF) {
-                remoteToken = UUID.randomUUID().toString().replace("-", "")
-                buildSelfConfig(context, downloadDir).toString()
-            } else {
-                buildConfig(context, downloadDir).toString()
-            }
+            val cfg = buildConfig(context, downloadDir).toString()
             Log.d(TAG, "调用 Libgopeed.start，内核=${kernel.id}，启动配置=$cfg")
-            port = if (kernel == Kernel.SELF) {
-                libgopeed.Libgopeed.start(cfg).toInt()
-            } else {
-                Libgopeed.start(cfg).toInt()
-            }
-            if (kernel == Kernel.SELF) {
-                if (port <= 0) throw IllegalStateException("自研内核没有返回监听端口")
-                remotePort = port
-                // FastCore 内核没有 /api/v1/info 路由（Go http 对未知路由回 404 page not found），
-                // 就绪探测改走它必然存在的 /api/v1/tasks（空 filter 返回全部任务）。
-                val token = remoteToken.orEmpty()
-                val deadline = System.currentTimeMillis() + 8_000L
-                var ready = false
-                while (System.currentTimeMillis() < deadline) {
-                    ready = runCatching {
-                        val req = Request.Builder()
-                            .url("http://127.0.0.1:$port/api/v1/tasks")
-                            .header("X-Api-Token", token)
-                            .build()
-                        localClient.newCall(req).execute().use { it.isSuccessful }
-                    }.getOrDefault(false)
-                    if (ready) break
-                    Thread.sleep(150L)
-                }
-                if (!ready) {
-                    throw IllegalStateException("自研内核 HTTP 服务未就绪（端口 $port）")
-                }
-            }
+            port = Libgopeed.start(cfg).toInt()
             _state.value = State.RUNNING
             Log.d(TAG, "引擎已启动：port=$port")
             // 并发上限与做种开关是「锦上添花」：失败只记日志，绝不让引擎启动失败
@@ -502,18 +444,13 @@ object GopeedEngine {
         if (_state.value != State.RUNNING) return
         Log.d(TAG, "停止引擎")
         try {
-            if (loadedKernel == Kernel.SELF) {
-                libgopeed.Libgopeed.stop()
-            } else {
-                Libgopeed.stop()
-            }
+            Libgopeed.stop()
         } catch (e: Throwable) {
             lastError = e.message ?: e.toString()
             Log.e(TAG, "停止引擎失败：${e.javaClass.name}: ${e.message}", e)
         }
         _state.value = State.INSTALLED
         port = 0
-        remotePort = 0
     }
 
     /**
@@ -523,8 +460,6 @@ object GopeedEngine {
      */
     fun invoke(method: String, path: String, query: String? = null, body: String? = null): JSONObject {
         if (_state.value != State.RUNNING) throw IllegalStateException("引擎未启动")
-        // 自研内核没有 invokeAsync：它在本机监听 HTTP，所有 REST 调用改走 127.0.0.1
-        if (loadedKernel == Kernel.SELF) return invokeHttp(method, path, query, body)
         val id = requestId.incrementAndGet()
         val latch = CountDownLatch(1)
         var ok = false
@@ -585,8 +520,6 @@ object GopeedEngine {
      *   都不成立 ⇒ 循环永远不退出，等于**永远做种**。真正能立刻停的是 `seedTime=1`（秒）。
      */
     fun applyRuntimeConfig(context: Context) {
-        // FastCore 自研内核没有 /api/v1/config 路由，跳过（它的 downloadConfig 在启动配置里下发）
-        if (loadedKernel == Kernel.SELF) return
         val cfg = invoke("GET", "/api/v1/config").optJSONObject("data")
             ?: throw IllegalStateException("引擎没有返回配置")
         val maxRunning = maxRunningOf(context)
@@ -616,8 +549,6 @@ object GopeedEngine {
      */
     fun applyMaxRunning(context: Context): Int? {
         if (_state.value != State.RUNNING) return null
-        // FastCore 自研内核没有 /api/v1/config 路由，并发上限由启动配置决定，跳过下发
-        if (loadedKernel == Kernel.SELF) return maxRunningOf(context)
         val value = maxRunningOf(context)
         val cfg = invoke("GET", "/api/v1/config").optJSONObject("data")
             ?: throw IllegalStateException("引擎没有返回配置")
@@ -662,15 +593,10 @@ object GopeedEngine {
         val speed: Long
     )
 
-    /** 取单个任务的运行态（官方/Gopeed：GET /api/v1/tasks/{id}/status；FastCore 自研内核：GET /api/v1/tasks/{id}） */
+    /** 取单个任务的运行态（GET /api/v1/tasks/{id}/status） */
     fun taskStatus(id: String): TaskView {
-        // FastCore 没有 /status 子路由（Go 未知路由回 404），直接读任务详情
-        val data = if (loadedKernel == Kernel.SELF) {
-            invoke("GET", "/api/v1/tasks/$id").optJSONObject("data")
-        } else {
-            invoke("GET", "/api/v1/tasks/$id/status").optJSONObject("data")
-        } ?: throw IllegalStateException("引擎没有返回任务状态")
-        // FastCore 的进度字段在 data.progress 里，官方 Gopeed 在 data 顶层；两处都兜底读
+        val data = invoke("GET", "/api/v1/tasks/$id/status").optJSONObject("data")
+            ?: throw IllegalStateException("引擎没有返回任务状态")
         val progress = data.optJSONObject("progress")
         val downloaded = data.optLong("downloaded").let { if (it > 0) it else progress?.optLong("downloaded") ?: 0L }
         val total = data.optLong("total").let { if (it > 0) it else progress?.optLong("total") ?: 0L }
@@ -769,11 +695,9 @@ object GopeedEngine {
         invoke("DELETE", "/api/v1/tasks/$id")
     }
 
-    /** 引擎版本（官方/Gopeed：GET /api/v1/info → data.version；FastCore 自研内核没有 /api/v1/info，返回空串） */
-    fun engineVersion(): String {
-        if (loadedKernel == Kernel.SELF) return ""
-        return invoke("GET", "/api/v1/info").optJSONObject("data")?.optString("version") ?: ""
-    }
+    /** 引擎版本（GET /api/v1/info → data.version） */
+    fun engineVersion(): String =
+        invoke("GET", "/api/v1/info").optJSONObject("data")?.optString("version") ?: ""
 
     // ---------- 内部实现 ----------
 
@@ -835,89 +759,6 @@ object GopeedEngine {
                     "① System.load(${so.absolutePath})：$directError\n" +
                     "② System.loadLibrary(\"gojni\")：${e.message}"
             )
-        }
-    }
-
-    /**
-     * 自研内核（StarSea FastCore）的启动配置，字段与星海完全对齐：
-     * `network/address` 决定监听地址（FastCore 由此开启本地 HTTP REST，**没有 apiEnable 字段**）。
-     *
-     * ★ 之前给 FastCore 传了官方 Gopeed 才有的 `apiEnable`，又用官方路由
-     *   `/api/v1/info` / `/api/v1/config` / `/api/v1/tasks/{id}/status` 调用它——
-     *   FastCore 全都没有这些路由，Go 对未知路径回 `404 page not found`，
-     *   表现为「用自研内核下载就 404、换官方内核就正常」。
-     */
-    private fun buildSelfConfig(context: Context, downloadDir: File): JSONObject {
-        // 自研内核用独立存储目录：官方内核的 bolt 库 schema 可能不兼容，混用会导致启动/接口异常
-        val root = File(context.filesDir, "${DIR_NAME}_self").apply { mkdirs() }
-        downloadDir.mkdirs()
-        return JSONObject().apply {
-            put("network", "tcp")
-            put("address", "127.0.0.1:0")
-            put("storage", "bolt")
-            put("storageDir", root.absolutePath)
-            put("apiToken", remoteToken.orEmpty())
-            put("refreshInterval", 200)
-            put(
-                "downloadConfig",
-                JSONObject().apply {
-                    put("maxRunning", 16)
-                    put(
-                        "protocolConfig",
-                        JSONObject().put(
-                            "http",
-                            JSONObject().apply {
-                                put("connections", 16)
-                                put("useServerCtime", false)
-                            }
-                        )
-                    )
-                }
-            )
-        }
-    }
-
-    /** 自研内核的 REST 调用：与官方内核的 invoke 返回同一种信封（{code,msg,data}） */
-    private fun invokeHttp(
-        method: String,
-        path: String,
-        query: String?,
-        body: String?
-    ): JSONObject {
-        val port = remotePort
-        if (port <= 0) throw IllegalStateException("引擎未启动")
-        val url = buildString {
-            append("http://127.0.0.1:").append(port).append(path)
-            if (!query.isNullOrBlank()) append('?').append(query)
-        }
-        val builder = Request.Builder()
-            .url(url)
-            .header("Accept", "application/json")
-            .header("X-Api-Token", remoteToken.orEmpty())
-        val requestBody = when {
-            body != null -> body.toRequestBody(jsonMedia)
-            // OkHttp 要求 POST/PUT/PATCH 必须有 body
-            method == "POST" || method == "PUT" || method == "PATCH" ->
-                "{}".toRequestBody(jsonMedia)
-            else -> null
-        }
-        builder.method(method, requestBody)
-        Log.d(TAG, "调用自研内核：$method $path query=${query.orEmpty()} token=${remoteToken?.take(6)}")
-        localClient.newCall(builder.build()).execute().use { resp ->
-            val text = resp.body?.string().orEmpty()
-            val json = try {
-                JSONObject(text)
-            } catch (e: Exception) {
-                Log.e(TAG, "自研内核返回无法解析：HTTP ${resp.code} 原文=${text.take(200)}", e)
-                throw IllegalStateException("核心接口异常（HTTP ${resp.code}）：${text.take(120)}")
-            }
-            val code = json.optInt("code", 0)
-            if (code != 0) {
-                val msg = json.optString("msg").ifBlank { "核心接口失败 code=$code" }
-                Log.e(TAG, "自研内核返回错误：$method $path code=$code msg=$msg")
-                throw IllegalStateException(msg)
-            }
-            return json
         }
     }
 

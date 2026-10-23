@@ -112,9 +112,7 @@ private fun autoStartGopeedIfSelected(ctx: Context) {
     val engineChoice = settingsRepo.downloadEngine
     val kernel = com.jiexiy.app.data.gopeed.GopeedEngine.Kernel.of(engineChoice)
     engine.syncInstalledState(ctx, kernel)
-    if (engineChoice != com.jiexiy.app.data.prefs.SettingsRepository.ENGINE_GOPEED &&
-        engineChoice != com.jiexiy.app.data.prefs.SettingsRepository.ENGINE_SELF
-    ) return
+    if (engineChoice != com.jiexiy.app.data.prefs.SettingsRepository.ENGINE_GOPEED) return
     if (!engine.isInstalled(ctx, kernel)) {
         // 内核被删了（或从没导入过）但设置还停在引擎上：自愈回内置下载器，避免"设置说在用引擎、
         // 实际跑的是内置下载器"的错位（与下载引擎页删内核时的处理一致）。

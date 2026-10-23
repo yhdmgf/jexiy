@@ -128,6 +128,7 @@ import com.jiexiy.app.data.network.TokenCheck
 import com.jiexiy.app.data.network.UCApi
 import com.jiexiy.app.data.network.XunleiApi
 import com.jiexiy.app.data.network.video.VideoPlatform
+import com.jiexiy.app.data.gopeed.KernelProvisioner
 import com.jiexiy.app.data.prefs.SettingsRepository
 import com.jiexiy.app.data.security.CredentialStore
 import com.jiexiy.app.data.update.UpdateChecker
@@ -364,6 +365,18 @@ fun MainScreen(
                 ) {
                     showUpdateSheet = true
                 }
+            }
+        }
+    }
+
+    // 内核更新检测：只在用户选择了 Gopeed 引擎时检查，有更新用 Snackbar 提示
+    LaunchedEffect(Unit) {
+        val settings = SettingsRepository(context)
+        if (settings.downloadEngine != SettingsRepository.ENGINE_GOPEED) return@LaunchedEffect
+        KernelProvisioner.loadRelease().onSuccess { release ->
+            val local = settings.gopeedKernelVersion
+            if (local.isNotBlank() && release.tagName != local) {
+                SnackbarController.show("Gopeed 内核有新版本（${release.tagName}），可在「设置 → 下载引擎」更新")
             }
         }
     }
