@@ -568,15 +568,8 @@ fun FeijiCloudScreen(
                         }
                     },
                     MultiSelectAction("分享", Icons.Outlined.Share, MaterialTheme.colorScheme.primary) {
-                        scope.launch {
-                            isOperating = true
-                            runCatching {
-                                shareResult = FeijiApi.share(token, uuid, selected.toList()).toModel()
-                            }
-                            isOperating = false
-                            multiSelectMode = false
-                            selected = emptySet()
-                        }
+                        batchInitial = BatchStep.SHARE
+                        showBatchActions = true
                     },
                     MultiSelectAction("移动", Icons.Outlined.DriveFileMove, MaterialTheme.colorScheme.primary) {
                         scope.launch {
