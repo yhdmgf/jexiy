@@ -1216,7 +1216,7 @@ class LanzouApi(
 
     /** 新流程：提取 ajax 下载接口地址（页面里 ajaxm/ajaxfile.php?file=…），相对路径拼 origin。 */
     private fun extractNewAjaxUrl(html: String, origin: String): String? {
-        val candidate = Regex("""(?:https?://[^'"\s]*?)?(?:/|\\./)?(?:ajaxm|ajaxfile)\.php\?file=\d+""")
+        val candidate = Regex("""(?:https?://[^'"\s]*?)?(?:/|\.\/)?(?:ajaxm|ajaxfile)\.php\?file=\d+""")
             .find(html)?.value
         if (candidate.isNullOrBlank()) return null
         if (candidate.startsWith("http")) return candidate
