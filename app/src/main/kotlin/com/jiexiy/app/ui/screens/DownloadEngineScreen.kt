@@ -238,39 +238,6 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     // ---------- 更新公告（下载引擎页横幅） ----------
     var gopeedUpdate by remember { mutableStateOf<UpdateBanner?>(null) }
     var selfUpdate by remember { mutableStateOf<UpdateBanner?>(null) }
-    // 进页面时对比云端/本地版本：有更新才显示公告横幅（本地没装/云端拉取失败都静默）
-    LaunchedEffect(Unit) {
-        coroutineScope {
-            // 官方内核：云端版本与本地已装版本不同时才提示
-            launch {
-                KernelProvisioner.loadRelease().onSuccess { r ->
-                    val local = settings.gopeedKernelVersion
-                    if (local.isNotBlank() && r.tagName != local) {
-                        gopeedUpdate = UpdateBanner(
-                            version = r.tagName,
-                            body = r.body,
-                            panUrl = r.panUrl,
-                            onDownload = { cloudRelease = r }
-                        )
-                    }
-                }
-            }
-            // 自研内核：云端版本与本地已装版本不同时才提示
-            launch {
-                SelfKernelProvisioner.loadRelease().onSuccess { r ->
-                    val local = settings.selfKernelVersion
-                    if (local.isNotBlank() && r.version != local) {
-                        selfUpdate = UpdateBanner(
-                            version = r.version,
-                            body = r.body,
-                            panUrl = r.panUrl,
-                            onDownload = { installSelfKernel() }
-                        )
-                    }
-                }
-            }
-        }
-    }
 
     fun refreshSoInfo() {
         val so = GopeedEngine.soFile(context)
@@ -363,6 +330,40 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 failure = e.message ?: e.toString()
             } finally {
                 selfBusy = false
+            }
+        }
+    }
+
+    // 进页面时对比云端/本地版本：有更新才显示公告横幅（本地没装/云端拉取失败都静默）
+    LaunchedEffect(Unit) {
+        coroutineScope {
+            // 官方内核：云端版本与本地已装版本不同时才提示
+            launch {
+                KernelProvisioner.loadRelease().onSuccess { r ->
+                    val local = settings.gopeedKernelVersion
+                    if (local.isNotBlank() && r.tagName != local) {
+                        gopeedUpdate = UpdateBanner(
+                            version = r.tagName,
+                            body = r.body,
+                            panUrl = r.panUrl,
+                            onDownload = { cloudRelease = r }
+                        )
+                    }
+                }
+            }
+            // 自研内核：云端版本与本地已装版本不同时才提示
+            launch {
+                SelfKernelProvisioner.loadRelease().onSuccess { r ->
+                    val local = settings.selfKernelVersion
+                    if (local.isNotBlank() && r.version != local) {
+                        selfUpdate = UpdateBanner(
+                            version = r.version,
+                            body = r.body,
+                            panUrl = r.panUrl,
+                            onDownload = { installSelfKernel() }
+                        )
+                    }
+                }
             }
         }
     }

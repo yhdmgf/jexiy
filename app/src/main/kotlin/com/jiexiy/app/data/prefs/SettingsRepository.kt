@@ -143,14 +143,14 @@ class SettingsRepository(context: Context) {
 
     /** 已导入的官方 Gopeed 内核版本（导入成功时写入；空串 = 还没导入过） */
     var gopeedKernelVersion: String
-        get() = prefs.getString("gopeed_kernel_version", "")
+        get() = prefs.getString("gopeed_kernel_version", "") ?: ""
         set(value) {
             prefs.edit().putString("gopeed_kernel_version", value).apply()
         }
 
     /** 已导入的自研内核版本（导入成功时写入；空串 = 还没导入过） */
     var selfKernelVersion: String
-        get() = prefs.getString("self_kernel_version", "")
+        get() = prefs.getString("self_kernel_version", "") ?: ""
         set(value) {
             prefs.edit().putString("self_kernel_version", value).apply()
         }

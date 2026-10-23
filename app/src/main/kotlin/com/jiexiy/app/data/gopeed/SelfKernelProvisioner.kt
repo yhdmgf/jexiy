@@ -103,6 +103,7 @@ object SelfKernelProvisioner {
     ): Long = withContext(Dispatchers.IO) {
         val dir = GopeedEngine.kernelTempDir(context).apply { mkdirs() }
         val target = File(dir, "self-kernel-${release.version}.so")
+        var done = 0L
         try {
             val request = Request.Builder()
                 .url(release.url)
@@ -114,7 +115,6 @@ object SelfKernelProvisioner {
                 }
                 val body = resp.body ?: throw IllegalStateException("下载内核失败：响应为空")
                 val total = body.contentLength().takeIf { it > 0 } ?: release.size
-                var done = 0L
                 body.byteStream().use { input ->
                     FileOutputStream(target).use { out ->
                         val buffer = ByteArray(256 * 1024)
@@ -135,5 +135,6 @@ object SelfKernelProvisioner {
         } finally {
             target.delete()
         }
+        done
     }
 }
