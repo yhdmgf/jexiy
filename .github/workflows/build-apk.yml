@@ -1,0 +1,171 @@
+# Nightly 测试包构建：每天北京时间 0 点（UTC 16:00）定时跑一次，另支持手动触发。
+# 按作者要求（PR #113）：不打 tag、不发 GitHub Release，产物仅上传为 Actions Artifacts，
+# 供每日最新 master 的尝鲜测试，不污染正式版本号与更新检测。
+# 签名：Release 包用仓库 Secrets 里的正式证书签名（KEYSTORE_BASE64 / KEYSTORE_PASSWORD /
+# KEY_ALIAS / KEY_PASSWORD），与正式版同签名 ⇒ 测试包可直接覆盖安装升级；
+# 本地构建没有这些变量，app/build.gradle.kts 会把 release 变体置为未签名（app-release-unsigned.apk）。
+name: Nightly Build APK
+
+on:
+  # UTC 16:00 = 北京时间 00:00
+  schedule:
+    - cron: '0 16 * * *'
+  # 支持在 Actions 页手动触发，需输入版本号（格式：x.y.z）
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: '版本号（格式：x.y.z，例如 1.1.1）'
+        required: true
+        default: '1.3.0'
+        type: string
+
+# 只上传 Artifacts，不写 Release/tag：读权限即可（最小权限原则）
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # 需要 git 历史与 gh CLI 才能比对最近成功构建的 SHA、读取 default branch HEAD
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle and dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # 防重复：若 master 自上次成功构建以来没有新提交，则跳过本次 nightly，
+      # 避免每天定时跑出完全相同的包。手动 workflow_dispatch 也会受此保护（无新提交即跳过）。
+      - name: Skip if main has no new commit since last successful build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          BRANCH="${{ github.ref_name }}"
+          git fetch origin "$BRANCH" --quiet
+          HEAD_SHA=$(git rev-parse "origin/$BRANCH")
+          echo "当前 $BRANCH HEAD: $HEAD_SHA"
+
+          # 最近一次本 workflow 成功 run 的 headSha（gh CLI 已预安装并带 GITHUB_TOKEN）
+          LAST_SUCCESS=$(gh run list \
+            --workflow "${{ github.workflow }}" \
+            --branch "$BRANCH" \
+            --status success \
+            --limit 1 \
+            --json headSha \
+            --jq '.[0].headSha // ""')
+          echo "上次成功构建 SHA: ${LAST_SUCCESS:-（无）}"
+
+          if [ -n "$LAST_SUCCESS" ] && [ "$LAST_SUCCESS" = "$HEAD_SHA" ]; then
+            echo "::notice::$BRANCH 自上次成功构建后无新提交，跳过本次 nightly"
+            echo "SKIP_BUILD=1" >> "$GITHUB_ENV"
+          fi
+
+      # 根据 versionName 计算 versionCode：1.1.1 -> 101010
+      - name: Calculate versionCode
+        if: env.SKIP_BUILD != '1'
+        run: |
+          set -e
+          VERSION_NAME="${{ github.event.inputs.version_name }}"
+          if [[ ! "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::版本号格式错误，应为 x.y.z（例如 1.1.1）"
+            exit 1
+          fi
+          IFS='.' read -r major minor patch <<< "$VERSION_NAME"
+          # 规则：major + "0" + minor + "0" + patch + "0"
+          VERSION_CODE="${major}0${minor}0${patch}0"
+          echo "versionName: $VERSION_NAME"
+          echo "versionCode: $VERSION_CODE"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+      # 从 Secrets 还原正式签名证书：KEYSTORE_BASE64 解码到 runner 临时目录
+      # （不落仓库、不进 Artifacts，runner 销毁即消失）。四项 Secrets 缺一即报错退出，
+      # 避免 nightly 悄悄产出未签名包（本地构建不经过这里 ⇒ release 仍是未签名包）。
+      # 用 printf 而不是 echo 解码，防止个别 shell 对长字符串加换行/截断。
+      - name: Restore release keystore
+        if: env.SKIP_BUILD != '1'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -e
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::缺少 Secrets.$name（仓库 Settings → Secrets and variables → Actions）"
+              exit 1
+            fi
+          done
+          KEYSTORE_FILE="$RUNNER_TEMP/解析云-release.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_FILE"
+          # 先用 keytool 验一遍密钥库与口令、别名是否存在：早失败，别等 R8 跑完十分钟才发现
+          keytool -list -keystore "$KEYSTORE_FILE" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null
+          echo "JIEXIY_KEYSTORE_FILE=$KEYSTORE_FILE" >> "$GITHUB_ENV"
+          echo "::notice::发布签名证书已就绪（别名 $KEY_ALIAS）"
+
+      - name: Build release APK
+        if: env.SKIP_BUILD != '1'
+        # 项目 settings.gradle.kts 按 JIEXIY_USE_MIRROR 切换仓库：CI 上阿里云镜像不可达，必须走官方源。
+        # runner 镜像预装 Android SDK（licenses 已接受），AGP 会自动补装缺失的 SDK 组件。
+        # release 变体开启 R8 混淆 + 资源压缩，产物显著小于 debug。
+        # 签名口令/别名只注入到这一步；证书路径 JIEXIY_KEYSTORE_FILE 已由上一步写进 GITHUB_ENV。
+        env:
+          JIEXIY_USE_MIRROR: 'false'
+          JIEXIY_KEYSTORE_FILE: ${{ env.JIEXIY_KEYSTORE_FILE }}
+          JIEXIY_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          JIEXIY_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          JIEXIY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --no-daemon
+
+      # 自检：产物必须存在且真的带上正式证书（apksigner 随 runner 预装的 build-tools 提供）。
+      # 有这一步，签名配置写错（变量名打错、证书没生效）会在 CI 里立刻红，而不是发出一堆装不上的包。
+      - name: Verify signed APK
+        if: env.SKIP_BUILD != '1'
+        run: |
+          set -e
+          APK=app/build/outputs/apk/release/app-release.apk
+          if [ ! -f "$APK" ]; then
+            echo "::error::未找到已签名产物 $APK —— release 签名配置未生效？"
+            exit 1
+          fi
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          APKSIGNER=$(ls "$SDK_ROOT"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs "$APK" | head -6
+
+      # 产物只上传为 Actions Artifacts，命名按作者要求：解析云-nightly-<日期>-<短SHA>。
+      # 日期/短SHA 先在 shell 里算出来写进 GITHUB_ENV，再在 upload-artifact 的 name 里引用
+      # （name 字段不做 shell 展开，直接写 $() 在 Actions 里不会生效）。
+      - name: Resolve artifact name (date-shortSHA)
+        if: env.SKIP_BUILD != '1'
+        run: |
+          echo "ARTIFACT_NAME=jiexiy-nightly-$(date +%Y%m%d)-${GITHUB_SHA:0:7}" >> "$GITHUB_ENV"
+
+      - name: Upload APK as artifact
+        if: env.SKIP_BUILD != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

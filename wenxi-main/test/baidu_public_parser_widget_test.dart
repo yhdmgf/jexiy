@@ -1,0 +1,227 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:asterlink/app_services.dart';
+import 'package:asterlink/data/state_store.dart';
+import 'package:asterlink/domain/baidu_share_route.dart';
+import 'package:asterlink/domain/models.dart';
+import 'package:asterlink/main.dart';
+import 'package:asterlink/ui/baidu_download_prompt.dart';
+import 'package:asterlink/ui/baidu_share_route_picker.dart';
+import 'package:asterlink/ui/browser_page.dart';
+import 'package:asterlink/ui/login_page.dart';
+import 'package:asterlink/ui/parse_page.dart';
+import 'baidu_public_parser_support.dart';
+import 'support.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late AppServices services;
+  late BaiduPublicFixture fixture;
+  late FakeHttp http;
+
+  Future<void> render(WidgetTester tester, {bool loggedIn = false}) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(430, 960);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    fixture = BaiduPublicFixture();
+    http = FakeHttp(fixture.respond);
+    services = AppServices(
+      controlEnabled: false,
+      store: StateStore.memory({
+        'secrets': fixture.passwordSecrets,
+        'credentials': {
+          if (loggedIn)
+            'Baidu': Credential('fixture', {
+              'primary': 'BDUSS=fixture',
+            }, updatedAt: 1).toJson(),
+        },
+      }),
+      dataDirectory: Directory('baidu-public-fixture'),
+      cacheDirectory: Directory('baidu-public-fixture/cache'),
+      transport: FakeNative(),
+      files: FakeFiles(Directory('baidu-public-fixture/files')),
+      http: http,
+      platformFeatures: false,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: appTheme(Brightness.light),
+        home: Scaffold(body: ParsePage(services)),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> enter(WidgetTester tester) async {
+    await tester.enterText(
+      find.byKey(const Key('parse-input')),
+      BaiduPublicFixture.url,
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> parse(WidgetTester tester) async {
+    await tester.ensureVisible(find.byKey(const Key('parse-start')));
+    await tester.tap(find.byKey(const Key('parse-start')));
+    await tester.pumpAndSettle();
+  }
+
+  void scenario(String name, Future<void> Function(WidgetTester) body) {
+    testWidgets(name, (tester) async {
+      try {
+        await body(tester);
+      } finally {
+        await tester.pumpWidget(const SizedBox());
+        var closed = false;
+        services.close().then((_) => closed = true);
+        for (var i = 0; i < 100 && !closed; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+        }
+        expect(closed, isTrue);
+      }
+    });
+  }
+
+  scenario(
+    'Baidu defaults to public parsing and opens its files without login',
+    (tester) async {
+      await render(tester);
+      await enter(tester);
+      expect(
+        tester
+            .widget<BaiduShareRoutePicker>(find.byType(BaiduShareRoutePicker))
+            .value,
+        BaiduShareRoute.publicParser,
+      );
+      await parse(tester);
+      expect(find.byType(BrowserPage), findsOneWidget);
+      expect(find.byType(WebLoginPage), findsNothing);
+      expect(find.text(BaiduPublicFixture.name), findsOneWidget);
+      expect(
+        http.calls.every((call) => call.uri.host == 'mf.dg22.top'),
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  scenario(
+    'a parser outage leaves account parsing selectable on the input page',
+    (tester) async {
+      await render(tester, loggedIn: true);
+      fixture.publicFailure = true;
+      await enter(tester);
+      await parse(tester);
+      expect(find.byType(BrowserPage), findsNothing);
+      expect(find.textContaining('解析站暂不可用'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('baidu-route-account')),
+      );
+      await tester.tap(find.byKey(const ValueKey('baidu-route-account')));
+      await tester.pumpAndSettle();
+      await parse(tester);
+      final browser = tester.widget<BrowserPage>(find.byType(BrowserPage));
+      expect(
+        BaiduShareRoute.fromSession(browser.session),
+        BaiduShareRoute.account,
+      );
+      expect(http.calls.last.uri.host, 'pan.baidu.com');
+    },
+  );
+
+  scenario('share browsing can switch between public and account routes', (
+    tester,
+  ) async {
+    await render(tester, loggedIn: true);
+    await enter(tester);
+    await parse(tester);
+    await tester.tap(find.byKey(const ValueKey('baidu-route-account')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<BaiduShareRoutePicker>(find.byType(BaiduShareRoutePicker))
+          .value,
+      BaiduShareRoute.account,
+    );
+    expect(find.text(BaiduPublicFixture.name), findsOneWidget);
+    expect(http.calls.last.uri.host, 'pan.baidu.com');
+    await tester.tap(find.byKey(const ValueKey('baidu-route-mf_dg22')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<BaiduShareRoutePicker>(find.byType(BaiduShareRoutePicker))
+          .value,
+      BaiduShareRoute.publicParser,
+    );
+    expect(http.calls.last.uri.host, 'mf.dg22.top');
+    expect(tester.takeException(), isNull);
+  });
+
+  scenario('public downloads do not display the account channel size notice', (
+    tester,
+  ) async {
+    await render(tester);
+    final session = await services.cloud.share(fixture.link);
+    bool? accepted;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async {
+                accepted = await confirmBaiduDownload(
+                  context,
+                  services,
+                  CloudPlatform.baidu,
+                  session: session,
+                );
+              },
+              child: const Text('下载测试'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('下载测试'));
+    await tester.pumpAndSettle();
+    expect(accepted, isTrue);
+    expect(find.byKey(const ValueKey('baidu-download-notice')), findsNothing);
+    expect(services.settings.hideBaiduDownloadNotice, isFalse);
+  });
+
+  testWidgets('route controls wrap on narrow screens with enlarged text', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 640),
+            textScaler: TextScaler.linear(1.8),
+          ),
+          child: Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.all(16),
+              child: BaiduShareRoutePicker(
+                value: BaiduShareRoute.publicParser,
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('公益解析'), findsOneWidget);
+    expect(find.text('账号下载'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}

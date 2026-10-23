@@ -1,0 +1,74 @@
+/*
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package com.jiexiy.app.ui.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.jiexiy.app.data.db.UCAccountEntity
+import com.jiexiy.app.data.repository.UCAccountRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+
+/**
+ * UC 账号 ViewModel。
+ */
+class UCAccountViewModel(
+    private val repository: UCAccountRepository
+) : ViewModel() {
+
+    val ucAccount: StateFlow<UCAccountEntity?> = repository.observeAccount()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
+
+    /**
+     * 「添加账号」标记：网盘页账号弹窗点「添加账号」时置位，登录页关闭时清掉。
+     * 置位后这一次登录会落成新的账号行，而不是覆盖当前主账号（见 [resolveAccountSlot]）。
+     */
+    private var addNewAccount = false
+
+    fun beginAddAccount() {
+        addNewAccount = true
+    }
+
+    fun cancelAddAccount() {
+        addNewAccount = false
+    }
+
+    /** 保存 UC Cookie；返回是否保存成功 */
+    suspend fun saveUCAccount(cookie: String): Boolean {
+        val saved = repository.saveUCAccount(cookie, newAccount = addNewAccount)
+        if (saved) addNewAccount = false
+        return saved
+    }
+
+    class Factory(
+        private val repository: UCAccountRepository
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            require(modelClass.isAssignableFrom(UCAccountViewModel::class.java))
+            return UCAccountViewModel(repository) as T
+        }
+    }
+}

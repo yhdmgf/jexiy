@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.14)
+project(asterlink_keepalive_tests LANGUAGES CXX)
+enable_testing()
+add_executable(download_power_request_test
+  download_power_request_test.cpp
+  ../download_power_request.cpp
+)
+target_compile_features(download_power_request_test PRIVATE cxx_std_17)
+target_compile_definitions(download_power_request_test PRIVATE NOMINMAX UNICODE _UNICODE)
+target_compile_options(download_power_request_test PRIVATE /W4 /WX /utf-8)
+add_test(NAME download_power_request COMMAND download_power_request_test)
+
+add_executable(player_image_data_test player_image_data_test.cpp)
+target_compile_features(player_image_data_test PRIVATE cxx_std_17)
+target_compile_definitions(player_image_data_test PRIVATE NOMINMAX UNICODE _UNICODE)
+target_compile_options(player_image_data_test PRIVATE /W4 /WX /utf-8)
+add_test(NAME player_image_data COMMAND player_image_data_test)
+
+add_executable(external_download_request_test external_download_request_test.cpp)
+target_compile_features(external_download_request_test PRIVATE cxx_std_17)
+target_compile_definitions(external_download_request_test PRIVATE NOMINMAX UNICODE _UNICODE)
+target_compile_options(external_download_request_test PRIVATE /W4 /WX /utf-8)
+add_test(NAME external_download_request COMMAND external_download_request_test)

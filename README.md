@@ -1,0 +1,133 @@
+<div align="center">
+
+<img src="app/src/main/res/drawable/icon.png" width="120" alt="JieXiy" />
+
+# 解析云 · JieXiy
+
+**粘贴分享链接，直接高速下载 —— 一个开源的 Android 网盘 / 视频解析下载应用**
+
+识别夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭 / 蓝奏云 / 蓝奏云优享版 的分享链接并自动匹配提取码；也能解析抖音 / 小红书 / 快手 / 微博 / AcFun / 哔哩哔哩 / Pixiv 的视频与图集。Range 分片并发 + 断点续传，图片 / 视频 / 音频可在线预览。
+
+[![Release](https://img.shields.io/github/v/release/yhdmgf/jexiy)](https://github.com/yhdmgf/jexiy/releases/latest)
+[![Stars](https://img.shields.io/github/stars/yhdmgf/jexiy?style=flat-square\&logo=github\&color=4C8BF5)](https://github.com/yhdmgf/jexiy/stargazers)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square)](./LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square\&logo=android\&logoColor=white)](#构建)
+[![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square\&logo=kotlin\&logoColor=white)](https://kotlinlang.org/)
+[![Compose](https://img.shields.io/badge/Jetpack%20Compose-MD3Expressive-4285F4?style=flat-square\&logo=jetpackcompose\&logoColor=white)](https://developer.android.com/jetpack/compose)
+
+[下载最新版](https://github.com/yhdmgf/jexiy/releases/latest) · [功能](#功能) · [使用](#使用) · [构建](#构建) · [常见问题](#常见问题)
+
+</div>
+
+***
+
+> **项目说明**：本项目（jihexiy）是基于上游原项目 **[CYQawa/YunX (云析/云溪)](https://github.com/CYQawa/YunX)** 进行二次开发与维护的分支版本。感谢原作者及社区的无私奉献与开源精神！
+
+> **云析永远免费开源。** 如果你是在任何地方"花钱买到"的，说明你被骗了，请立即退款。
+> 任何收费版本均为二次打包的诈骗版本，与本项目无关。
+
+> **云析使用AGPL-3.0开源协议** 如果你使用了云析的代码，未经授权请遵守协议，同样以AGPL-3.0开放源代码。
+
+## 截图
+
+|           <br />          |            <br />           |            <br />            |
+| :-----------------------: | :-------------------------: | :--------------------------: |
+|  ![解析输入](images/Link.jpg) | ![文件列表](images/Parsing.jpg) | ![下载管理](images/Download.jpg) |
+|            解析直链           |             分享解析            |             下载管理             |
+| ![网盘登录](images/Login.jpg) |  ![设置](images/Setting.jpg)  |    ![关于](images/about.jpg)   |
+|            网盘登录           |              设置             |              关于              |
+
+## 功能
+
+- **网盘分享链接解析** —— 识别夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭 / 蓝奏云 / 蓝奏云优享版 的分享链接，自动匹配提取码
+
+- **视频链接解析** —— 粘贴抖音 / 小红书 / 快手 / 微博 / AcFun 的分享链接免登录直出直链；哔哩哔哩登录后画质更高，Pixiv 未登录只能拿到部分公开作品、在「账号」页粘贴浏览器 Cookie 后可解析全部作品（含 R18 与受限作品），哔哩哔哩的音视频分轨由应用内部合轨（不依赖 ffmpeg）
+
+- **高速下载** —— Range 分片并发 + 断点续传，任务保存请求头与固定分片规划，并发上限 32
+
+- **在线预览与播放** —— 图片 / 视频 / 音频直接在线播放（逐请求带上 Referer / Cookie，直链不再 403）；网盘里的常见文本文件也能在线打开
+
+- **图集两列网格** —— 图文笔记直接把图铺成两列，点开可翻页 / 双指放大 / 单张下载，长按进入多选批量下载
+
+- **下载自动归组** —— 整个文件夹、或一次批量下载的图片，在下载页收纳成一个可折叠分组
+
+- **临时转存清理** —— 百度 / 迅雷 / 光鸭取链后清理；夸克保留到下载完成或删除任务后清理
+
+- **多平台登录** —— 夸克 / UC / 百度 / 139 / 115 使用 WebView Cookie；迅雷 / 光鸭 使用账号密码 / 短信验证码；123 使用账号密码换取 JWT；蓝奏云 / 蓝奏云优享版 使用账号密码
+
+- **认证备份** —— 使用用户口令派生密钥，以 AES-GCM 加密 Cookie / JWT 备份文件
+
+- **剪贴板识别** —— 复制分享链接后回到应用，提示一键粘贴解析
+
+## 支持平台
+
+**网盘**
+
+- 夸克网盘
+
+- UC 网盘
+
+- 迅雷网盘
+
+- 百度网盘
+
+- 123 云盘
+
+- 139 网盘（和彩云）
+
+- 115 网盘
+
+- 光鸭云盘
+
+- 蓝奏云
+
+- 蓝奏云优享版
+
+**视频 / 图集**
+
+- 抖音
+
+- 小红书
+
+- 快手
+
+- 微博
+
+- AcFun
+
+- 哔哩哔哩（需登录才能解析高清）
+
+- Pixiv（未登录只能拿到部分公开作品；不支持网页登录，可在「账号」页粘贴浏览器 Cookie 以解析全部作品）
+
+> \[!WARNING]
+> **不建议使用百度网盘，可能导致账号被风控！**
+
+> \[!NOTE]
+> 其他网盘与视频平台暂未支持，如有需要请开一个 [issue](https://github.com/yhdmgf/jexiy/issues)。
+
+## 使用
+
+1. 在「账号」页登录需要使用的网盘账号（需要登录的视频平台也在这里登录）
+2. 在「解析」页粘贴链接（可带提取码）：分享链接解析网盘，视频链接会自动识别平台
+3. 网盘链接浏览分享内容、点击文件获取下载直链；视频链接在结果页直接预览或下载，图片笔记长按可多选
+4. 在「下载」页查看进度，支持暂停 / 继续 / 删除 / 打开
+
+## 技术栈
+
+| 分类  | 选型                                |
+| --- | --------------------------------- |
+| 语言  | Kotlin                            |
+| UI  | Jetpack Compose + Material 3      |
+| 持久化 | Room（KSP 注解处理）+ SharedPreferences |
+| 网络  | OkHttp 4.12.0（请求 + 分片下载）          |
+| 预览播放 | Media3 ExoPlayer / Coil 3         |
+| 音视频合轨 | MediaExtractor + MediaMuxer（系统原生，逐样本重封装不重编码） |
+| 构建  | Gradle + KSP                      |
+
+## 构建
+
+要求：minSdk 24，targetSdk 34。
+
+```bash
+git clone https://github.com/yhdmgf/jexiy.git
+
