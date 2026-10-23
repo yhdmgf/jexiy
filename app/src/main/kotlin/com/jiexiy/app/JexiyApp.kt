@@ -36,6 +36,8 @@ class JexiyApp : Application() {
         super.onCreate()
         // 移除调试日志
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
+        // 上传队列：注册各平台上传实现，让上传页在还没入队文件时也能展示平台名
+        com.jiexiy.app.data.upload.CloudUploadManager.init(this)
         // 移除防篡改检测：不再检查 ArchiveProbe 或类名匹配
         
         // 防篡改检测已移除：不再执行深度扫描

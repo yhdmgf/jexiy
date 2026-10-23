@@ -18,6 +18,7 @@
 
 package com.jiexiy.app.data.network
 
+import android.net.Uri
 import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.QuotaInfo
 import com.jiexiy.app.data.network.model.ShareExpire
@@ -31,6 +32,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URLEncoder
 
 /** 115 个人盘列表分页结果 */
@@ -266,6 +268,97 @@ class Pan115Api(
             json.optString("cid").ifBlank { json.optJSONObject("data")?.optString("cid").orEmpty() }
                 .takeIf { it.isNotBlank() }
         }
+
+    /**
+     * 上传文件（文档 §3.5）：`sampleinitupload.php` 换发阿里云 OSS 一次性凭据 → 单个 multipart POST 直传。
+     *
+     * 网页端不分片，单文件上限 [Pan115Constants.MAX_UPLOAD_SIZE]（5 GB），更大的要走官方客户端的分片接口。
+     * `target` 为 `U_1_<cid>`（U_1 表示个人盘根空间，cid 为父目录）。
+     *
+     * @param open 打开文件的 [start, end) 输入流
+     * @param onProgress 已上传字节数
+     * @return 新文件的 fid
+     */
+    suspend fun uploadFile(
+        cookie: String,
+        parentId: String,
+        fileName: String,
+        size: Long,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("无法读取文件大小，请重新选择文件")
+        if (size > Pan115Constants.MAX_UPLOAD_SIZE) {
+            throw IllegalStateException("115 网页上传单文件最大 5 GB，更大的文件请使用官方客户端上传")
+        }
+
+        val init = executeJson(
+            baseBuilder(Pan115Constants.INIT_UPLOAD_URL, cookie, Pan115Constants.REFERER)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .post(
+                    form(
+                        "filename" to fileName,
+                        "filesize" to size.toString(),
+                        "target" to "U_1_${parentId.ifBlank { Pan115Constants.ROOT_CID }}",
+                        "path" to ""
+                    ).toRequestBody(formMediaType)
+                )
+                .build()
+        ).first
+
+        // 成功时直接返回 OSS 凭据（没有其它 115 接口的 state 信封），失败才带 state/errno
+        val objectKey = init.optString("object")
+        val policy = init.optString("policy")
+        val accessId = init.optString("accessid")
+        val callback = init.optString("callback")
+        val signature = init.optString("signature")
+        if (objectKey.isBlank() || policy.isBlank() || accessId.isBlank() ||
+            callback.isBlank() || signature.isBlank()
+        ) {
+            checkState(init, "上传凭证获取失败")
+        }
+        val host = init.optString("host").trimEnd('/')
+        val parsed = Uri.parse(host)
+        val uploadHost = parsed.host ?: ""
+        if (!host.startsWith("http") || parsed.userInfo != null ||
+            uploadHost.isBlank() || !uploadHost.endsWith(".aliyuncs.com")
+        ) {
+            throw IllegalStateException("115 返回的上传服务器无效")
+        }
+        val uploadUrl = if (host.startsWith("http://")) "https://${host.substring("http://".length)}" else host
+
+        val fields = linkedMapOf(
+            "name" to fileName,
+            "key" to objectKey,
+            "policy" to policy,
+            "OSSAccessKeyId" to accessId,
+            "success_action_status" to "200",
+            "callback" to callback,
+            "signature" to signature
+        )
+        UploadIo.multipartPost(
+            url = uploadUrl,
+            fields = fields,
+            fieldName = "file",
+            fileName = fileName,
+            contentType = "application/octet-stream",
+            open = open,
+            size = size,
+            headers = linkedMapOf("User-Agent" to Pan115Constants.WEB_UA),
+            followRedirects = false,
+            onProgress = { sent, total -> onProgress(if (total > 0) sent else 0L) }
+        ).use { resp ->
+            if (resp.code == 401) throw IllegalStateException("115 登录已过期，请重新网页登录")
+            if (!resp.isSuccessful) throw IllegalStateException("115 上传失败（HTTP ${resp.code}）")
+            val result = runCatching { JSONObject(resp.body?.string().orEmpty()) }
+                .getOrElse { throw IllegalStateException("115 上传响应无法解析") }
+            val fid = result.optJSONObject("data")?.optString("file_id").orEmpty()
+                .ifBlank { result.optString("file_id") }
+            if (fid.isBlank()) throw IllegalStateException("115 未返回新文件标识，请刷新目录确认")
+            fid
+        }
+    }
 
     /** 重命名：`POST /files/batch_rename`（文档 §3.3） */
     suspend fun rename(id: String, newName: String, cookie: String) = withContext(Dispatchers.IO) {

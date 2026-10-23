@@ -112,7 +112,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.jiexiy.app.data.parse.FeijiAccountStore
-import com.jiexiy.app.data.upload.FeijiUploadManager
+import com.jiexiy.app.data.upload.CloudUploadManager
 import com.jiexiy.app.ui.SnackbarController
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.AnimatedContent
@@ -196,12 +196,14 @@ fun FeijiCloudScreen(
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
         var added = 0
         uris.forEach { uri ->
-            val info = FeijiUploadManager.describe(context, uri) ?: return@forEach
-            FeijiUploadManager.enqueue(
+            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
+            CloudUploadManager.enqueue(
                 context = context,
+                platform = DownloadPlatform.FEIJI,
                 uri = uri,
-                fileName = info.first,
-                size = info.second,
+                fileName = info.name,
+                size = info.size,
+                mimeType = info.mimeType,
                 folderId = uploadTargetFolderId
             )
             added++

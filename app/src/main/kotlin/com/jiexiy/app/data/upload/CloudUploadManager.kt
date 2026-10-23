@@ -1,0 +1,198 @@
+/*
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package com.jiexiy.app.data.upload
+
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import com.jiexiy.app.data.download.DownloadPlatform
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.io.IOException
+import java.util.concurrent.atomic.AtomicLong
+
+/** 文件选择器返回的信息：显示名、字节数、MIME 类型。 */
+data class SelectedFile(
+    val name: String,
+    val size: Long,
+    val mimeType: String
+)
+
+/**
+ * 平台无关的上传任务管理：选择文件 → 读取 ContentResolver → 按平台分发给 [CloudUploader]。
+ *
+ * 上传进度、失败重试、取消都收敛在这里，传输页只读 [tasks]；各平台的协议差异全部隔离在
+ * 实现 [CloudUploader] 的类里。每个任务一条独立协程（与下载侧的分片并发模型一致）。
+ */
+object CloudUploadManager {
+
+    private var appContext: Context? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val jobs = mutableMapOf<Long, Job>()
+    private val nextId = AtomicLong(1)
+
+    private val _tasks = MutableStateFlow<List<UploadTask>>(emptyList())
+    val tasks: StateFlow<List<UploadTask>> = _tasks.asStateFlow()
+
+    private val factories = LinkedHashMap<String, () -> CloudUploader?>()
+
+    /** 惰性装配：首次入队时把应用上下文与各平台上传实现装好。 */
+    fun init(context: Context) {
+        if (appContext != null) return
+        val app = context.applicationContext
+        appContext = app
+        register(DownloadPlatform.FEIJI) { FeijiUploader(app) }
+        register(DownloadPlatform.LANZOU) { LanzouUploader(app) }
+        register(DownloadPlatform.ILANZOU) { ILanzouUploader(app) }
+        register(DownloadPlatform.PAN115) { Pan115Uploader(app) }
+    }
+
+    /** 注册一个平台的上传实现；同名平台后注册覆盖先注册。 */
+    fun register(platform: String, factory: () -> CloudUploader?) {
+        factories[platform] = factory
+    }
+
+    /** 该平台是否已注册上传实现（界面据此决定「上传」入口是否显示）。 */
+    fun supports(platform: String): Boolean = factories.containsKey(platform)
+
+    /** 平台展示名；未注册或尚未 init 时返回 null。 */
+    fun labelOf(platform: String): String? = factories[platform]?.invoke()?.label
+
+    /** 读取系统文件选择器返回的显示名与大小；名称缺失时回退到 Uri 末段。 */
+    fun describe(context: Context, uri: Uri): SelectedFile? {
+        var name = ""
+        var size = -1L
+        var type = ""
+        runCatching {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (nameIndex >= 0) name = cursor.getString(nameIndex).orEmpty()
+                    if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) size = cursor.getLong(sizeIndex)
+                }
+            }
+            type = context.contentResolver.getType(uri).orEmpty()
+        }
+        if (name.isBlank()) name = uri.lastPathSegment.orEmpty().substringAfterLast('/')
+        if (name.isBlank()) return null
+        return SelectedFile(name, size, type)
+    }
+
+    fun enqueue(
+        context: Context,
+        platform: String,
+        uri: Uri,
+        fileName: String,
+        size: Long,
+        mimeType: String,
+        folderId: String
+    ): Long {
+        init(context)
+        val id = nextId.getAndIncrement()
+        _tasks.update {
+            it + UploadTask(
+                id = id,
+                platform = platform,
+                platformLabel = labelOf(platform).orEmpty(),
+                uri = uri.toString(),
+                fileName = fileName,
+                size = size,
+                mimeType = mimeType,
+                folderId = folderId
+            )
+        }
+        start(id)
+        return id
+    }
+
+    fun retry(id: Long) {
+        if (appContext == null) return
+        update(id) { it.copy(status = UploadStatus.PENDING, phase = UploadPhase.PREPARING, progress = 0L, error = "") }
+        start(id)
+    }
+
+    fun cancel(id: Long) {
+        jobs.remove(id)?.cancel()
+        update(id) {
+            if (it.status == UploadStatus.COMPLETED) it
+            else it.copy(status = UploadStatus.CANCELLED, error = "")
+        }
+    }
+
+    fun remove(id: Long) {
+        jobs.remove(id)?.cancel()
+        _tasks.update { list -> list.filterNot { it.id == id } }
+    }
+
+    fun clearCompleted() {
+        _tasks.update { list -> list.filter { it.status != UploadStatus.COMPLETED } }
+    }
+
+    private fun start(id: Long) {
+        val context = appContext ?: return
+        val task = _tasks.value.firstOrNull { it.id == id } ?: return
+        jobs[id]?.cancel()
+        jobs[id] = scope.launch {
+            update(id) { it.copy(status = UploadStatus.RUNNING, phase = UploadPhase.PREPARING, error = "") }
+            try {
+                val uploader = factories[task.platform]?.invoke()
+                    ?: throw IOException("该平台暂不支持上传")
+                val uri = Uri.parse(task.uri)
+                val size = if (task.size > 0) task.size else describe(context, uri)?.size ?: -1L
+                if (size <= 0) throw IOException("无法读取文件大小")
+                val source = ContentResolverUploadSource(context, uri, task.fileName, size, task.mimeType)
+                val result = uploader.upload(
+                    source = source,
+                    folderId = task.folderId,
+                    onProgress = { sent, phase ->
+                        update(id) { it.copy(progress = sent.coerceAtMost(size), size = size, phase = phase) }
+                    }
+                )
+                update(id) {
+                    it.copy(
+                        status = UploadStatus.COMPLETED,
+                        progress = if (result.size > 0) result.size else size,
+                        size = if (result.size > 0) result.size else size,
+                        phase = UploadPhase.FINISHING,
+                        error = ""
+                    )
+                }
+            } catch (e: Exception) {
+                if (jobs[id]?.isCancelled == true) {
+                    update(id) { it.copy(status = UploadStatus.CANCELLED) }
+                } else {
+                    update(id) { it.copy(status = UploadStatus.FAILED, error = e.message ?: "上传失败") }
+                }
+            } finally {
+                jobs.remove(id)
+            }
+        }
+    }
+
+    private fun update(id: Long, transform: (UploadTask) -> UploadTask) {
+        _tasks.update { list -> list.map { if (it.id == id) transform(it) else it } }
+    }
+}

@@ -33,6 +33,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
@@ -303,6 +304,79 @@ class LanzouApi(
             }
             result
         }
+
+    /**
+     * B3：上传文件（`POST /html5up.php`，单个 multipart 请求，不分片）。
+     *
+     * 网页端用 WebUploader 发 `task=1` 到 html5up.php，字段固定为
+     * `task / vie / ve / id / name / folder_id_bb_n` + 文件字段 `upload_file`；
+     * 鉴权完全靠 Cookie（不需要 uid/vei 查询参数，与 doupload.php 不同）。
+     *
+     * @param open 打开文件的 [start, end) 输入流
+     * @param onProgress 已上传字节数
+     * @return 新文件的数字 id（未加 [LanzouConstants.FILE_PREFIX] 前缀）
+     */
+    suspend fun uploadFile(
+        cookie: String,
+        uid: String,
+        parentId: String,
+        fileName: String,
+        size: Long,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("无法读取文件大小，请重新选择文件")
+        val fields = linkedMapOf(
+            "task" to "1",
+            "vie" to "2",
+            "ve" to "2",
+            "id" to "WU_FILE_0",
+            "name" to fileName,
+            "folder_id_bb_n" to parentId.ifBlank { LanzouConstants.ROOT_FOLDER_ID }
+        )
+        val headers = linkedMapOf(
+            "Cookie" to cookie,
+            "User-Agent" to LanzouConstants.WEB_UA,
+            "Referer" to LanzouConstants.MYDISK_URL,
+            "Origin" to LanzouConstants.ORIGIN
+        )
+        UploadIo.multipartPost(
+            url = LanzouConstants.HTML5UP_URL,
+            fields = fields,
+            fieldName = "upload_file",
+            fileName = fileName,
+            contentType = "application/octet-stream",
+            open = open,
+            size = size,
+            headers = headers,
+            followRedirects = false,
+            onProgress = { sent, total -> onProgress(if (total > 0) sent else 0L) }
+        ).use { resp ->
+            if (resp.code == 401 || resp.code == 403) throw IllegalStateException("蓝奏登录已过期，请重新网页登录")
+            if (!resp.isSuccessful) throw IllegalStateException("蓝奏上传失败（HTTP ${resp.code}）")
+            val body = resp.body?.string().orEmpty()
+            val json = runCatching { JSONObject(body) }.getOrElse {
+                throw IllegalStateException("蓝奏上传失败，请在官网检查权限和文件类型")
+            }
+            val zt = json.optInt("zt", -1)
+            when {
+                zt == 1 -> {}
+                zt == 4 -> throw IllegalStateException("蓝奏请求频繁，请稍后重试")
+                zt == 9 -> throw IllegalStateException("蓝奏登录已过期，请重新网页登录")
+                else -> throw IllegalStateException("蓝奏上传失败（$zt），请在官网检查权限和文件类型")
+            }
+            val text = json.optJSONArray("text") ?: json.optJSONObject("text")
+            val item = when (text) {
+                is org.json.JSONArray -> text.optJSONObject(0)
+                is JSONObject -> text
+                else -> null
+            }
+            val id = item?.optString("id").orEmpty()
+            if (!Regex("""^[0-9]{1,24}$""").matches(id)) throw IllegalStateException("蓝奏未返回新文件信息，请刷新目录确认")
+            id
+        }
+    }
 
     /** B4：新建文件夹，返回新目录 id。 */
     suspend fun createFolder(cookie: String, uid: String, vei: String, parentId: String, name: String): String =

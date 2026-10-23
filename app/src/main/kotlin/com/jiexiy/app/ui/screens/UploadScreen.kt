@@ -57,33 +57,41 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.jiexiy.app.data.upload.FeijiUploadManager
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.upload.CloudUploadManager
+import com.jiexiy.app.data.upload.UploadPhase
 import com.jiexiy.app.data.upload.UploadStatus
 import com.jiexiy.app.data.upload.UploadTask
 import com.jiexiy.app.ui.SnackbarController
 
 /**
- * 上传页：选择文件加入小飞机上传队列，展示进度 / 失败原因，可取消、重试、删除记录。
+ * 上传页：选择文件加入 [platform] 平台的上传队列，展示进度 / 失败原因，可取消、重试、删除记录。
  */
 @Composable
 fun UploadScreen(
     modifier: Modifier = Modifier,
+    platform: String = DownloadPlatform.FEIJI,
     folderId: String = "0"
 ) {
     val context = LocalContext.current
-    val tasks by FeijiUploadManager.tasks.collectAsState()
+    val tasks by CloudUploadManager.tasks.collectAsState()
+    val label = CloudUploadManager.labelOf(platform)
+        ?.ifBlank { "网盘" }
+        .orEmpty().ifEmpty { "网盘" }
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
     ) { uris ->
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
         var added = 0
         uris.forEach { uri ->
-            val info = FeijiUploadManager.describe(context, uri) ?: return@forEach
-            FeijiUploadManager.enqueue(
+            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
+            CloudUploadManager.enqueue(
                 context = context,
+                platform = platform,
                 uri = uri,
-                fileName = info.first,
-                size = info.second,
+                fileName = info.name,
+                size = info.size,
+                mimeType = info.mimeType,
                 folderId = folderId
             )
             added++
@@ -127,7 +135,7 @@ fun UploadScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = { picker.launch(arrayOf("*/*")) }) {
-                        Text("选择文件上传到小飞机网盘")
+                        Text("选择文件上传到$label")
                     }
                 }
             }
@@ -139,9 +147,9 @@ fun UploadScreen(
                 items(tasks, key = { it.id }) { task ->
                     UploadTaskRow(
                         task = task,
-                        onCancel = { FeijiUploadManager.cancel(task.id) },
-                        onRetry = { FeijiUploadManager.retry(task.id) },
-                        onRemove = { FeijiUploadManager.remove(task.id) }
+                        onCancel = { CloudUploadManager.cancel(task.id) },
+                        onRetry = { CloudUploadManager.retry(task.id) },
+                        onRemove = { CloudUploadManager.remove(task.id) }
                     )
                 }
             }
@@ -170,8 +178,28 @@ private fun UploadTaskRow(
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = statusText(task),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (task.status == UploadStatus.FAILED) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                        if (task.platformLabel.isNotBlank()) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "· ${task.platformLabel}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = statusText(task),
+                        text = formatUploadBytes(task.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (task.status == UploadStatus.FAILED) {
                             MaterialTheme.colorScheme.error
@@ -221,8 +249,12 @@ private fun UploadTaskRow(
 
 private fun statusText(task: UploadTask): String = when (task.status) {
     UploadStatus.PENDING -> "等待上传"
-    UploadStatus.RUNNING -> "上传中 ${formatUploadBytes(task.progress)} / ${formatUploadBytes(task.size)}"
-    UploadStatus.COMPLETED -> "已完成 · ${formatUploadBytes(task.size)}"
+    UploadStatus.RUNNING -> when (task.phase) {
+        UploadPhase.PREPARING -> "准备中（算校验值 / 取上传凭证）"
+        UploadPhase.UPLOADING -> "上传中 ${formatUploadBytes(task.progress)} / ${formatUploadBytes(task.size)}"
+        UploadPhase.FINISHING -> "上传完成，等待网盘确认"
+    }
+    UploadStatus.COMPLETED -> "已完成"
     UploadStatus.FAILED -> "上传失败"
     UploadStatus.CANCELLED -> "已取消"
 }

@@ -30,6 +30,8 @@ object LanzouConstants {
     const val MYDISK_URL = "https://pc.woozooo.com/mydisk.php"
     const val MYDISK_FILES_URL = "https://pc.woozooo.com/mydisk.php?item=files&action=index"
     const val DOUPLOAD_URL = "https://pc.woozooo.com/doupload.php"
+    /** 网页端 WebUploader 上传入口（B3）：multipart 单请求，不带 uid/vei 查询参数 */
+    const val HTML5UP_URL = "https://pc.woozooo.com/html5up.php"
     const val ORIGIN = "https://pc.woozooo.com"
 
     /**

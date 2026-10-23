@@ -83,6 +83,11 @@ object Pan115Constants {
     const val APP_DOWNLOAD_URL = "https://proapi.115.com/app/chrome/downurl"
 
     /** 首次分享前的协议确认（action=pubshare） */
+    /** 首次上传：换发阿里云 OSS 一次性凭据（`policy` / `signature`），不分片。 */
+    const val INIT_UPLOAD_URL = "https://uplb.115.com/3.0/sampleinitupload.php"
+    /** 网页端单文件上传上限（超大文件需走官方客户端的分片接口）。 */
+    const val MAX_UPLOAD_SIZE = 5L * 1024 * 1024 * 1024
+
     const val ALLOW_PROTOCOL_URL = "$API_BASE/user/allow_protocol"
 
     /** 创建分享（user_id、file_ids、ignore_warn） */

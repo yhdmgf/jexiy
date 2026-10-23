@@ -18,17 +18,28 @@
 
 package com.jiexiy.app.data.network
 
+import android.util.Base64
 import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.QuotaInfo
 import com.jiexiy.app.data.network.model.ShareFile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URLEncoder
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
@@ -164,6 +175,149 @@ class ILanzouApi(
             if (id.isBlank() || id == "0") throw IllegalStateException("蓝奏优享未返回新文件夹信息，请刷新确认")
             id
         }
+
+    /**
+     * 上传文件（文档 §3.5）：`getUpToken` 换发七牛凭证 → 七牛上传 → `7n/results` 轮询确认。
+     *
+     * 小于 [QINIU_PART_SIZE] 走单个 multipart 请求；更大则「创建上传 → 分段 POST → 合并」三阶段。
+     * `upToken == "-1"` 表示秒传，直接从 `map.fileId` 取结果。
+     *
+     * @param account 七牛 object key 里的账号段（`fetchAccountInfo().account`），服务端用它定位存储位置
+     * @param open 打开文件的 [start, end) 输入流（分片会多次调用）
+     * @param onProgress 已传输字节数（含算 MD5 阶段）
+     * @return 新文件数字 id（未加 [ILanzouConstants.FILE_PREFIX] 前缀）
+     */
+    suspend fun uploadFile(
+        appToken: String,
+        uuid: String,
+        account: String,
+        parentId: String,
+        fileName: String,
+        size: Long,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("无法读取文件大小，请重新选择文件")
+        if (account.isBlank()) throw IllegalStateException("蓝奏优享未返回上传账号信息，请重新登录")
+
+        val md5 = UploadIo.digest(open, size, "MD5") { read -> onProgress(read) }
+        val pre = exec(
+            Request.Builder()
+                .url(buildUrl(ILanzouConstants.GET_UPLOAD_TOKEN, uuid, appToken, extra = true, params = emptyList()))
+                .headers(commonHeaders(true))
+                .post(
+                    JSONObject()
+                        .put("fileId", "")
+                        .put("fileName", fileName)
+                        .put("fileSize", maxOf(1L, (size + 1023) / 1024))
+                        .put("folderId", parentId.ifBlank { ILanzouConstants.ROOT_FOLDER_ID })
+                        .put("md5", md5)
+                        .put("type", 1)
+                        .toString().toRequestBody(jsonMediaType)
+                )
+                .build()
+        )
+        val upToken = pre.optString("upToken")
+        if (upToken.isBlank()) throw IllegalStateException("蓝奏优享未返回上传授权")
+        if (upToken == "-1") {
+            val id = pre.optJSONObject("map")?.optString("fileId").orEmpty()
+            if (id.isBlank()) throw IllegalStateException("蓝奏优享未确认秒传文件")
+            return@withContext id
+        }
+
+        val cal = Calendar.getInstance()
+        val key = "disk/${cal.get(Calendar.YEAR)}/${pad2(cal.get(Calendar.MONTH) + 1)}/${pad2(cal.get(Calendar.DAY_OF_MONTH))}/$account/${System.currentTimeMillis()}.rar"
+        val auth = mapOf("Authorization" to "UpToken $upToken")
+        val token = if (size <= QINIU_PART_SIZE) {
+            UploadIo.multipartPost(
+                url = ILanzouConstants.QINIU_UPLOAD_HOST + "/",
+                fields = linkedMapOf("token" to upToken, "key" to key, "fname" to fileName),
+                fieldName = "file",
+                fileName = fileName,
+                contentType = "application/octet-stream",
+                open = open,
+                size = size,
+                followRedirects = false,
+                onProgress = { sent, _ -> onProgress(sent) }
+            ).use { resp ->
+                checkResponse(resp, "蓝奏优享上传失败")
+                parseJson(resp).optString("token")
+            }
+        } else {
+            val objectKey = Base64.encodeToString(
+                key.toByteArray(Charsets.UTF_8),
+                Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP
+            )
+            val base = "${ILanzouConstants.QINIU_UPLOAD_HOST}/buckets/${ILanzouConstants.QINIU_BUCKET}/objects/$objectKey/uploads"
+            val uploadId = client.newCall(
+                Request.Builder().url(base)
+                    .apply { auth.forEach { (k, v) -> header(k, v) } }
+                    .post(EMPTY_BODY)
+                    .build()
+            ).execute().use { resp ->
+                checkResponse(resp, "蓝奏优享无法创建分段上传")
+                parseJson(resp).optString("uploadId")
+            }
+            if (uploadId.isBlank()) throw IllegalStateException("蓝奏优享未返回分段上传标识")
+            val parts = JSONArray()
+            var start = 0L
+            while (start < size) {
+                val end = minOf(size, start + QINIU_PART_SIZE)
+                val number = parts.length() + 1
+                val etag = UploadIo.rangePut(
+                    url = "$base/$uploadId/$number",
+                    start = start,
+                    end = end,
+                    open = open,
+                    contentType = "application/octet-stream",
+                    headers = auth,
+                    followRedirects = false,
+                    onProgress = onProgress
+                ).use { resp ->
+                    checkResponse(resp, "蓝奏优享分段上传失败")
+                    parseJson(resp).optString("etag")
+                }
+                if (etag.isBlank()) throw IllegalStateException("蓝奏优享未确认上传分段")
+                parts.put(JSONObject().put("partNumber", number).put("etag", etag))
+                start = end
+            }
+            onProgress(size)
+            val commit = client.newCall(
+                Request.Builder().url("$base/$uploadId")
+                    .apply { auth.forEach { (k, v) -> header(k, v) } }
+                    .post(JSONObject().put("fname", fileName).put("parts", parts).toString().toRequestBody(jsonMediaType))
+                    .build()
+            ).execute().use { resp ->
+                checkResponse(resp, "蓝奏优享无法合并上传分段")
+                parseJson(resp).optString("token")
+            }
+            commit
+        }
+        if (token.isBlank()) throw IllegalStateException("蓝奏优享未返回上传结果")
+        onProgress(size)
+
+        for (attempt in 0 until 30) {
+            if (attempt > 0) delay(1000)
+            val url = buildUrl(
+                ILanzouConstants.UPLOAD_RESULTS,
+                uuid,
+                appToken = null,
+                extra = true,
+                params = listOf("tokenList" to token, "tokenTime" to isoNow())
+            )
+            val json = exec(
+                Request.Builder().url(url).headers(commonHeaders(false)).post(EMPTY_BODY).build()
+            )
+            val first = json.optJSONArray("list")?.optJSONObject(0)
+            if (first?.optInt("status", 0) == 1) {
+                val id = first.optString("fileId")
+                if (id.isBlank()) throw IllegalStateException("蓝奏优享未确认上传文件标识")
+                return@withContext id
+            }
+        }
+        throw IllegalStateException("蓝奏优享仍在处理上传，请稍后刷新目录确认")
+    }
 
     /** 目录重命名（文档 §3.3）。 */
     suspend fun renameFolder(appToken: String, uuid: String, folderId: String, newName: String) = withContext(Dispatchers.IO) {
@@ -330,6 +484,28 @@ class ILanzouApi(
     /** appToken 特殊编码：标准 query 编码后把 %3A 还原为字面冒号。 */
     private fun encodeToken(value: String): String =
         URLEncoder.encode(value, "UTF-8").replace("%3A", ":")
+
+    /** 七牛分段大小（8 MB）：小于它走单个 multipart 请求，更大走分段上传。 */
+    private val QINIU_PART_SIZE = 8L * 1024 * 1024
+
+    private val EMPTY_BODY: RequestBody = ByteArray(0).toRequestBody()
+
+    private fun pad2(value: Int): String = "%02d".format(value)
+
+    /** 服务端只要一个时间戳（用于 tokenTime 去重）。 */
+    private fun isoNow(): String =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            .apply { timeZone = TimeZone.getTimeZone("UTC") }
+            .format(Date())
+
+    /** 七牛不返回 JSON 错误体，失败时只能给 HTTP 状态。 */
+    private fun checkResponse(response: Response, fallback: String) {
+        if (!response.isSuccessful) throw IllegalStateException("$fallback（HTTP ${response.code}）")
+    }
+
+    private fun parseJson(response: Response): JSONObject = runCatching {
+        JSONObject(response.body?.string().orEmpty())
+    }.getOrElse { throw IllegalStateException("蓝奏优享上传响应无法解析") }
 
     private fun commonHeaders(json: Boolean): okhttp3.Headers {
         val builder = okhttp3.Headers.Builder()
