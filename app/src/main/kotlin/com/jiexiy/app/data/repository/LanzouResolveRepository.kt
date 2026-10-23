@@ -33,7 +33,7 @@ import java.net.URI
  *
  * 域名分流：
  * - `lanzn.com` 族（新版蓝奏，ESA 校验）走 [LanzouApi.resolveNewShare] 全新流程，无页面缓存；
- * - 其他蓝奏域（lanzou*/lan[zs]o[ux]）走老流程（页面 + iframe + downprocess + HEAD 探测）。
+ * - 其他蓝奏域（lanzou 族、lan[zs]o[ux]）走老流程（页面 + iframe + downprocess + HEAD 探测）。
  */
 class LanzouResolveRepository(
     private val api: LanzouApi
