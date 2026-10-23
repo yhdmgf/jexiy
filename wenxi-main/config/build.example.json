@@ -1,8 +1,0 @@
-{
-  "controlEnabled": true,
-  "controlUrl": "https://example.com/asterlink/control.json",
-  "githubRepository": "YOUR_NAME/YOUR_REPOSITORY",
-  "applicationId": "com.example.asterlink",
-  "metricsAppKey": "",
-  "metricsChannel": "community"
-}
