@@ -178,6 +178,7 @@ import com.jiexiy.app.ui.screens.AnnouncementScreen
 import com.jiexiy.app.ui.screens.AnnouncementUnreadBadge
 import com.jiexiy.app.ui.screens.BookmarkScreen
 import com.jiexiy.app.ui.screens.DownloadScreen
+import com.jiexiy.app.ui.screens.TransferScreen
 import com.jiexiy.app.ui.screens.FeijiCloudScreen
 import com.jiexiy.app.ui.screens.DriveScreen
 import com.jiexiy.app.data.parse.FeijiAccountStore
@@ -902,10 +903,13 @@ fun MainScreen(
         FeijiCloudScreen(
             account = feijiAccount,
             downloadManager = downloadManager,
-            scrollBehavior = topAppBarScrollBehavior,
             onExit = { showFeijiCloud = false },
             onDownloadStarted = {
                 SnackbarController.show("已加入下载")
+            },
+            onUploadStarted = {
+                showFeijiCloud = false
+                currentTab = MainTab.Download
             }
         )
         return
@@ -1481,9 +1485,9 @@ fun MainScreen(
                                         videoAccountViewModel.removeAll(platform)
                                     }
                                 )
-                                MainTab.Download -> DownloadScreen(
-                                    scrollBehavior,
-                                    downloadViewModel,
+                                MainTab.Download -> TransferScreen(
+                                    scrollBehavior = scrollBehavior,
+                                    viewModel = downloadViewModel,
                                     // 下载调试开关（开发调试菜单）：开启后下载页长按任务可进「调试信息」页
                                     downloadDebug = ThemeController.downloadDebug,
                                     // 深链接进来的直链 / 磁力：预填「添加下载任务」弹窗，由用户确认后入队

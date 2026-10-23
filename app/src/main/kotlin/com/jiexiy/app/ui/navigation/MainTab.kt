@@ -20,11 +20,11 @@ package com.jiexiy.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,6 +42,6 @@ enum class MainTab(
 ) {
     Resolve("解析", Icons.Filled.Link, Icons.Outlined.Link),
     Drive("账号", Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle),
-    Download("下载", Icons.Filled.Download, Icons.Outlined.Download),
+    Download("传输", Icons.Filled.SwapVert, Icons.Outlined.SwapVert),
     Settings("设置", Icons.Filled.Settings, Icons.Outlined.Settings)
 }

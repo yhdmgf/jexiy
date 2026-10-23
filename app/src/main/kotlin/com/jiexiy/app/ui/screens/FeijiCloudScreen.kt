@@ -19,6 +19,8 @@
 package com.jiexiy.app.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,61 +77,36 @@ import com.jiexiy.app.ui.theme.ListGroupGap
 import com.jiexiy.app.ui.theme.listGroupShape
 import com.jiexiy.app.ui.theme.spatialDefault
 import com.jiexiy.app.ui.theme.spatialFast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.DriveFileMove
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.jiexiy.app.data.parse.FeijiAccountStore
+import com.jiexiy.app.data.upload.FeijiUploadManager
 import com.jiexiy.app.ui.SnackbarController
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.AnimatedContent
@@ -158,9 +135,10 @@ import kotlinx.coroutines.launch
 fun FeijiCloudScreen(
     account: FeijiAccountEntity?,
     downloadManager: DownloadManager,
-    scrollBehavior: TopAppBarScrollBehavior,
+    scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
     onExit: () -> Unit,
     onDownloadStarted: () -> Unit = {},
+    onUploadStarted: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -176,7 +154,7 @@ fun FeijiCloudScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var showSearch by rememberSaveable { mutableStateOf(false) }
     var multiSelectMode by remember { mutableStateOf(false) }
-    val selected = remember { mutableStateOf<Set<FeijiApi.File>>(emptySet()) }
+    var selected by remember { mutableStateOf<Set<FeijiApi.File>>(emptySet()) }
     var isOperating by remember { mutableStateOf(false) }
     var showActionSheet by remember { mutableStateOf(false) }
     var actionFile by remember { mutableStateOf<FeijiApi.File?>(null) }
@@ -202,6 +180,28 @@ fun FeijiCloudScreen(
     }
 
     fun currentFolderId(): String = path.value.lastOrNull()?.first ?: "0"
+
+    val uploadPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        var added = 0
+        uris.forEach { uri ->
+            val info = FeijiUploadManager.describe(context, uri) ?: return@forEach
+            FeijiUploadManager.enqueue(
+                context = context,
+                uri = uri,
+                fileName = info.first,
+                size = info.second,
+                folderId = currentFolderId()
+            )
+            added++
+        }
+        if (added > 0) {
+            SnackbarController.show("已加入 $added 个上传任务")
+            onUploadStarted()
+        }
+    }
 
     suspend fun load(folderId: String) {
         loading = true
@@ -274,7 +274,7 @@ fun FeijiCloudScreen(
     fun goBack() {
         if (multiSelectMode) {
             multiSelectMode = false
-            selected.clear()
+            selected = emptySet()
         } else if (path.value.isNotEmpty()) {
             val p = path.value
             val parentFolderId = if (p.size <= 1) "0" else p[p.size - 2].first
@@ -318,7 +318,7 @@ fun FeijiCloudScreen(
                             if (multiSelectMode) {
                                 IconButton(onClick = {
                                     multiSelectMode = false
-                                    selected.clear()
+                                    selected = emptySet()
                                 }) {
                                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "取消选择")
                                 }
@@ -340,7 +340,7 @@ fun FeijiCloudScreen(
                                     Text(if (selected.size == displayFiles.size) "取消全选" else "全选")
                                 }
                             } else {
-                                IconButton(onClick = goBack) {
+                                IconButton(onClick = { goBack() }) {
                                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                                 }
                                 Column(modifier = Modifier.weight(1f)) {
@@ -366,7 +366,10 @@ fun FeijiCloudScreen(
                                         else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                CloudAddMenu(onCreateFolder = { showCreateFolder = true })
+                                CloudAddMenu(
+                                    onCreateFolder = { showCreateFolder = true },
+                                    onUploadFile = { uploadPicker.launch(arrayOf("*/*")) }
+                                )
                             }
                         }
                         if (!multiSelectMode) {
@@ -501,7 +504,6 @@ fun FeijiCloudScreen(
         ScrollToTopButton(
             listState = listState,
             modifier = Modifier
-                .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = if (multiSelectMode) 104.dp else 16.dp)
         )
 
@@ -510,7 +512,7 @@ fun FeijiCloudScreen(
             visible = multiSelectMode,
             enter = slideInVertically(spatialDefault()) { it } + fadeIn(effectsDefault()),
             exit = slideOutVertically(spatialFast()) { it } + fadeOut(effectsFast()),
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier.padding(top = 16.dp, bottom = if (multiSelectMode) 104.dp else 16.dp)
         ) {
             MultiSelectBar(
                 busy = isOperating,
@@ -523,7 +525,7 @@ fun FeijiCloudScreen(
                             runCatching { downloadTargets(targets, "已选 ${targets.size} 项") }
                             isOperating = false
                             multiSelectMode = false
-                            selected.clear()
+                            selected = emptySet()
                             onDownloadStarted()
                         }
                     },
@@ -531,11 +533,11 @@ fun FeijiCloudScreen(
                         scope.launch {
                             isOperating = true
                             runCatching {
-                                shareResult = FeijiApi.share(token, uuid, selected.toList())
+                                shareResult = FeijiApi.share(token, uuid, selected.toList()).toModel()
                             }
                             isOperating = false
                             multiSelectMode = false
-                            selected.clear()
+                            selected = emptySet()
                         }
                     },
                     MultiSelectAction("移动", Icons.Outlined.DriveFileMove, MaterialTheme.colorScheme.primary) {
@@ -544,13 +546,12 @@ fun FeijiCloudScreen(
                             runCatching { FeijiApi.move(token, uuid, selected.toList(), "0") }
                             isOperating = false
                             multiSelectMode = false
-                            selected.clear()
+                            selected = emptySet()
                             load(currentFolderId())
                         }
                     },
                     MultiSelectAction("删除", Icons.Outlined.Delete, MaterialTheme.colorScheme.error) {
-                        showBatchActions = true
-                        batchInitial = BatchStep.DELETE
+                        showDeleteConfirm = true
                     }
                 )
             )
@@ -580,12 +581,12 @@ fun FeijiCloudScreen(
                     onDownloadStarted()
                 }
             },
-            onShare = { pwd, expiredType ->
+            onShare = { _, pwd, expiredType ->
                 val f = actionFile ?: return@FileActionSheet
                 scope.launch {
                     isOperating = true
                     runCatching {
-                        shareResult = FeijiApi.share(token, uuid, listOf(f), codes = pwd, validDays = expiredType)
+                        shareResult = FeijiApi.share(token, uuid, listOf(f), codes = pwd, validDays = expiredType).toModel()
                     }
                     isOperating = false
                 }
@@ -640,20 +641,20 @@ fun FeijiCloudScreen(
                     runCatching { downloadTargets(targets, "已选 ${targets.size} 项") }
                     isOperating = false
                     multiSelectMode = false
-                    selected.clear()
+                    selected = emptySet()
                     showBatchActions = false
                     onDownloadStarted()
                 }
             },
-            onShare = { pwd, expiredType ->
+            onShare = { _, pwd, expiredType ->
                 scope.launch {
                     isOperating = true
                     runCatching {
-                        shareResult = FeijiApi.share(token, uuid, selected.toList(), codes = pwd, validDays = expiredType)
+                        shareResult = FeijiApi.share(token, uuid, selected.toList(), codes = pwd, validDays = expiredType).toModel()
                     }
                     isOperating = false
                     multiSelectMode = false
-                    selected.clear()
+                    selected = emptySet()
                     showBatchActions = false
                 }
             },
@@ -675,7 +676,7 @@ fun FeijiCloudScreen(
                             runCatching { FeijiApi.move(token, uuid, selected.toList(), targetFolderId) }
                             isOperating = false
                             multiSelectMode = false
-                            selected.clear()
+                            selected = emptySet()
                             onDone()
                             load(currentFolderId())
                         }
@@ -709,7 +710,7 @@ fun FeijiCloudScreen(
                     showDeleteConfirm = false
                     actionFile = null
                     multiSelectMode = false
-                    selected.clear()
+                    selected = emptySet()
                     load(currentFolderId())
                 }
             }
@@ -865,6 +866,16 @@ private fun FeijiMoveStep(
 }
 
 // ---------- 辅助 ----------
+
+
+/** 接口分享信息 → 通用分享弹窗模型 */
+private fun FeijiApi.ShareInfo.toModel(): ShareInfo = ShareInfo(
+    shareUrl = shareUrl,
+    passcode = passcode,
+    pwdId = "",
+    title = title,
+    expiredType = 0
+)
 
 /** 将 [FeijiApi.File] 转换为 [ShareFile]，供 [ShareFileRow] 使用 */
 private fun FeijiApi.File.toShareFile(): ShareFile = ShareFile(
