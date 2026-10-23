@@ -66,6 +66,7 @@ import com.jiexiy.app.data.download.DownloadManager
 import com.jiexiy.app.data.download.DownloadPlatform
 import com.jiexiy.app.data.network.FeijiApi
 import com.jiexiy.app.data.network.model.DownloadLink
+import com.jiexiy.app.data.network.model.ShareExpire
 import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.data.network.model.ShareInfo
 import com.jiexiy.app.ui.items.MultiSelectAction
@@ -618,7 +619,10 @@ fun FeijiCloudScreen(
                 scope.launch {
                     isOperating = true
                     runCatching {
-                        shareResult = FeijiApi.share(token, uuid, listOf(f), codes = pwd, validDays = expiredType).toModel()
+                        val days = ShareExpire.daysOrNull(expiredType) ?: 0
+                        shareResult = FeijiApi.share(
+                            token, uuid, listOf(f), codes = pwd, validDays = days
+                        ).toModel(expiredType)
                     }
                     isOperating = false
                 }
@@ -682,7 +686,10 @@ fun FeijiCloudScreen(
                 scope.launch {
                     isOperating = true
                     runCatching {
-                        shareResult = FeijiApi.share(token, uuid, selected.toList(), codes = pwd, validDays = expiredType).toModel()
+                        val days = ShareExpire.daysOrNull(expiredType) ?: 0
+                        shareResult = FeijiApi.share(
+                            token, uuid, selected.toList(), codes = pwd, validDays = days
+                        ).toModel(expiredType)
                     }
                     isOperating = false
                     multiSelectMode = false
@@ -937,12 +944,12 @@ private fun FeijiMoveStep(
 
 
 /** 接口分享信息 → 通用分享弹窗模型 */
-private fun FeijiApi.ShareInfo.toModel(): ShareInfo = ShareInfo(
+private fun FeijiApi.ShareInfo.toModel(expiredType: Int): ShareInfo = ShareInfo(
     shareUrl = shareUrl,
     passcode = passcode,
     pwdId = "",
     title = title,
-    expiredType = 0
+    expiredType = expiredType
 )
 
 /** 将 [FeijiApi.File] 转换为 [ShareFile]，供 [ShareFileRow] 使用 */

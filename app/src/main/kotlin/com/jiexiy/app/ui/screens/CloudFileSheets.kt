@@ -932,6 +932,7 @@ internal fun ShareResultDialog(
         info.shareUrl.contains("xunlei.com") -> "迅雷网盘"
         info.shareUrl.contains("baidu.com") -> "百度网盘"
         info.shareUrl.contains("115") -> "115网盘"
+        info.shareUrl.contains("feijipan.com") || info.shareUrl.contains("feijix.com") -> "小飞机网盘"
         else -> "夸克网盘"
     }
     val shareText = buildString {

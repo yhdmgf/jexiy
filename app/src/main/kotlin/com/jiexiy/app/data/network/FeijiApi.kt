@@ -387,7 +387,7 @@ object FeijiApi {
         if (shareUrl.isBlank()) throw IOException("小飞机未返回分享地址")
         ShareInfo(
             shareUrl = shareUrl,
-            passcode = json.optString("code").ifBlank { code },
+            passcode = code,
             title = files.firstOrNull()?.name ?: "小飞机分享"
         )
     }
