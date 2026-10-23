@@ -217,6 +217,16 @@ fun FeijiCloudScreen(
         loading = false
     }
 
+    // 进入页面立即加载根目录（account 就绪后触发一次）
+    LaunchedEffect(account?.id, account?.uuid, account?.userId, token) {
+        if (token.isBlank()) {
+            loading = false
+            error = "请先登录小飞机网盘"
+        } else {
+            load(currentFolderId())
+        }
+    }
+
     suspend fun enqueueFile(file: FeijiApi.File, fileName: String) {
         val spec = FeijiApi.download(token, uuid, userId, file.id)
         downloadManager.enqueue(

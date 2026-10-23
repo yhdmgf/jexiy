@@ -435,7 +435,7 @@ internal fun AnnouncementUnreadBadge(count: Int, modifier: Modifier = Modifier) 
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = if (count > 99) "99+" else count.toString(),
+                text = count.toString(),
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 10.sp,
                 lineHeight = 12.sp,

@@ -463,15 +463,15 @@ object GopeedEngine {
             if (kernel == Kernel.SELF) {
                 if (port <= 0) throw IllegalStateException("自研内核没有返回监听端口")
                 remotePort = port
-                // 等 HTTP 服务真正可连：start() 返回端口时监听可能还没就绪，
-                // 立刻建任务会拿到连接失败/非 JSON 响应（表现为「核心接口异常」）
+                // FastCore 内核没有 /api/v1/info 路由（Go http 对未知路由回 404 page not found），
+                // 就绪探测改走它必然存在的 /api/v1/tasks（空 filter 返回全部任务）。
                 val token = remoteToken.orEmpty()
                 val deadline = System.currentTimeMillis() + 8_000L
                 var ready = false
                 while (System.currentTimeMillis() < deadline) {
                     ready = runCatching {
                         val req = Request.Builder()
-                            .url("http://127.0.0.1:$port/api/v1/info")
+                            .url("http://127.0.0.1:$port/api/v1/tasks")
                             .header("X-Api-Token", token)
                             .build()
                         localClient.newCall(req).execute().use { it.isSuccessful }
@@ -585,6 +585,8 @@ object GopeedEngine {
      *   都不成立 ⇒ 循环永远不退出，等于**永远做种**。真正能立刻停的是 `seedTime=1`（秒）。
      */
     fun applyRuntimeConfig(context: Context) {
+        // FastCore 自研内核没有 /api/v1/config 路由，跳过（它的 downloadConfig 在启动配置里下发）
+        if (loadedKernel == Kernel.SELF) return
         val cfg = invoke("GET", "/api/v1/config").optJSONObject("data")
             ?: throw IllegalStateException("引擎没有返回配置")
         val maxRunning = maxRunningOf(context)
@@ -614,6 +616,8 @@ object GopeedEngine {
      */
     fun applyMaxRunning(context: Context): Int? {
         if (_state.value != State.RUNNING) return null
+        // FastCore 自研内核没有 /api/v1/config 路由，并发上限由启动配置决定，跳过下发
+        if (loadedKernel == Kernel.SELF) return maxRunningOf(context)
         val value = maxRunningOf(context)
         val cfg = invoke("GET", "/api/v1/config").optJSONObject("data")
             ?: throw IllegalStateException("引擎没有返回配置")
@@ -658,17 +662,26 @@ object GopeedEngine {
         val speed: Long
     )
 
-    /** 取单个任务的运行态（GET /api/v1/tasks/{id}/status） */
+    /** 取单个任务的运行态（官方/Gopeed：GET /api/v1/tasks/{id}/status；FastCore 自研内核：GET /api/v1/tasks/{id}） */
     fun taskStatus(id: String): TaskView {
-        val data = invoke("GET", "/api/v1/tasks/$id/status").optJSONObject("data")
-            ?: throw IllegalStateException("引擎没有返回任务状态")
+        // FastCore 没有 /status 子路由（Go 未知路由回 404），直接读任务详情
+        val data = if (loadedKernel == Kernel.SELF) {
+            invoke("GET", "/api/v1/tasks/$id").optJSONObject("data")
+        } else {
+            invoke("GET", "/api/v1/tasks/$id/status").optJSONObject("data")
+        } ?: throw IllegalStateException("引擎没有返回任务状态")
+        // FastCore 的进度字段在 data.progress 里，官方 Gopeed 在 data 顶层；两处都兜底读
+        val progress = data.optJSONObject("progress")
+        val downloaded = data.optLong("downloaded").let { if (it > 0) it else progress?.optLong("downloaded") ?: 0L }
+        val total = data.optLong("total").let { if (it > 0) it else progress?.optLong("total") ?: 0L }
+        val speed = data.optLong("speed").let { if (it > 0) it else progress?.optLong("speed") ?: 0L }
         return TaskView(
             id = id,
             name = "",
             status = data.optString("status"),
-            downloaded = data.optLong("downloaded"),
-            total = data.optLong("total"),
-            speed = data.optLong("speed")
+            downloaded = downloaded,
+            total = total,
+            speed = speed
         )
     }
 
@@ -756,8 +769,11 @@ object GopeedEngine {
         invoke("DELETE", "/api/v1/tasks/$id")
     }
 
-    /** 引擎版本（GET /api/v1/info → data.version） */
-    fun engineVersion(): String = invoke("GET", "/api/v1/info").optJSONObject("data")?.optString("version") ?: ""
+    /** 引擎版本（官方/Gopeed：GET /api/v1/info → data.version；FastCore 自研内核没有 /api/v1/info，返回空串） */
+    fun engineVersion(): String {
+        if (loadedKernel == Kernel.SELF) return ""
+        return invoke("GET", "/api/v1/info").optJSONObject("data")?.optString("version") ?: ""
+    }
 
     // ---------- 内部实现 ----------
 
@@ -823,8 +839,13 @@ object GopeedEngine {
     }
 
     /**
-     * 自研内核的启动配置：与官方内核不同，它需要监听本地 HTTP（apiEnable 在旧版是开关，
-     * 新版用 network/address 直接给监听地址），并带一个 apiToken 供 X-Api-Token 校验。
+     * 自研内核（StarSea FastCore）的启动配置，字段与星海完全对齐：
+     * `network/address` 决定监听地址（FastCore 由此开启本地 HTTP REST，**没有 apiEnable 字段**）。
+     *
+     * ★ 之前给 FastCore 传了官方 Gopeed 才有的 `apiEnable`，又用官方路由
+     *   `/api/v1/info` / `/api/v1/config` / `/api/v1/tasks/{id}/status` 调用它——
+     *   FastCore 全都没有这些路由，Go 对未知路径回 `404 page not found`，
+     *   表现为「用自研内核下载就 404、换官方内核就正常」。
      */
     private fun buildSelfConfig(context: Context, downloadDir: File): JSONObject {
         // 自研内核用独立存储目录：官方内核的 bolt 库 schema 可能不兼容，混用会导致启动/接口异常
@@ -835,8 +856,6 @@ object GopeedEngine {
             put("address", "127.0.0.1:0")
             put("storage", "bolt")
             put("storageDir", root.absolutePath)
-            // 自研内核的 HTTP REST 需要显式开启（官方 Gopeed 的 StartConfig 字段）
-            put("apiEnable", true)
             put("apiToken", remoteToken.orEmpty())
             put("refreshInterval", 200)
             put(

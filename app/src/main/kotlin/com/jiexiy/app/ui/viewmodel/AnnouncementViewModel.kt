@@ -133,35 +133,14 @@ class AnnouncementViewModel(private val readStore: AnnouncementReadStore) : View
      *   正在看的那条顺带重拉（列表刷新时它一般不可见，返回详情页时就已经是新数据）。
      */
     fun refresh() {
-        detailCache.clear()
-        reloadCurrentDetail()
+        // 刷新列表不再重拉详情：详情接口会让 viewCount +1，用户反馈「按刷新就读一次」很烦。
+        // 已读状态完全由本地 AnnouncementReadStore 控制，列表刷新不影响已读。
         loadFirstPage(refreshing = true)
     }
 
-    /**
-     * 强制重拉「当前正在看的那条详情」（详情页右上角刷新 / 列表刷新顺带更新）。
-     *
-     * ★ 刻意**不走 [openDetail]**：那条路会把状态切成 `Loading`，页面会闪一下加载态；
-     *   这里保留旧内容，拿到新数据再整体替换；失败只弹 Snackbar，不把已有内容换成错误页
-     *   （用户主动刷新失败时，旧内容仍然是有用的）。
-     *
-     * 注意：详情接口会让 viewCount +1，所以主动刷新的代价是浏览量再 +1 —— 这是预期行为。
-     */
+    /** 详情页右上角刷新：已禁用——详情接口会让 viewCount +1，刷新不再重拉（与列表刷新同口径） */
     fun reloadCurrentDetail() {
-        val id = (_detail.value as? DetailUiState.Loaded)?.item?.id ?: return
-        detailCache.remove(id)
-        viewModelScope.launch {
-            when (val result = AnnouncementApi.fetchDetail(id)) {
-                is AnnouncementApi.Result.Failure ->
-                    SnackbarController.show("公告刷新失败：${result.message}")
-                is AnnouncementApi.Result.Success -> {
-                    val item = result.data
-                    detailCache[id] = item
-                    _detail.value = DetailUiState.Loaded(item)
-                    backfillListItem(id, item)
-                }
-            }
-        }
+        // no-op：用户反馈「按刷新就会读一次」，已读后不再重复请求详情接口
     }
 
     private fun loadFirstPage(refreshing: Boolean) {

@@ -106,8 +106,10 @@ fun FeijiLoginScreen(
     var showDebug by remember { mutableStateOf(false) }
     var cookieInput by remember { mutableStateOf("") }
     var isSavingManual by remember { mutableStateOf(false) }
-    // 进入登录页时页面里已经存在的凭证：它不算「本次登录」，不触发自动保存
+    // 基线：页面加载完成时已有的登录态（WebView 残留旧 Cookie/localStorage）不算本次登录
     var baseline by remember { mutableStateOf<String?>(null) }
+    // 页面是否已完成首次加载（加载完成前不采样，避免页面跳转中读到中间态）
+    var pageReady by remember { mutableStateOf(false) }
 
     val webView = remember {
         WebView(context).apply {
@@ -130,10 +132,11 @@ fun FeijiLoginScreen(
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     isLoading = false
+                    pageReady = true
                     if (baseline == null) {
                         scope.launch {
                             val existing = readWebCredentials(view ?: return@launch)
-                            if (existing != null && baseline == null) baseline = existing.encode()
+                            if (baseline == null) baseline = existing?.encode()
                         }
                     }
                 }
@@ -147,28 +150,30 @@ fun FeijiLoginScreen(
         onDispose { webView.destroy() }
     }
 
+    /** 检测到 appToken 即保存成功（不先打账号接口：uuid 未绑定或网络抖动都会让校验失败，反而漏掉自动保存） */
     suspend fun saveCredential(credential: WebCredential): Boolean {
+        if (credential.token.isBlank()) return false
         val uuid = credential.uuid.ifBlank { FeijiApi.getUuid() }
-        val info = FeijiApi.account(credential.token, uuid)
-        FeijiAccountStore.save(context, credential.token, uuid, info, newAccount)
+        FeijiAccountStore.save(
+            context,
+            token = credential.token,
+            uuid = uuid,
+            info = FeijiApi.Account(name = "", used = 0, total = 0),
+            newAccount = newAccount
+        )
         return true
     }
 
-    // 自动登录检测：只接受「相对基线发生变化」的凭证，并且必须通过真实接口校验
+    // 自动登录检测：页面就绪后，读到与基线不同的 appToken 就立即保存（基线为空=之前未登录，读到即保存）
     rememberWebLoginAutoDetect(
         sampleCredential = {
+            if (!pageReady) return@rememberWebLoginAutoDetect null
             val current = readWebCredentials(webView) ?: return@rememberWebLoginAutoDetect null
             val encoded = current.encode()
-            if (baseline == null) {
-                baseline = encoded
-                null
-            } else if (encoded == baseline) {
-                null
-            } else {
-                encoded
-            }
+            val b = baseline
+            if (b == null) encoded else if (encoded == b) null else encoded
         },
-        isPlausible = { decodeCredential(it) != null },
+        isPlausible = { decodeCredential(it)?.token?.isNotBlank() == true },
         validateAndSave = { encoded ->
             val credential = decodeCredential(encoded) ?: return@rememberWebLoginAutoDetect false
             saveCredential(credential)

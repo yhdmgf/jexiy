@@ -49,6 +49,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Delete
@@ -112,6 +113,7 @@ import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
 import com.jiexiy.app.util.PermissionState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -232,6 +234,43 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var cloudRelease by remember { mutableStateOf<KernelProvisioner.KernelRelease?>(null) }
     /** 「GitHub 下载」的二级菜单：直链 / 镜像站 */
     var showGithubDialog by remember { mutableStateOf(false) }
+
+    // ---------- 更新公告（下载引擎页横幅） ----------
+    var gopeedUpdate by remember { mutableStateOf<UpdateBanner?>(null) }
+    var selfUpdate by remember { mutableStateOf<UpdateBanner?>(null) }
+    // 进页面时对比云端/本地版本：有更新才显示公告横幅（本地没装/云端拉取失败都静默）
+    LaunchedEffect(Unit) {
+        coroutineScope {
+            // 官方内核：云端版本与本地已装版本不同时才提示
+            launch {
+                KernelProvisioner.loadRelease().onSuccess { r ->
+                    val local = settings.gopeedKernelVersion
+                    if (local.isNotBlank() && r.tagName != local) {
+                        gopeedUpdate = UpdateBanner(
+                            version = r.tagName,
+                            body = r.body,
+                            panUrl = r.panUrl,
+                            onDownload = { cloudRelease = r }
+                        )
+                    }
+                }
+            }
+            // 自研内核：云端版本与本地已装版本不同时才提示
+            launch {
+                SelfKernelProvisioner.loadRelease().onSuccess { r ->
+                    val local = settings.selfKernelVersion
+                    if (local.isNotBlank() && r.version != local) {
+                        selfUpdate = UpdateBanner(
+                            version = r.version,
+                            body = r.body,
+                            panUrl = r.panUrl,
+                            onDownload = { installSelfKernel() }
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun refreshSoInfo() {
         val so = GopeedEngine.soFile(context)
@@ -465,6 +504,21 @@ fun DownloadEngineScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     error = speedError,
                     onRun = { runSpeedTest() }
                 )
+
+                // 更新公告横幅：只显示「当前选中内核」的更新（云端版本与本地已装不同才出现），
+                // 内置下载器没有对应内核公告，不显示；与右上角 qlyyz.xyz 公告互不相干。
+                val activeBanner = when {
+                    gopeedOn -> gopeedUpdate
+                    selfOn -> selfUpdate
+                    else -> null
+                }
+                if (activeBanner != null) {
+                    KernelUpdateBanner(
+                        banner = activeBanner,
+                        engineLabel = if (selfOn) "自研内核" else "官方 Gopeed 内核",
+                        onDownload = activeBanner.onDownload
+                    )
+                }
 
                 Text(
                     "下载引擎决定新任务由谁来执行，已存在的任务不受影响。",
@@ -1465,3 +1519,81 @@ private fun gopeedStateLabel(state: GopeedEngine.State): String = when (state) {
 private fun gopeedNeedsRestart(message: String): Boolean =
     message.contains("libgojni.so") || message.contains("NoClassDefFoundError") ||
         message.contains("Libgopeed") || message.contains("go.Seq")
+
+/** 更新公告横幅数据（下载引擎页用）：云端版本、公告正文、网盘链接、下载入口回调 */
+private data class UpdateBanner(
+    val version: String,
+    val body: String,
+    val panUrl: String?,
+    val onDownload: () -> Unit
+)
+
+/**
+ * 内核更新公告横幅：只在「选了内核且云端版本 != 本地已装版本」时显示。
+ * 内置下载器不显示；与右上角 qlyyz.xyz 公告互不相干。
+ */
+@Composable
+private fun KernelUpdateBanner(
+    banner: UpdateBanner,
+    engineLabel: String,
+    onDownload: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.Campaign,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "$engineLabel 有新版本",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = banner.version,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            if (banner.body.isNotBlank()) {
+                Text(
+                    text = banner.body.take(500),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Text(
+                text = if (banner.panUrl != null) "支持网盘下载（免登录）" else "仅直链下载",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Button(
+                onClick = onDownload,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Download,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(if (banner.panUrl != null) "网盘下载" else "下载更新")
+            }
+        }
+    }
+}

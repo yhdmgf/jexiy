@@ -225,6 +225,21 @@ fun DriveScreen(
     val feijiAccount by FeijiAccountStore.account.collectAsState()
     val feijiAccounts by FeijiAccountStore.accounts.collectAsState()
     val feijiToken = feijiAccount?.appToken
+    // 小飞机配额（账号 + 容量），登录后拉取一次
+    var feijiQuota by remember { mutableStateOf<FeijiApi.Account?>(null) }
+    LaunchedEffect(feijiAccount?.id, feijiAccount?.appToken, feijiAccount?.uuid) {
+        val account = feijiAccount ?: return@LaunchedEffect
+        if (account.appToken.isBlank()) {
+            feijiQuota = null
+            return@LaunchedEffect
+        }
+        val uuid = account.uuid.ifBlank { runCatching { FeijiApi.getUuid() }.getOrNull() }.orEmpty()
+        if (uuid.isBlank()) {
+            feijiQuota = null
+            return@LaunchedEffect
+        }
+        feijiQuota = runCatching { FeijiApi.account(account.appToken, uuid) }.getOrNull()
+    }
     var showQuarkSheet by remember { mutableStateOf(false) }
     var showUCSheet by remember { mutableStateOf(false) }
     var showXunleiSheet by remember { mutableStateOf(false) }
@@ -620,6 +635,7 @@ fun DriveScreen(
                     FeijiDriveCard(
                         loggedIn = !feijiToken.isNullOrBlank(),
                         account = feijiAccount,
+                        quota = feijiQuota,
                         onClick = {
                             if (feijiToken == null) onFeijiLogin() else onFeijiCloud()
                         },
@@ -899,6 +915,7 @@ fun DriveScreen(
 private fun FeijiDriveCard(
     loggedIn: Boolean,
     account: FeijiAccountEntity?,
+    quota: FeijiApi.Account? = null,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     /** 已登录时右侧「三个点」更多按钮；null 则不显示 */
@@ -936,11 +953,31 @@ private fun FeijiDriveCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
-                Text(
-                    text = if (loggedIn) "已登录 · 点击浏览文件" else "未登录，点击登录",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (loggedIn && quota != null && quota.total > 0) {
+                    Text(
+                        text = "已用 ${formatBytes(quota.used)} / ${formatBytes(quota.total)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    jexiyWavyProgress(
+                        progress = {
+                            (quota.used.toFloat() / quota.total.toFloat()).coerceIn(0f, 1f)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        waving = false
+                    )
+                } else {
+                    Text(
+                        text = if (loggedIn) "已登录 · 点击浏览文件" else "未登录，点击登录",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             // ★ 与 DriveAccountCardContent 的尾部逻辑保持一致
             when {

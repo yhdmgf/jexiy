@@ -141,6 +141,20 @@ class SettingsRepository(context: Context) {
             prefs.edit().putString("download_engine", value).apply()
         }
 
+    /** 已导入的官方 Gopeed 内核版本（导入成功时写入；空串 = 还没导入过） */
+    var gopeedKernelVersion: String
+        get() = prefs.getString("gopeed_kernel_version", "")
+        set(value) {
+            prefs.edit().putString("gopeed_kernel_version", value).apply()
+        }
+
+    /** 已导入的自研内核版本（导入成功时写入；空串 = 还没导入过） */
+    var selfKernelVersion: String
+        get() = prefs.getString("self_kernel_version", "")
+        set(value) {
+            prefs.edit().putString("self_kernel_version", value).apply()
+        }
+
     /** 夸克取链方式：true=免转存（直接换下载直链，不写入网盘，默认）；false=先转存到临时目录再取链 */
     var quarkNoSaveDownload: Boolean
         get() = prefs.getBoolean("quark_no_save_download", true)

@@ -149,6 +149,8 @@ object KernelProvisioner {
         val tagName: String,
         /** Release 说明里命中的「网盘下载」链接；没有该条目时为 null（弹窗里就不显示「网盘自动下载」） */
         val panUrl: String?,
+        /** Release 说明正文（公告内容）：界面在「有更新」时展示 */
+        val body: String,
         /** 本机 ABI 对应的包名，形如 `libgopeed-arm64-v8a.aar` */
         val assetName: String,
         /** 包大小（字节）；0 = 未知 */
@@ -272,6 +274,7 @@ object KernelProvisioner {
             KernelRelease(
                 tagName = release.tagName,
                 panUrl = UpdateChecker.netdiskDownloadUrl(release.body),
+                body = release.body,
                 assetName = asset.name,
                 assetSize = asset.size,
                 directUrl = asset.downloadUrl,
@@ -353,6 +356,8 @@ object KernelProvisioner {
                 // 导入成功：临时包与分片一起清掉（内核已经解到私有目录，这两样都没用了）
                 runCatching { chunkDir.deleteRecursively() }
                 runCatching { target.delete() }
+                // 记录已导入的本地内核版本：下载引擎页用它跟云端对比，版本相同就不提示更新公告
+                runCatching { SettingsRepository(appContext).gopeedKernelVersion = release.tagName }
                 _phase.value = Phase.Done(release.assetName, soBytes)
                 Log.d(TAG, "内核已导入：${release.assetName} ${bytes}B → libgojni.so ${soBytes}B")
             } catch (e: CancellationException) {
