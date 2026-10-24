@@ -40,6 +40,26 @@ object BaiduConstants {
     /** 百度网盘统一 app_id */
     const val APP_ID = "250528"
 
+    // ---------- 上传（对齐 wenxi 的 baidu.dart） ----------
+
+    /** 上传预创建：提交 block_list，重复文件直接返回 fs_id（return_type=2） */
+    const val PRECREATE_URL = "https://pan.baidu.com/api/precreate"
+
+    /** 上传提交：分段全部上传成功后把文件正式入库 */
+    const val CREATE_URL = "https://pan.baidu.com/api/create"
+
+    /** 上传节点发现（返回 servers / bak_servers / host） */
+    const val LOCATE_UPLOAD_URL = "https://d.pcs.baidu.com/rest/2.0/pcs/file"
+
+    /** 单分段上传路径（拼在节点主机后） */
+    const val SUPERFILE_PATH = "/rest/2.0/pcs/superfile2"
+
+    /** 上传分段大小：服务端硬校验 4 MB，块 MD5 必须按这个长度切 */
+    const val UPLOAD_CHUNK_SIZE = 4L * 1024 * 1024
+
+    /** 文件前 256 KB 的 MD5（slice-md5），服务端用它判断整文件是否已存在 */
+    const val UPLOAD_PREFIX_SIZE = 256L * 1024
+
     /** 临时转存目录名（对齐抓包） */
     const val TEMP_DIR_NAME = "解析云临时转存"
 

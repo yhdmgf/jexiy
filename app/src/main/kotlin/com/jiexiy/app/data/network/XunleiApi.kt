@@ -32,6 +32,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.security.MessageDigest
 import kotlin.random.Random
 
@@ -993,63 +994,93 @@ class XunleiApi(
         return "1.$h"
     }
 
-    private fun md5Hex(input: String): String {
-        val digest = MessageDigest.getInstance("MD5").digest(input.toByteArray())
         return digest.joinToString("") { "%02x".format(it) }
     }
 
     /**
-     * 迅雷中文口令（如「张三丰资源」）→ 带提取码的分享链接（免登录）。
+     * 上传文件（`drive/v1/files` 创建 + 块哈希聚合 gcid + S3 v4 可断点续传）：
      *
-     * 口令是「分享链接 + 提取码」的打包形式：把口令当关键词打 shoulei 的搜索跳转接口，
-     * `ext.kouling_type == "share_page"` 时 `location` 就是带 `pwd` 的分享页地址（明文，无需解密）；
-     * 没有对应资源时只返回 `search_url`，这里按「口令无效」抛出。
-     * 纯逻辑（判定 / 拼 URL / 解 location）在 [XunleiKouling]，便于单测。
+     * 1. 按 [min] 0x40000 [max] 0x200000 自适应的块大小逐块算 SHA-1；
+     * 2. 把所有块摘要再串起来做一次 SHA-1，得到服务端要求的聚合校验值 gcid（大写十六进制）；
+     * 3. 以 gcid 作为 `hash` 创建 resumable 文件，服务端命中已有内容就跳过传输；
+     * 4. 未命中则用 `resumable.params` 下发的 STS 凭据走 S3 v4 直传。
+     *
+     * @param open 打开文件的 [start, end) 输入流（算块哈希与分片上传都会重新调用）
+     * @param onProgress 已传输字节数
+     * @return 新文件的 id
      */
-    suspend fun parseKouling(keyword: String): String = withContext(Dispatchers.IO) {
-        val request = Request.Builder()
-            .url(XunleiKouling.buildJumpUrl(keyword))
-            .header("User-Agent", XunleiKouling.USER_AGENT)
-            .header("Accept", "*/*")
-            .header("Origin", XunleiKouling.ORIGIN)
-            .header("Referer", XunleiKouling.REFERER)
-            .header("Accept-Language", "zh-CN")
-            .get()
-            .build()
-        client.newCall(request).execute().use { resp ->
-            val body = resp.body?.string().orEmpty()
-            if (!resp.isSuccessful) throw IllegalStateException("口令解析失败（HTTP ${resp.code}）")
-            val json = runCatching { JSONObject(body) }.getOrNull()
-                ?: throw IllegalStateException("口令解析失败：响应格式异常")
-            val type = json.optJSONObject("ext")?.optString("kouling_type").orEmpty()
-            if (type != "share_page") throw IllegalStateException("口令「$keyword」没有对应的网盘分享")
-            XunleiKouling.shareUrlFromLocation(json.optString("location"))
-                ?: throw IllegalStateException("口令「$keyword」没有对应的网盘分享")
+    suspend fun uploadFile(
+        parentId: String,
+        fileName: String,
+        size: Long,
+        accessToken: String,
+        deviceId: String,
+        captchaToken: String,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("迅雷不支持上传空文件")
+
+        var blockSize = 0x40000L
+        while (size / blockSize > 0x200 && blockSize < 0x200000L) blockSize *= 2
+
+        // 逐块 SHA-1 后聚合一次：块边界参与校验，客户端重传不会误判成秒传
+        val blockHashes = ArrayList<ByteArray>()
+        for (start in 0L until size step blockSize) {
+            blockHashes.add(sha1Bytes(open(start, minOf(size, start + blockSize))))
         }
+        val gcid = sha1Bytes(blockHashes.toByteArray()).joinToString("") { "%02X".format(it) }
+
+        val data = panCall(captchaToken, deviceId, "POST:/drive/v1/files", { token ->
+            panRequest(
+                XunleiConstants.FILES_URL,
+                accessToken,
+                deviceId,
+                token,
+                JSONObject()
+                    .put("kind", "drive#file")
+                    .put("parent_id", parentId)
+                    .put("name", fileName)
+                    .put("size", size)
+                    .put("hash", gcid)
+                    .put("upload_type", "UPLOAD_TYPE_RESUMABLE")
+                    .put("space", "")
+                    .toString()
+            )
+        }) { it }
+        val id = data.optString("id").takeIf { it.isNotBlank() }
+            ?: data.optJSONObject("file")?.optString("id").orEmpty()
+        if (id.isBlank()) throw IllegalStateException("迅雷未创建上传任务")
+
+        val params = data.optJSONObject("resumable")?.optJSONObject("params").orNull()
+        if (params != null && !params.isEmpty()) {
+            S3v4Uploader.upload(
+                endpoint = params.optString("endpoint"),
+                bucket = params.optString("bucket"),
+                objectKey = params.optString("key"),
+                accessKey = params.optString("access_key_id"),
+                secretKey = params.optString("access_key_secret"),
+                region = "xunlei",
+                token = params.optString("security_token"),
+                size = size,
+                contentType = "application/octet-stream",
+                open = { start, end -> open(start, end) },
+                onProgress = onProgress
+            )
+        }
+        id
     }
 
-    companion object {
-        /** 设备 ID：动态生成的设备指纹（进程启动时由 Application 初始化并持久化） */
-        fun newDeviceId(): String = XunleiDeviceFingerprint.deviceId()
-
-        /**
-         * 解析 reviewurl（review_panel 返回的验证面板链接）的查询参数。
-         * 响应体通常自带 creditkey / token，可优先用于自有短信登录流，而非跳外部浏览器。
-         */
-        fun parseReviewUrl(reviewUrl: String): Map<String, String> {
-            val map = mutableMapOf<String, String>()
-            runCatching {
-                val q = reviewUrl.substringAfter('?', "")
-                q.split('&').forEach { pair ->
-                    val parts = pair.split('=', limit = 2)
-                    if (parts.size == 2) {
-                        map[parts[0]] = java.net.URLDecoder.decode(parts[1], "UTF-8")
-                    } else if (parts.size == 1 && parts[0].isNotBlank()) {
-                        map[parts[0]] = ""
-                    }
-                }
+    private fun sha1Bytes(source: InputStream): ByteArray {
+        val digest = MessageDigest.getInstance("SHA-1")
+        val buffer = ByteArray(64 * 1024)
+        source.use { input ->
+            while (true) {
+                val n = input.read(buffer)
+                if (n < 0) break
+                digest.update(buffer, 0, n)
             }
-            return map
         }
+        return digest.digest()
     }
-}

@@ -19,6 +19,12 @@
 package com.jiexiy.app.ui.screens
 
 import com.jiexiy.app.ui.SnackbarController
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.upload.CloudUploadManager
+import com.jiexiy.app.ui.components.OperationSheet
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -110,9 +116,12 @@ fun GuangYaCloudScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     onExit: () -> Unit,
     onDownloadStarted: () -> Unit = {},
+    /** 上传入队后通知上层切换到「传输」Tab */
+    onUploadStarted: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     BackHandler {
         if (viewModel.multiSelectMode) {
             viewModel.exitMultiSelect()
@@ -139,6 +148,32 @@ fun GuangYaCloudScreen(
     var batchInitial by remember { mutableStateOf(BatchStep.MENU) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showCreateFolder by remember { mutableStateOf(false) }
+    var showUploadDestination by remember { mutableStateOf(false) }
+    var uploadTargetFolderId by remember { mutableStateOf("") }
+
+    val uploadPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        var added = 0
+        uris.forEach { uri ->
+            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
+            CloudUploadManager.enqueue(
+                context = context,
+                platform = DownloadPlatform.GUANGYA,
+                uri = uri,
+                fileName = info.name,
+                size = info.size,
+                mimeType = info.mimeType,
+                folderId = uploadTargetFolderId
+            )
+            added++
+        }
+        if (added > 0) {
+            SnackbarController.show("已加入 ${added} 个上传任务")
+            onUploadStarted()
+        }
+    }
 
     LaunchedEffect(viewModel.cloudMessage) {
         viewModel.cloudMessage?.let {
@@ -267,7 +302,8 @@ fun GuangYaCloudScreen(
                                                     else MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
-                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true })
+                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true },
+                                    onUploadFile = { showUploadDestination = true })
                                         }
                                     }
                                     if (!viewModel.multiSelectMode) {
@@ -471,6 +507,22 @@ fun GuangYaCloudScreen(
                 viewModel.createFolder(name)
             }
         )
+    }
+
+    // 上传目标选择器：先选目录再选文件
+    if (showUploadDestination) {
+        OperationSheet(busy = false, onDismiss = { showUploadDestination = false }) {
+            GuangYaMoveStep(
+                subtitle = "上传文件到",
+                viewModel = viewModel,
+                onBack = { showUploadDestination = false },
+                onDone = {
+                    uploadTargetFolderId = (viewModel.moveUiState.value as? GuangYaCloudUiState.Loaded)?.dirId ?: ""
+                    showUploadDestination = false
+                    uploadPicker.launch(arrayOf("*/*"))
+                }
+            )
+        }
     }
 
     viewModel.shareResult?.let { info ->

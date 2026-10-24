@@ -79,6 +79,18 @@ object Pan123Constants {
      */
     const val FILE_UPLOAD_REQUEST_URL = "$API_BASE/b/api/file/upload_request"
 
+    /** 上传完成提交（直传模式，带完整 AK/SK） */
+    const val FILE_UPLOAD_COMPLETE_URL = "$API_BASE/b/api/file/upload_complete"
+
+    /** 上传完成提交（预签名模式，逐片向网盘换 URL） */
+    const val FILE_UPLOAD_COMPLETE_V2_URL = "$API_BASE/b/api/file/upload_complete/v2"
+
+    /** 单片预签名地址申请 */
+    const val S3_UPLOAD_OBJECT_AUTH_URL = "$API_BASE/b/api/file/s3_upload_object/auth"
+
+    /** 分段预签名地址批量申请 */
+    const val S3_REPAIR_UPLOAD_PARTS_BATCH_URL = "$API_BASE/b/api/file/s3_repare_upload_parts_batch"
+
     /** 创建分享（POST /b/api/share/create） */
     const val SHARE_CREATE_URL = "$API_BASE/b/api/share/create"
 

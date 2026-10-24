@@ -101,6 +101,12 @@ object C139Constants {
      */
     const val FILE_CREATE_URL = "$CLOUD_BASE/hcy/file/create"
 
+    /** 上传分段 URL 申请（partInfos 按 100 个一批） */
+    const val FILE_GET_UPLOAD_URL = "$CLOUD_BASE/hcy/file/getUploadUrl"
+
+    /** 上传完成提交 */
+    const val FILE_COMPLETE_URL = "$CLOUD_BASE/hcy/file/complete"
+
     /** 重命名 */
     const val FILE_UPDATE_URL = "$CLOUD_BASE/hcy/file/update"
 

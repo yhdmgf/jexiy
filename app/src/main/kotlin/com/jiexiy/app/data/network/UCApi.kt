@@ -33,6 +33,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URLEncoder
 
 /**
@@ -735,6 +736,54 @@ suspend fun getDownloadLink(fid: String, cookie: String): DownloadLink? = withCo
         }
         all.ifEmpty { null }
     }
+
+    /**
+     * 上传文件（阿里云 CCP，与夸克同一套接口，仅域名/产品码/防盗链不同）：
+     * `upload/pre` 取凭据 → `update/hash` 提交 MD5+SHA1 试秒传 → 逐片 `upload/auth` 签发授权后 PUT →
+     * `CompleteMultipartUpload` 合并 → `upload/finish` 入库。
+     *
+     * @param open 打开文件的 [start, end) 输入流（算 hash 与分片都会重新调用）
+     * @param onProgress 已传输字节数
+     * @return 新文件的标识（CCP 的 obj_key）
+     */
+    suspend fun uploadFile(
+        cookie: String,
+        pdirFid: String,
+        fileName: String,
+        size: Long,
+        mimeType: String,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("UC 不支持上传空文件")
+        val parent = pdirFid.ifBlank { UCConstants.DEFAULT_PDIR_FID }
+        val exists = listCloudFiles(parent, cookie)
+            ?.any { !it.isdir && it.fname == fileName }
+            ?: false
+        if (exists) throw IllegalStateException("目录中已有同名文件，请重命名后上传")
+        CcpUploader.upload(
+            config = ccpConfig,
+            post = { url, body -> parseData(postJson(url, cookie, body), { it }) },
+            fileName = fileName,
+            size = size,
+            parentFid = parent,
+            mimeType = mimeType,
+            open = open,
+            onProgress = onProgress
+        )
+    }
+
+    /** CCP 上传平台配置：UC 产品码 UCBrowser，OSS 防盗链指向 drive.uc.cn。 */
+    private val ccpConfig = CcpUploader.Config(
+        label = "UC",
+        uploadPreUrl = UCConstants.UPLOAD_PRE_URL,
+        updateHashUrl = UCConstants.UPDATE_HASH_URL,
+        uploadAuthUrl = UCConstants.UPLOAD_AUTH_URL,
+        uploadFinishUrl = UCConstants.UPLOAD_FINISH_URL,
+        ossReferer = "${UCConstants.WEB_ORIGIN}/",
+        ossUserAgent = UCConstants.OSS_USER_AGENT
+    )
 
     /** 重命名（抓包：POST file/rename） */
     suspend fun renameFile(fid: String, newName: String, cookie: String): Boolean =

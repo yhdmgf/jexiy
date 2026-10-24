@@ -67,6 +67,23 @@ object UCConstants {
     /** 根目录 fid */
     const val DEFAULT_PDIR_FID = "0"
 
+    // ---------- 上传（阿里云 CCP，产品码 UCBrowser） ----------
+
+    /** 上传前置：换发一次性上传凭据（bucket / obj_key / upload_id / auth_info） */
+    const val UPLOAD_PRE_URL = "$API_BASE/1/clouddrive/file/upload/pre?pr=UCBrowser&fr=pc"
+
+    /** 提交 MD5 + SHA1，命中已有内容时 `finish=true`（秒传） */
+    const val UPDATE_HASH_URL = "$API_BASE/1/clouddrive/file/update/hash?pr=UCBrowser&fr=pc"
+
+    /** 为单片或合并请求签发一次性 OSS 授权头 auth_key */
+    const val UPLOAD_AUTH_URL = "$API_BASE/1/clouddrive/file/upload/auth?pr=UCBrowser&fr=pc"
+
+    /** 上传完成后通知服务端入库 */
+    const val UPLOAD_FINISH_URL = "$API_BASE/1/clouddrive/file/upload/finish?pr=UCBrowser&fr=pc"
+
+    /** OSS 请求固定 UA（与网页端 SDK 一致，防盗链校验） */
+    const val OSS_USER_AGENT = "aliyun-sdk-js/6.6.1 Chrome 98.0.4758.80 on Windows 10 64-bit"
+
     /** 个人网盘文件列表 / 创建目录 */
     const val FILE_URL = "$API_BASE/1/clouddrive/file?pr=UCBrowser&fr=pc"
 

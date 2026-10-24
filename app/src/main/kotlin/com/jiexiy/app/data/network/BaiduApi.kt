@@ -25,8 +25,12 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URLEncoder
 
 /**
@@ -578,6 +582,171 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
     }
 
     // ---------- 公共 ----------
+
+    /**
+     * 上传文件（`api/precreate` → `superfile2` 4 MB 分段 → `api/create`）。
+     *
+     * 分段 MD5 以 4 MB 为粒度提交，`content-md5` 是整文件 MD5、`slice-md5` 是前 256 KB 的 MD5，
+     * 两者任一命中服务端已有内容就只重传缺的分段；`return_type == 2` 则整个文件秒传。
+     *
+     * @param open 打开文件的 [start, end) 输入流（算块 hash 与传分段都会重新调用）
+     * @param onProgress 已传输字节数
+     * @return 新文件的 fs_id（字符串形式）
+     */
+    suspend fun uploadFile(
+        cookie: String,
+        parentDir: String,
+        fileName: String,
+        size: Long,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("百度网盘不支持上传空文件")
+        val baseDir = parentDir.trimEnd('/').ifBlank { "/" }
+        val path = "$baseDir/$fileName"
+        val chunk = BaiduConstants.UPLOAD_CHUNK_SIZE
+        val count = ((size + chunk - 1) / chunk).toInt()
+        val blocks = ArrayList<String>(count)
+        for (i in 0 until count) {
+            blocks.add(UploadIo.digest(open, minOf(size, (i + 1L) * chunk), "MD5", onProgress,
+                start = i * chunk))
+        }
+        val whole = UploadIo.digest(open, size, "MD5", onProgress)
+        val prefix = UploadIo.digest(open, minOf(size, BaiduConstants.UPLOAD_PREFIX_SIZE), "MD5", onProgress)
+        val baseQuery = baiduQuery(cookie)
+
+        val blockList = JSONArray(blocks).toString()
+        val pre = postForm(
+            "$baseQuery${BaiduConstants.PRECREATE_URL}",
+            form(
+                "path" to path,
+                "isdir" to "0",
+                "size" to size.toString(),
+                "autoinit" to "1",
+                "block_list" to blockList,
+                "rtype" to "0",
+                "content-md5" to whole,
+                "slice-md5" to prefix
+            )
+        )
+        if (pre.optInt("return_type") != 2) {
+            val uploadId = pre.optString("uploadid")
+            if (uploadId.isBlank()) throw IllegalStateException("百度未创建上传任务")
+            val nodes = uploadServers(cookie, baseQuery, pre.optString("uploadsign").orEmpty())
+            if (nodes.isEmpty()) throw IllegalStateException("百度未返回上传节点")
+            val needed = pre.optJSONArray("block_list") ?: JSONArray()
+            val done = HashSet<Int>()
+            for (i in 0 until needed.length()) {
+                val index = needed.optInt(i, -1)
+                if (index !in 0 until count || !done.add(index)) {
+                    throw IllegalStateException("百度返回的上传分段序号无效")
+                }
+                var node = 0
+                val md5 = blocks[index]
+                while (true) {
+                    try {
+                        val json = uploadChunk(cookie, nodes[node], baseQuery, path, uploadId,
+                            index, size, open, onProgress)
+                        checkErrno(json, "百度分段上传失败")
+                        if (!json.optString("md5").equals(md5, ignoreCase = true)) {
+                            throw IllegalStateException("百度上传分段校验失败，请重试")
+                        }
+                        break
+                    } catch (e: BaiduApiException) {
+                        if (node + 1 >= nodes.size) throw e
+                        node++
+                    }
+                }
+            }
+            val created = postForm(
+                "$baseQuery${BaiduConstants.CREATE_URL}?a=commit",
+                form(
+                    "path" to path,
+                    "isdir" to "0",
+                    "size" to size.toString(),
+                    "uploadid" to uploadId,
+                    "block_list" to blockList,
+                    "rtype" to "0",
+                    "local_mtime" to (System.currentTimeMillis() / 1000).toString()
+                )
+            )
+            checkErrno(created, "百度提交上传失败")
+            created.optString("fs_id").takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("百度未返回新文件标识")
+        } else {
+            pre.optJSONObject("info")?.optString("fs_id").orEmpty().takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("百度未返回秒传文件标识")
+        }
+    }
+
+    /** 上传通用参数串（app_id + clienttype + bdstoken），precreate / create / superfile2 共用。 */
+    private fun baiduQuery(cookie: String): String {
+        val token = getBdstoken(cookie).orEmpty()
+        val params = linkedMapOf(
+            "app_id" to BaiduConstants.APP_ID,
+            "clienttype" to "0",
+            "web" to "1"
+        )
+        if (token.isNotBlank()) params["bdstoken"] = urlEncode(token)
+        val query = params.entries.joinToString("&") { (k, v) -> "$k=$v" }
+        return if (query.startsWith("?")) query else "?$query"
+    }
+
+    private fun uploadServers(cookie: String, baseQuery: String, sign: String): List<String> {
+        val url = BaiduConstants.LOCATE_UPLOAD_URL + baseQuery +
+            "&method=locateupload&upload_version=2.0" +
+            if (sign.isNotBlank()) "&uploadsign=${urlEncode(sign)}" else ""
+        val request = Request.Builder()
+            .url(url)
+            .header("Cookie", cookie)
+            .header("User-Agent", BaiduConstants.UA_NETDISK)
+            .header("Referer", "https://yun.baidu.com/disk/main")
+            .get()
+            .build()
+        val json = runCatching { executeJson(request) }.getOrElse { return emptyList() }
+        val hosts = LinkedHashSet<String>()
+        for (key in listOf("servers", "bak_servers")) {
+            val array = json.optJSONArray(key) ?: continue
+            for (i in 0 until array.length()) {
+                val item = array.optJSONObject(i) ?: continue
+                val host = item.optString("server").orEmpty().trimEnd('/')
+                if (host.isNotBlank()) hosts.add(host)
+            }
+        }
+        json.optString("host").orEmpty().let { raw ->
+            if (raw.isNotBlank()) hosts.add("https://$raw".trimEnd('/'))
+        }
+        hosts.toList()
+    }
+
+    /** 上传单个 4 MB 分段；POST 原始字节，无表单字段。 */
+    private fun uploadChunk(
+        cookie: String,
+        node: String,
+        baseQuery: String,
+        path: String,
+        uploadId: String,
+        index: Int,
+        size: Long,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit
+    ): JSONObject {
+        val start = index * BaiduConstants.UPLOAD_CHUNK_SIZE
+        val end = minOf(size, start + BaiduConstants.UPLOAD_CHUNK_SIZE)
+        val body = UploadIo.chunkBody(open, start, end) { sent -> onProgress(sent) }
+        val request = Request.Builder()
+            .url("$node${BaiduConstants.SUPERFILE_PATH}$baseQuery&method=upload&type=tmpfile"
+                + "&path=${urlEncode(path)}&uploadid=${urlEncode(uploadId)}&partseq=$index")
+            .header("Cookie", cookie)
+            .header("User-Agent", BaiduConstants.UA_NETDISK)
+            .header("Referer", "https://yun.baidu.com/disk/main")
+            .post(body)
+            .build()
+        val response = client.newCall(request).execute()
+        val text = response.use { it.body?.string() ?: "" }
+        return JSONObject(text)
+    }
 
     private fun executeJson(request: Request): JSONObject {
         val response = client.newCall(request).execute()

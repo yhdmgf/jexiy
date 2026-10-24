@@ -32,6 +32,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URLEncoder
 
 /**
@@ -702,6 +703,20 @@ class QuarkApi(
             )
         }
     }
+
+    // ---------- 请求构造与响应解析 ----------
+
+    /** 上传任务凭证（`upload/pre` 一次性下发） */
+    /** CCP 上传平台配置：夸克产品码 ucpro，OSS 防盗链指向 pan.quark.cn。 */
+    private val ccpConfig = CcpUploader.Config(
+        label = "夸克",
+        uploadPreUrl = QuarkConstants.UPLOAD_PRE_URL,
+        updateHashUrl = QuarkConstants.UPDATE_HASH_URL,
+        uploadAuthUrl = QuarkConstants.UPLOAD_AUTH_URL,
+        uploadFinishUrl = QuarkConstants.UPLOAD_FINISH_URL,
+        ossReferer = "${QuarkConstants.COOKIE_DOMAIN}/",
+        ossUserAgent = QuarkConstants.OSS_USER_AGENT
+    )
 
     // ---------- 请求构造与响应解析 ----------
 

@@ -29,6 +29,17 @@ object GuangYaConstants {
 
     const val API_BASE = "https://api.guangyapan.com"
     const val ACCOUNT_BASE = "https://account.guangyapan.com"
+
+    // ---------- 上传（阿里云 OSS 直传，文档对齐 wenxi 的 guangya_upload.dart） ----------
+
+    /** 申请上传令牌：下发 OSS STS 凭据；文件已存在时返回 `_uploadCode=156`，无需传分片 */
+    const val GET_RES_CENTER_TOKEN = "$API_BASE/nd.bizuserres.s/v1/get_res_center_token"
+
+    /** 上传后轮询任务状态，拿最终 fileId（服务端还要校验内容） */
+    const val GET_INFO_BY_TASK_ID = "$API_BASE/nd.bizuserres.s/v1/file/get_info_by_task_id"
+
+    /** 文件已存在（秒传） */
+    const val UPLOAD_CODE_EXIST = "156"
     const val WEB_SITE = "https://www.guangyapan.com"
 
     /** 下载直链必须携带的 Referer（文档 §5.6/§7.1） */

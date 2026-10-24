@@ -32,6 +32,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URLEncoder
 
 /** 设备标识（deviceId 32 位十六进制 + deviceSign）。 */
@@ -581,6 +582,83 @@ class GuangYaApi(
             delay(GuangYaConstants.TASK_DELAY_MS)
         }
         throw IllegalStateException("光鸭操作仍在处理中，请稍后刷新列表确认结果")
+    }
+
+    /**
+     * 上传文件（文档 §3.5）：`get_res_center_token` 换发 OSS STS 凭据 → OSS 分片直传 →
+     * 轮询 `file/get_info_by_task_id` 拿最终 fileId（服务端还要对内容做一次校验）。
+     *
+     * `_uploadCode == 156` 表示同名同 MD5 文件已存在，直接按秒传处理。
+     *
+     * @param open 打开文件的 [start, end) 输入流（算 MD5 与分片上传都会重新调用）
+     * @param onProgress 已上传字节数
+     * @return 新文件的 fileId
+     */
+    suspend fun uploadFile(
+        accessToken: String,
+        parentId: String,
+        fileName: String,
+        size: Long,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("光鸭不支持上传空文件")
+        val md5 = UploadIo.digest(open, size, "MD5", onProgress)
+        val json = executeJson(
+            businessRequest(
+                GuangYaConstants.GET_RES_CENTER_TOKEN,
+                JSONObject()
+                    .put("capacity", 2)
+                    .put("name", fileName)
+                    .put("parentId", parentId)
+                    .put("res", JSONObject().put("fileSize", size).put("md5", md5))
+                    .toString(),
+                null,
+                accessToken
+            ).build()
+        )
+        checkBusiness(json, "申请光鸭上传令牌失败")
+        val data = dataOf(json) ?: throw IllegalStateException("光鸭未返回上传任务")
+        val taskId = firstNonBlank(data.optString("taskId"), json.optString("taskId"))
+        if (taskId.isBlank()) throw IllegalStateException("光鸭未创建上传任务")
+        val creds = data.optJSONObject("creds") ?: JSONObject()
+        if (data.optString("_uploadCode").orEmpty() != GuangYaConstants.UPLOAD_CODE_EXIST) {
+            OssMultipartUploader.upload(
+                endpoint = firstNonBlank(
+                    data.optString("fullEndPoint"), data.optString("endPoint"),
+                    creds.optString("fullEndPoint"), creds.optString("endPoint")
+                ),
+                bucket = firstNonBlank(data.optString("bucketName"), creds.optString("bucketName")),
+                objectKey = firstNonBlank(data.optString("objectPath"), creds.optString("objectPath")),
+                accessKey = firstNonBlank(data.optString("accessKeyID"), creds.optString("accessKeyID")),
+                secretKey = firstNonBlank(data.optString("secretAccessKey"), creds.optString("secretAccessKey")),
+                securityToken = firstNonBlank(data.optString("sessionToken"), creds.optString("sessionToken")),
+                size = size,
+                contentType = "application/octet-stream",
+                open = { start, end -> open(start, end) },
+                onProgress = onProgress
+            )
+        }
+        repeat(180) {
+            val status = executeJson(
+                businessRequest(
+                    GuangYaConstants.GET_INFO_BY_TASK_ID,
+                    JSONObject().put("taskId", taskId).toString(),
+                    null,
+                    accessToken
+                ).build()
+            )
+            // 145/146/147/155/163 等表示仍在校验，不抛错继续轮询
+            runCatching { checkBusiness(status, "查询光鸭上传状态失败") }
+            val fileId = firstNonBlank(
+                dataOf(status)?.optString("fileId").orEmpty(),
+                status.optString("fileId")
+            )
+            if (fileId.isNotBlank()) return@withContext fileId
+            delay(1000)
+        }
+        throw IllegalStateException("光鸭正在校验上传内容，请稍后刷新列表确认")
     }
 
     // ---------- 内部 ----------

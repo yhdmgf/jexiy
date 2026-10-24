@@ -32,6 +32,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.InputStream
 import java.net.URLEncoder
 import java.util.Calendar
 import java.util.TimeZone
@@ -527,6 +528,128 @@ class Pan123Api(
             id.takeIf { it.isNotBlank() && it != "0" }
                 ?: throw IllegalStateException("123 未返回文件夹编号")
         }
+
+    /**
+     * 上传文件（文档 §3.5）：`upload_request` 预建（`etag` 为整文件 MD5）→ 按服务端返回的凭据走两条路之一 →
+     * `upload_complete` 提交。
+     *
+     * 路径一：服务端给全量 AK/SK（`AccessKeyId` + `SecretAccessKey`）时走 S3 兼容协议（区域固定 `123pan`、
+     *   bucket 走路径前缀）；路径二：只给 `StorageNode` + `UploadId` 时逐片向网盘换预签名地址，分片固定 16 MB。
+     * `Reuse == true` 表示同内容文件已存在，直接秒传。
+     *
+     * @param parentFileId 父目录 FileId；根目录传 `"0"`
+     * @param open 打开文件的 [start, end) 输入流
+     * @param onProgress 已上传字节数
+     * @return 新文件的 FileId
+     */
+    suspend fun uploadFile(
+        parentFileId: String,
+        fileName: String,
+        size: Long,
+        token: String,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        val post = { url: String, path: String, body: JSONObject ->
+            val json = postAuth(url, path, body.toString(), token)
+            checkOk(json, "123 请求失败")
+            json.optJSONObject("data")
+        }
+        val md5 = UploadIo.digest(open, size, "MD5", onProgress)
+        val pre = post(
+            Pan123Constants.FILE_UPLOAD_REQUEST_URL,
+            "/b/api/file/upload_request",
+            JSONObject()
+                .put("driveId", 0)
+                .put("duplicate", 1)
+                .put("etag", md5)
+                .put("fileName", fileName)
+                .put("parentFileId", parentFileId.toLongOrNull() ?: 0L)
+                .put("size", size)
+                .put("type", 0)
+        ) ?: throw IllegalStateException("123 未返回上传文件标识")
+        var id = pre.optString("FileId").orEmpty()
+            .ifBlank { pre.optJSONObject("Info")?.optString("FileId").orEmpty() }
+        if (id.isBlank()) throw IllegalStateException("123 未返回上传文件标识")
+        if (!pre.optBoolean("Reuse", false)) {
+            if (pre.optString("Key").isBlank()) throw IllegalStateException("123 未创建上传任务")
+            val accessKey = pre.optString("AccessKeyId").orEmpty()
+            val secretKey = pre.optString("SecretAccessKey").orEmpty()
+            if (accessKey.isNotBlank() && secretKey.isNotBlank()) {
+                S3v4Uploader.upload(
+                    endpoint = pre.optString("EndPoint").orEmpty(),
+                    bucket = pre.optString("Bucket").orEmpty(),
+                    objectKey = pre.optString("Key").orEmpty(),
+                    accessKey = accessKey,
+                    secretKey = secretKey,
+                    region = "123pan",
+                    token = pre.optString("SessionToken").orEmpty(),
+                    pathStyle = true,
+                    size = size,
+                    contentType = "application/octet-stream",
+                    open = { start, end -> open(start, end) },
+                    onProgress = onProgress
+                )
+                post(
+                    Pan123Constants.FILE_UPLOAD_COMPLETE_URL,
+                    "/b/api/file/upload_complete",
+                    JSONObject().put("fileId", id)
+                )
+            } else {
+                val chunkSize = 16L * 1024 * 1024
+                val count = maxOf(1, ((size + chunkSize - 1) / chunkSize).toInt())
+                val batchBody = JSONObject()
+                    .put("StorageNode", pre["StorageNode"])
+                    .put("bucket", pre.optString("Bucket"))
+                    .put("key", pre.optString("Key"))
+                    .put("uploadId", pre.optString("UploadId"))
+                for (i in 0 until count) {
+                    val urls = if (count == 1) {
+                        post(
+                            Pan123Constants.S3_UPLOAD_OBJECT_AUTH_URL,
+                            "/b/api/file/s3_upload_object/auth",
+                            batchBody.put("partNumberStart", i + 1).put("partNumberEnd", i + 2)
+                        ) ?: throw IllegalStateException("123 未返回上传地址")
+                    } else {
+                        post(
+                            Pan123Constants.S3_REPAIR_UPLOAD_PARTS_BATCH_URL,
+                            "/b/api/file/s3_repare_upload_parts_batch",
+                            batchBody.put("partNumberStart", i + 1).put("partNumberEnd", i + 2)
+                        ) ?: throw IllegalStateException("123 未返回上传地址")
+                    }
+                    val presigned = urls.optJSONObject("presignedUrls") ?: JSONObject()
+                    val address = presigned.optString("$i").orEmpty()
+                        .ifBlank { presigned.optString("${i + 1}") }
+                        .ifBlank { presigned.optString((i + 1).toString()) }
+                        .ifBlank { urls.optString("presignedUrls") }
+                        .ifBlank { presigned.optString("presignedUrl") }
+                    if (address.isBlank()) throw IllegalStateException("123 未返回分段直传地址")
+                    UploadIo.rangePut(
+                        address,
+                        i.toLong() * chunkSize,
+                        minOf(size, (i.toLong() + 1) * chunkSize),
+                        open,
+                        "application/octet-stream",
+                        emptyMap(),
+                        false,
+                        onProgress
+                    ).use { resp ->
+                        if (!resp.isSuccessful) throw IllegalStateException("123 分段上传失败（HTTP ${resp.code}）")
+                    }
+                }
+                post(
+                    Pan123Constants.FILE_UPLOAD_COMPLETE_V2_URL,
+                    "/b/api/file/upload_complete/v2",
+                    batchBody
+                        .put("fileId", id)
+                        .put("fileSize", size)
+                        .put("isMultipart", count > 1)
+                )
+            }
+        }
+        id
+    }
 
     /** 移动：POST /b/api/file/mod_pid */
     suspend fun moveFiles(fileIds: List<String>, toParentFileId: String, token: String) = withContext(Dispatchers.IO) {

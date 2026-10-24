@@ -19,6 +19,11 @@
 package com.jiexiy.app.ui.screens
 
 import com.jiexiy.app.ui.SnackbarController
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.upload.CloudUploadManager
+import com.jiexiy.app.ui.components.OperationSheet
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -122,6 +127,8 @@ fun XunleiCloudScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     onExit: () -> Unit,
     onDownloadStarted: () -> Unit = {},
+    /** 上传入队后通知上层切换到「传输」Tab */
+    onUploadStarted: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -156,8 +163,34 @@ fun XunleiCloudScreen(
     var showBatchActions by remember { mutableStateOf(false) }
     var batchInitial by remember { mutableStateOf(BatchStep.MENU) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    // 「+」菜单的「创建文件夹」弹窗（「上传文件」项目前是占位，见 CloudAddMenu）
+    // 「+」菜单的两个弹窗：创建文件夹 / 上传目标选择
     var showCreateFolder by remember { mutableStateOf(false) }
+    var showUploadDestination by remember { mutableStateOf(false) }
+    var uploadTargetFolderId by remember { mutableStateOf("") }
+
+    val uploadPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        var added = 0
+        uris.forEach { uri ->
+            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
+            CloudUploadManager.enqueue(
+                context = context,
+                platform = DownloadPlatform.XUNLEI,
+                uri = uri,
+                fileName = info.name,
+                size = info.size,
+                mimeType = info.mimeType,
+                folderId = uploadTargetFolderId
+            )
+            added++
+        }
+        if (added > 0) {
+            SnackbarController.show("已加入 ${added} 个上传任务")
+            onUploadStarted()
+        }
+    }
 
     LaunchedEffect(viewModel.cloudMessage) {
         viewModel.cloudMessage?.let {
@@ -296,7 +329,8 @@ fun XunleiCloudScreen(
                                                 )
                                             }
                                             // 「+」新建菜单（创建文件夹 / 上传文件，Agent.md §3.26）
-                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true })
+                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true },
+                                    onUploadFile = { showUploadDestination = true })
                                         }
                                     }
                                     if (!viewModel.multiSelectMode) {
@@ -523,6 +557,22 @@ fun XunleiCloudScreen(
         )
     }
 
+    // 上传目标选择器：先选目录再选文件
+    if (showUploadDestination) {
+        OperationSheet(busy = false, onDismiss = { showUploadDestination = false }) {
+            XunleiMoveStep(
+                subtitle = "上传文件到",
+                viewModel = viewModel,
+                onBack = { showUploadDestination = false },
+                onDone = {
+                    uploadTargetFolderId = (viewModel.moveUiState.value as? XunleiCloudUiState.Loaded)?.dirFid ?: ""
+                    showUploadDestination = false
+                    uploadPicker.launch(arrayOf("*/*"))
+                }
+            )
+        }
+    }
+
     viewModel.shareResult?.let { info ->
         ShareResultDialog(
             info = info,
@@ -530,7 +580,7 @@ fun XunleiCloudScreen(
         )
     }
 
-// 操作执行中加载弹窗（下载文件夹/批量下载显示进度）
+    // 操作执行中加载弹窗（下载文件夹/批量下载显示进度）
     if (viewModel.isOperating) {
         AlertDialog(
             onDismissRequest = { },

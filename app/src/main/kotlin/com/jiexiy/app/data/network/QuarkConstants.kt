@@ -104,6 +104,23 @@ object QuarkConstants {
     /** __puus 有效期约 3 小时，提前到 90 分钟刷新（对齐 AList 100±5 分钟） */
     const val PUUS_REFRESH_INTERVAL_MS = 90L * 60 * 1000
 
+    // ---------- 上传（阿里云 CCP，对齐 wenxi 的 quark_upload.dart） ----------
+
+    /** 申请上传任务 → 返回 task_id / bucket / obj_key / upload_id / upload_url / auth_info */
+    const val UPLOAD_PRE_URL = "$API_BASE/1/clouddrive/file/upload/pre?pr=ucpro&fr=pc"
+
+    /** 回填 MD5/SHA1：命中重复文件时 `finish=true`，即秒传，不再传分片 */
+    const val UPDATE_HASH_URL = "$API_BASE/1/clouddrive/file/update/hash?pr=ucpro&fr=pc"
+
+    /** 为单个分片（或合并请求）签发一次性 OSS 授权头 auth_key */
+    const val UPLOAD_AUTH_URL = "$API_BASE/1/clouddrive/file/upload/auth?pr=ucpro&fr=pc"
+
+    /** 分片全部合并后收尾，服务端才把文件正式入库 */
+    const val UPLOAD_FINISH_URL = "$API_BASE/1/clouddrive/file/upload/finish?pr=ucpro&fr=pc"
+
+    /** 服务端要求与网页端一致的 SDK 标识，签名里引用 */
+    const val OSS_USER_AGENT = "aliyun-sdk-js/6.6.1 Chrome 98.0.4758.80 on Windows 10 64-bit"
+
     /** 关键 Cookie 字段，缺失则视为未登录 */
     fun isValidCookie(cookie: String?): Boolean =
         cookie != null && cookie.contains("__pus=") && cookie.contains("__puus=")

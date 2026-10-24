@@ -17,6 +17,7 @@
 
 package com.jiexiy.app.data.network
 
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
@@ -45,10 +46,11 @@ object UploadIo {
         open: (Long, Long) -> InputStream,
         size: Long,
         algorithm: String,
-        onProgress: (Long) -> Unit = {}
+        onProgress: (Long) -> Unit = {},
+        start: Long = 0L
     ): String {
         val md = MessageDigest.getInstance(algorithm)
-        open(0, size).use { input ->
+        open(start, start + size).use { input ->
             val buffer = ByteArray(BUFFER_SIZE)
             var read = 0L
             while (true) {
@@ -122,6 +124,31 @@ object UploadIo {
     }
 
     /** [start, end) 区间流式请求体；回调给出绝对字节位置。 */
+    /** [start, end) 区间流式请求体（不带 Content-Type，用于百度 superfile2 这类纯二进制接口）。 */
+    fun chunkBody(
+        open: (Long, Long) -> InputStream,
+        start: Long,
+        end: Long,
+        onProgress: (Long) -> Unit = {}
+    ): RequestBody = object : RequestBody() {
+        override fun contentType(): MediaType? = null
+        override fun contentLength() = end - start
+
+        override fun writeTo(sink: BufferedSink) {
+            open(start, end).use { input ->
+                val buffer = ByteArray(BUFFER_SIZE)
+                var sent = 0L
+                while (true) {
+                    val n = input.read(buffer)
+                    if (n < 0) break
+                    sink.write(buffer, 0, n)
+                    sent += n
+                    onProgress(start + sent)
+                }
+            }
+        }
+    }
+
     private fun rangeBody(
         open: (Long, Long) -> InputStream,
         start: Long,

@@ -64,9 +64,16 @@ object CloudUploadManager {
         val app = context.applicationContext
         appContext = app
         register(DownloadPlatform.FEIJI) { FeijiUploader(app) }
+        register(DownloadPlatform.QUARK) { QuarkUploader(app) }
+        register(DownloadPlatform.UC) { UCUploader(app) }
+        register(DownloadPlatform.XUNLEI) { XunleiUploader(app) }
+        register(DownloadPlatform.BAIDU) { BaiduUploader(app) }
+        register(DownloadPlatform.C139) { C139Uploader(app) }
+        register(DownloadPlatform.PAN123) { Pan123Uploader(app) }
+        register(DownloadPlatform.PAN115) { Pan115Uploader(app) }
+        register(DownloadPlatform.GUANGYA) { GuangYaUploader(app) }
         register(DownloadPlatform.LANZOU) { LanzouUploader(app) }
         register(DownloadPlatform.ILANZOU) { ILanzouUploader(app) }
-        register(DownloadPlatform.PAN115) { Pan115Uploader(app) }
     }
 
     /** 注册一个平台的上传实现；同名平台后注册覆盖先注册。 */
