@@ -905,10 +905,10 @@ fun DriveScreen(
 /**
  * 小飞机网盘卡片。
  *
- * ★ 与其他网盘（夸克/UC/迅雷/百度…）保持完全一致的交互：
+ * ★ 空间展示与其他网盘（夸克/UC/迅雷/百度…）完全一致：
+ *   - 同一套 `已用 X / Y` + 细进度条（[QuotaInlineBar]），同一种淡入展开动效；
  *   - 右侧不再显示「文件 / 登录」文字，改为登录后显示「三个点」更多菜单（[onMoreClick]）；
  *   - 未登录显示「去登录」，已登录但没传 [onMoreClick] 时显示已登录徽标。
- *   之前这里是自己写的 `Text(if (loggedIn) "文件" else "登录")`，和其他网盘不一致（用户反馈）。
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -953,30 +953,25 @@ private fun FeijiDriveCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
-                if (loggedIn && quota != null && quota.total > 0) {
-                    Text(
-                        text = "已用 ${formatBytes(quota.used)} / ${formatBytes(quota.total)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    jexiyWavyProgress(
-                        progress = {
-                            (quota.used.toFloat() / quota.total.toFloat()).coerceIn(0f, 1f)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(4.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        waving = false
-                    )
-                } else {
-                    Text(
-                        text = if (loggedIn) "已登录 · 点击浏览文件" else "未登录，点击登录",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                // 登录态提示行
+                Text(
+                    text = if (loggedIn) "已登录 · 点击浏览文件" else "未登录，点击登录",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                // 已登录且有空间数据：卡片内展示剩余空间进度条（出现时淡入 + 纵向展开，避免突兀）
+                AnimatedVisibility(
+                    visible = loggedIn && quota != null,
+                    enter = fadeIn(effectsDefault()) + expandVertically(
+                        expandFrom = Alignment.Top,
+                        animationSpec = spatialDefault()
+                    ),
+                    exit = fadeOut(effectsFast()) + shrinkVertically(animationSpec = spatialFast())
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        quota?.let { QuotaInlineBar(QuotaInfo(used = it.used, total = it.total)) }
+                    }
                 }
             }
             // ★ 与 DriveAccountCardContent 的尾部逻辑保持一致
