@@ -350,6 +350,17 @@ class AliyunApi(
             }
         }
 
+    /** 取分享内文件的下载直链。对应 `POST /adrive/v2/file/get_share_download_url`，匿名（用分享令牌鉴权）。 */
+    suspend fun shareDownloadUrl(session: AliyunShareSession, fileId: String): String = withContext(Dispatchers.IO) {
+        val data = postAnonymousToken(
+            AliyunConstants.PATH_SHARE_DOWNLOAD_URL,
+            JSONObject().put("share_id", session.shareId).put("file_id", fileId),
+            session.stoken
+        )
+        checkBusiness(data, "阿里云盘取直链失败")
+        pickUrl(data, allowFallback = true).ifBlank { throw IllegalStateException("阿里云盘未返回直链") }
+    }
+
     // ---------- 上传 ----------
 
     /**

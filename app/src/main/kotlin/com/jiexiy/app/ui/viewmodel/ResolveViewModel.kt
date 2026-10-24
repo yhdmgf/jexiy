@@ -134,6 +134,7 @@ class ResolveViewModel(
     private val lanzouAccountRepository: LanzouAccountRepository,
     private val lanzouResolveRepository: LanzouResolveRepository,
     private val feijiResolveRepository: ShareResolveRepository,
+    private val aliyunResolveRepository: ShareResolveRepository,
     private val downloadManager: DownloadManager,
     private val bookmarkDao: BookmarkDao,
     /** GitHub 解析器实例（null 表示未启用 GitHub 平台） */
@@ -944,6 +945,7 @@ class ResolveViewModel(
         SharePlatform.ILANZOU -> ilanzouAccountRepository.getAccount()?.appToken
         SharePlatform.LANZOU -> lanzouAccountRepository.getAccount()?.cookie
         SharePlatform.FEIJI -> com.jiexiy.app.data.parse.FeijiAccountStore.token.value.orEmpty()
+        SharePlatform.ALIYUN -> null
         SharePlatform.GITHUB -> null
         else -> accountRepository.getAccount()?.cookie
     }
@@ -1018,6 +1020,7 @@ class ResolveViewModel(
         SharePlatform.ILANZOU -> ilanzouResolveRepository
         SharePlatform.LANZOU -> lanzouResolveRepository
         SharePlatform.FEIJI -> feijiResolveRepository
+        SharePlatform.ALIYUN -> aliyunResolveRepository
         else -> resolveRepository
     }
 
@@ -2341,6 +2344,7 @@ class ResolveViewModel(
         private val lanzouAccountRepository: LanzouAccountRepository,
         private val lanzouResolveRepository: LanzouResolveRepository,
         private val feijiResolveRepository: ShareResolveRepository,
+        private val aliyunResolveRepository: ShareResolveRepository,
         private val downloadManager: DownloadManager,
         private val bookmarkDao: BookmarkDao,
         private val githubApi: GitHubApi? = null,
@@ -2366,6 +2370,7 @@ class ResolveViewModel(
                 ilanzouAccountRepository, ilanzouResolveRepository,
                 lanzouAccountRepository, lanzouResolveRepository,
                 feijiResolveRepository,
+                aliyunResolveRepository,
                 downloadManager,
                 bookmarkDao,
                 githubApi,

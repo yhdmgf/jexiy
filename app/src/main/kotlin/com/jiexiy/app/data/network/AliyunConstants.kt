@@ -67,6 +67,7 @@ object AliyunConstants {
     const val PATH_SHARE_INFO = "/adrive/v3/share_link/get_share_by_anonymous"
     const val PATH_SHARE_TOKEN = "/v2/share_link/get_share_token"
     const val PATH_LIST_BY_SHARE = "/adrive/v2/file/list_by_share"
+    const val PATH_SHARE_DOWNLOAD_URL = "/adrive/v2/file/get_share_download_url"
 
     const val PATH_LIST = "/adrive/v3/file/list"
     const val PATH_FILE_GET = "/v2/file/get"

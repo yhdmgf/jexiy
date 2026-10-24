@@ -104,6 +104,7 @@ import com.jiexiy.app.data.account.AccountStore
 import com.jiexiy.app.data.network.ShareLinkParser
 import com.jiexiy.app.data.network.SharePlatform
 import com.jiexiy.app.data.repository.FeijiResolveRepository
+import com.jiexiy.app.data.repository.AliyunResolveRepository
 import com.jiexiy.app.data.account.AccountSyncManager
 import com.jiexiy.app.data.account.AccountSyncTrigger
 import com.jiexiy.app.data.announcement.AnnouncementReadStore
@@ -825,6 +826,7 @@ fun MainScreen(
             uuidProvider = { FeijiAccountStore.account.value?.uuid.orEmpty() }
         )
     }
+    val aliyunResolveRepository = remember { AliyunResolveRepository() }
     // 视频解析仓库：解析页「视频解析」入口使用（与视频账号页共用同一份 Cookie 账号表）
     val videoParseRepository = remember {
         VideoParseRepository(VideoAccountRepository(db.videoAccountDao()))
@@ -852,6 +854,7 @@ fun MainScreen(
             lanzouRepository,
             lanzouResolveRepository,
             feijiResolveRepository,
+            aliyunResolveRepository,
             downloadManager,
             db.bookmarkDao(),
             githubApi,
