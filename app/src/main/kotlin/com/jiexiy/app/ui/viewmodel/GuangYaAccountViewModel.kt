@@ -68,6 +68,13 @@ class GuangYaAccountViewModel(
         false to (e.message ?: "光鸭登录失败，请检查账号密码，或切换网页登录")
     }
 
+    /** 校验并保存网页登录抓到的令牌；返回是否成功（登录页「保存」与自动检测共用）。 */
+    suspend fun saveWebCredential(raw: String): Boolean {
+        val saved = repository.saveWebCredential(raw, newAccount = addNewAccount)
+        if (saved) addNewAccount = false
+        return saved
+    }
+
     /** 发送短信验证码的结果：成功返回 verification_id 与是否老用户，供登录页倒计时/端点选择。 */
     sealed interface GuangYaSmsResult {
         data class Success(val verificationId: String, val isUser: Boolean, val expiresIn: Int) : GuangYaSmsResult
