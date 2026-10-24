@@ -81,14 +81,6 @@ object AccountApi {
         data class Failure(val message: String) : Result<Nothing>
     }
 
-    /** 一次同步的结果：云端合并后的账号列表 + 本次各项计数 */
-    data class SyncOutcome(
-        val accounts: JSONArray,
-        val uploaded: Int,
-        val downloaded: Int,
-        val kept: Int,
-    )
-
     /** 消息是否为图形验证码错误（命中则界面应刷新验证码图并清空已输入内容） */
     fun isCaptchaRefresh(message: String): Boolean = message.contains(CAPTCHA_REFRESH_MSG)
 
@@ -190,37 +182,78 @@ object AccountApi {
         }
 
     // ---------- 账号同步接口（sync.php，同 host，共享同一份会话 Cookie）----------
+    // ★ sync.php 只有 4 个 CRUD action：pull / sync_save / sync_del / clear_all（没有 action=sync）。
+    //   合并（双向、本地优先）由客户端在 AccountSyncManager 里做，这里只负责存取。
+
+    /** 云端一条同步记录：platform + 凭据对象 payload + 过期时间戳 */
+    data class CloudRecord(
+        val platform: String,
+        val payload: JSONObject,
+        val expiresAt: Long,
+    )
 
     /**
-     * 双向同步网盘账号。
+     * 拉取当前用户全部同步记录（`action=pull`，GET）。
      *
-     * 请求体就是认证备份的根对象（`{app, version, accounts}`），`expiresAt` 由
-     * [com.jiexiy.app.data.backup.AuthBackupManager] 计算；服务端合并后返回完整账号列表，
-     * 客户端直接把它写回本地库（见 [AccountSyncManager]）。
+     * pull 的 `data` 是**数组**（不是对象），所以不走 [request]/parseEnvelope（后者只解 data 对象），
+     * 自己发请求 + 用 [checkSuccess] 校验后直接读数组。
      */
-    suspend fun sync(context: Context, payload: JSONObject): Result<SyncOutcome> =
-        request(context, "?action=sync", "POST", payload, SYNC_URL) { data, _ ->
-            val accounts = data?.optJSONArray("accounts") ?: JSONArray()
-            val stats = data?.optJSONObject("stats")
-            SyncOutcome(
-                accounts = accounts,
-                uploaded = stats?.optInt("uploaded") ?: 0,
-                downloaded = stats?.optInt("downloaded") ?: 0,
-                kept = stats?.optInt("kept") ?: 0,
-            )
+    suspend fun pull(context: Context): Result<List<CloudRecord>> = withContext(Dispatchers.IO) {
+        try {
+            val client = ensureClient(context)
+            AccountCookieJar.get(context)
+            val resp = client.newCall(
+                Request.Builder().url("$SYNC_URL?action=pull").get().build()
+            ).execute()
+            val respText = resp.body?.string().orEmpty()
+            resp.close()
+            if (!resp.isSuccessful) {
+                Log.e(TAG, "拉取同步失败：HTTP ${resp.code}（$SYNC_URL）")
+                return@withContext Result.Failure("拉取同步失败（HTTP ${resp.code}）")
+            }
+            val json = try { JSONObject(respText) } catch (e: Exception) {
+                return@withContext Result.Failure("响应解析失败")
+            }
+            checkSuccess(json, SYNC_URL).mapCatching {
+                val arr = json.optJSONArray("data") ?: JSONArray()
+                val out = ArrayList<CloudRecord>(arr.length())
+                for (i in 0 until arr.length()) {
+                    val r = arr.optJSONObject(i) ?: continue
+                    val platform = r.optString("platform")
+                    if (platform.isBlank()) continue
+                    out.add(CloudRecord(platform, r.optJSONObject("payload") ?: JSONObject(), r.optLong("expires_at", 0L)))
+                }
+                out
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "拉取同步异常：${e.javaClass.simpleName}: ${e.message}", e)
+            Result.Failure("网络请求异常")
         }
+    }
 
-    /**
-     * 删除云端该平台的账号。本地删除后先调它再同步，避免下次合并把刚删的账号从云端加回来。
-     */
-    suspend fun deleteAccount(context: Context, platform: String): Result<Unit> =
+    /** 保存/覆盖单条同步凭据（`action=sync_save`，POST） */
+    suspend fun syncSave(context: Context, platform: String, payload: JSONObject, expiresAt: Long): Result<Unit> =
         request(
             context,
-            "?action=delete",
+            "?action=sync_save",
+            "POST",
+            JSONObject().put("platform", platform).put("payload", payload).put("expires_at", expiresAt),
+            SYNC_URL
+        ) { _, _ -> Unit }
+
+    /** 删除云端单条同步凭据（`action=sync_del`，POST） */
+    suspend fun syncDel(context: Context, platform: String): Result<Unit> =
+        request(
+            context,
+            "?action=sync_del",
             "POST",
             JSONObject().put("platform", platform),
             SYNC_URL
         ) { _, _ -> Unit }
+
+    /** 清空当前用户全部同步凭据（`action=clear_all`，POST 空 body） */
+    suspend fun clearAll(context: Context): Result<Unit> =
+        request(context, "?action=clear_all", "POST", JSONObject(), SYNC_URL) { _, _ -> Unit }
 
     // ---------- 内部：请求与解析 ----------
 
@@ -303,29 +336,29 @@ object AccountApi {
     }
 
     /**
-     * 解析统一响应结构。
-     *
+     * 校验响应成功（兼容两套壳）：
      * ★ auth.php 用 `code`/`msg`（成功 code=200），sync.php 用 `success`/`code`/`message`/`data`
-     *   （成功 success=true，code 可能省略）。两套壳都兼容：
-     *   成功 = `success==true` 或 `code==200`；失败原因取 `msg`，没有再取 `message`。
+     *   （成功 success=true，code 可能省略）。成功 = `success==true` 或 `code==200`；
+     *   失败原因取 `msg`，没有再取 `message`。
      */
+    private fun checkSuccess(json: JSONObject?, url: String): Result<Unit> {
+        if (json == null) return Result.Failure("响应格式异常")
+        if (json.optBoolean("success") || json.optInt("code") == 200) return Result.Success(Unit)
+        val message = json.optString("msg")
+            .ifBlank { json.optString("message") }
+            .ifBlank { "请求失败" }
+        Log.e(TAG, "账号接口业务失败：[code=${json.optInt("code")}] $message（$url）")
+        return Result.Failure(message)
+    }
+
     private fun <T> parseEnvelope(
         json: JSONObject?,
         url: String,
         fromData: (JSONObject?, Any) -> T,
     ): Result<T> {
-        if (json == null) return Result.Failure("响应格式异常")
-        val ok = json.optBoolean("success") || json.optInt("code") == 200
-        if (!ok) {
-            val message = json.optString("msg")
-                .ifBlank { json.optString("message") }
-                .ifBlank { "请求失败" }
-            val code = json.optInt("code")
-            Log.e(TAG, "账号接口业务失败：[code=$code] $message（$url）")
-            return Result.Failure(message)
-        }
+        checkSuccess(json, url).onFailure { return Result.Failure(it) }
         return try {
-            Result.Success(fromData(json.optJSONObject("data"), Unit))
+            Result.Success(fromData(json?.optJSONObject("data"), Unit))
         } catch (e: Exception) {
             Log.e(TAG, "账号数据解析失败（$url）：${e.message}", e)
             Result.Failure("数据解析失败")
