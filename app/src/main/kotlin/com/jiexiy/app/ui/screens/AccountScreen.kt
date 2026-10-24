@@ -217,6 +217,19 @@ fun AccountScreen(
             scope.launch {
                 busy = true
                 error = null
+                // 注册前端限制：仅 QQ 邮箱（数字@qq.com）+ 密码须同时含字母和数字
+                if (tab == 1) {
+                    if (!Regex("""^\d+@qq\.com$""", RegexOption.IGNORE_CASE).matches(email.trim())) {
+                        error = "仅支持 QQ 邮箱（数字@qq.com）"
+                        busy = false
+                        return@launch
+                    }
+                    if (!(password.any { it.isLetter() } && password.any { it.isDigit() })) {
+                        error = "密码必须同时包含字母和数字"
+                        busy = false
+                        return@launch
+                    }
+                }
                 val result = if (tab == 0) {
                     AccountApi.login(context, email.trim(), password, captchaText.trim())
                 } else {
@@ -335,6 +348,11 @@ fun AccountScreen(
                         onValueChange = { email = it },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("邮箱") },
+                        supportingText = if (tab == 1) {
+                            { Text("仅支持 QQ 邮箱，如 12345@qq.com") }
+                        } else {
+                            null
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         singleLine = true
                     )
@@ -344,7 +362,7 @@ fun AccountScreen(
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("密码") },
                         supportingText = if (tab == 1) {
-                            { Text("至少 6 位") }
+                            { Text("至少 6 位，须含字母和数字") }
                         } else {
                             null
                         },
