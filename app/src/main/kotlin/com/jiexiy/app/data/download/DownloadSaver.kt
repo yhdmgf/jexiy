@@ -163,9 +163,23 @@ object DownloadSaver {
             }
         }
         for (candidate in nameCandidates(fileName)) {
+            // 必须先查重名：部分 DocumentsProvider 遇重名不抛错而是**静默改名**
+            // （"app.apk" → "app.apk (1)" APK 就装不上；"README.md" → "README.md.txt"），
+            // 不预查就会拿到被改名后的文档，扩展名被破坏。
+            if (safNameExists(resolver, treeUri, dirUri, candidate)) continue
             val docUri = runCatching {
                 DocumentsContract.createDocument(resolver, dirUri, mimeOf(candidate), candidate)
             }.onFailure { Log.e(TAG, "SAF 创建文档失败（$candidate）: ${it.message}") }.getOrNull() ?: continue
+            // 兜底：创建后核对真实显示名，被改名了就改回来；改不回来（名字已被占）删掉换候选名
+            if (safDisplayName(resolver, docUri) != candidate) {
+                val renamed = runCatching {
+                    DocumentsContract.renameDocument(resolver, docUri, candidate)
+                }.getOrNull()
+                if (renamed == null) {
+                    runCatching { resolver.delete(docUri, null, null) }
+                    continue
+                }
+            }
             return@runCatching DownloadDestination(
                 path = docUri.toString(),
                 openStream = { resolver.openOutputStream(docUri) },
@@ -222,6 +236,34 @@ object DownloadSaver {
                 .ifBlank { "自定义目录" }
         }.getOrDefault("自定义目录")
     }
+
+    /** SAF 目录下是否已有同名对象（文件/文件夹）；查询失败时按「存在」处理，避免踩重名 */
+    private fun safNameExists(
+        resolver: ContentResolver,
+        treeUri: Uri,
+        parentDocUri: Uri,
+        name: String
+    ): Boolean = runCatching {
+            val parentDocId = DocumentsContract.getDocumentId(parentDocUri)
+            val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentDocId)
+            resolver.query(
+                childrenUri,
+                null,
+                "${DocumentsContract.Document.COLUMN_DISPLAY_NAME}=?",
+                arrayOf(name),
+                null
+            )?.use { it.moveToFirst() } ?: false
+        }.onFailure { Log.e(TAG, "查询 SAF 同名对象失败（$name）: ${it.message}") }
+            .getOrDefault(true)
+
+    /** 读取文档真实显示名（DocumentsProvider 可能在创建时改名） */
+    private fun safDisplayName(resolver: ContentResolver, docUri: Uri): String? = runCatching {
+        resolver.query(
+            docUri,
+            arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+            null, null, null
+        )?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+    }.getOrNull()
 
     /**
      * MediaStore.Downloads 目标（Android 10+ 默认下载目录）：
