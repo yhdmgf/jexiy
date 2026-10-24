@@ -28,6 +28,7 @@ import com.jiexiy.app.data.network.GuangYaConstants
 import com.jiexiy.app.data.network.GuangYaDevice
 import com.jiexiy.app.data.network.GuangYaSmsChallenge
 import com.jiexiy.app.data.network.GuangYaTokens
+import com.jiexiy.app.data.network.GuangYaWebCredential
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -90,6 +91,44 @@ class GuangYaAccountRepository(
         AccountSyncTrigger.notifySaved()
         entity
     }
+
+    /**
+     * 保存网页登录抓到的令牌（www.guangyapan.com 的 localStorage）；先过一遍真实接口校验再落库。
+     * 与账号密码登录共用同一套令牌体系，access 过期时同样走 refresh 续期。
+     * @param newAccount true = 网盘页「添加账号」进来的，落成新的一行；false = 覆盖当前主账号那一行
+     */
+    suspend fun saveWebCredential(raw: String, newAccount: Boolean = false): Boolean = runCatching {
+        val tokens = GuangYaWebCredential.parse(raw) ?: return false
+        // 网页侧同时给出设备标识与签名时直接用（服务端可能已绑定）；否则沿用本地生成/已有的
+        val device = if (tokens.deviceId.isNotBlank() && tokens.deviceSign.isNotBlank()) {
+            GuangYaDevice(deviceId = tokens.deviceId, deviceSign = tokens.deviceSign)
+        } else {
+            deviceOf(dao.getAccount())
+        }
+        cachedDeviceId = device.deviceId
+        val info = api.fetchAccountInfo(tokens.accessToken, device) ?: return false
+        val existing = dao.getAccount()
+        // localStorage 里不带 expiresIn：记 0，下次 ensureAccessToken 会用 refresh 续一次
+        accessExpiresAt = 0L
+        val accountName = listOf(tokens.nickname, tokens.userId, existing?.account.orEmpty())
+            .firstOrNull { it.isNotBlank() }?.trim() ?: "光鸭用户"
+        val slot = resolveAccountSlot(DownloadPlatform.GUANGYA, existing, newAccount)
+        dao.upsert(
+            GuangYaAccountEntity(
+                id = slot.id,
+                accessToken = tokens.accessToken,
+                refreshToken = tokens.refreshToken.ifBlank { existing?.refreshToken.orEmpty() },
+                deviceId = device.deviceId,
+                deviceSign = device.deviceSign,
+                account = accountName,
+                nickname = tokens.nickname.ifBlank { accountName },
+                isPrimary = slot.isPrimary,
+                remark = slot.remark
+            )
+        )
+        AccountSyncTrigger.notifySaved()
+        true
+    }.getOrDefault(false)
 
     /** 发送短信验证码（文档 §2.6）：手机号规范化为 "+86 xxx" 后请求。 */
     suspend fun sendSms(phoneNumber: String): Result<GuangYaSmsChallenge> = runCatching {

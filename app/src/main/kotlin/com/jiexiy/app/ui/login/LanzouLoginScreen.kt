@@ -58,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -72,15 +73,18 @@ import com.jiexiy.app.ui.viewmodel.LanzouAccountViewModel
 import kotlinx.coroutines.launch
 
 /**
- * 蓝奏云登录页（仅账号密码登录）：
- * 调用官网登录接口（accounts.woozooo.com，含 acw_sc__v2 人机校验）换取 Cookie 并落库。
+ * 蓝奏云登录页：
+ * - 默认账号密码登录（官方接口，自动通过 acw_sc__v2 人机校验）；
+ * - 登录按键下方提供「网页登录」入口，在官网页面里手动登录（遇到滑块 / 短信 / 扫码时
+ *   纯接口绕不过去，只能走这条）。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LanzouLoginScreen(
     viewModel: LanzouAccountViewModel,
     onBack: () -> Unit,
-    onSaved: () -> Unit
+    onSaved: () -> Unit,
+    onWebLogin: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     var account by rememberSaveable { mutableStateOf("") }
@@ -203,6 +207,15 @@ fun LanzouLoginScreen(
                     Text("登录")
                 }
             }
+
+            // 登录按键下方的「网页登录」入口：官网页面手动登录，能绕过滑块 / 短信 / 扫码
+            TextButton(
+                onClick = onWebLogin,
+                enabled = !isSaving,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("网页登录", style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 
@@ -219,7 +232,11 @@ fun LanzouLoginScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        "3. 若提示密码错误，请核对后重试（连续失败请稍后再试）。",
+                        "3. 若遇到滑块 / 短信 / 扫码，点「网页登录」在官网页面里完成；纯接口绕不过去。",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "4. 连续密码失败请稍后再试（会被服务端限流）。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -120,7 +120,8 @@ fun C139LoginScreen(
             settings.loadWithOverviewMode = true
             settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NARROW_COLUMNS
             setInitialScale(0)
-            // 139 网盘用手机 UA（移动版页面在 WebView 渲染稳定；PC 版 SPA 会因环境检测白屏）
+            // 登录页地址已切 PC 版（C139Constants.LOGIN_URL），UA 保持移动版默认值：
+            // 不换成 PC_UA，否则 PC 版 SPA 在 WebView 会因环境检测白屏
             settings.userAgentString = WebSettings.getDefaultUserAgent(context)
             settings.suppressRequestedWithHeader()
             webViewClient = object : DiagnosticWebViewClient() {

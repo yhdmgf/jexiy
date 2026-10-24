@@ -158,8 +158,10 @@ import com.jiexiy.app.data.repository.VideoParseRepository
 import com.jiexiy.app.ui.login.BaiduLoginScreen
 import com.jiexiy.app.ui.login.C139LoginScreen
 import com.jiexiy.app.ui.login.GuangYaLoginScreen
+import com.jiexiy.app.ui.login.GuangYaWebLoginScreen
 import com.jiexiy.app.ui.login.ILanzouLoginScreen
 import com.jiexiy.app.ui.login.LanzouLoginScreen
+import com.jiexiy.app.ui.login.LanzouWebLoginScreen
 import com.jiexiy.app.ui.login.Pan115LoginScreen
 import com.jiexiy.app.ui.login.Pan123LoginScreen
 import com.jiexiy.app.ui.login.FeijiLoginScreen
@@ -318,6 +320,9 @@ fun MainScreen(
     var showGuangYaLogin by rememberSaveable { mutableStateOf(false) }
     var showILanzouLogin by rememberSaveable { mutableStateOf(false) }
     var showLanzouLogin by rememberSaveable { mutableStateOf(false) }
+    // 光鸭 / 蓝奏的网页登录页：官网页面手动登录，纯接口绕不过滑块 / 短信 / 扫码时走这条
+    var showGuangYaWebLogin by rememberSaveable { mutableStateOf(false) }
+    var showLanzouWebLogin by rememberSaveable { mutableStateOf(false) }
     // 视频平台登录页：null = 不展示；否则为正在登录的平台（枚举是 Serializable，可直接交给 rememberSaveable）
     var videoLoginPlatform by rememberSaveable { mutableStateOf<VideoPlatform?>(null) }
     // 本次视频登录是否算「新增账号」（账号弹窗点「添加账号」时为 true，登录后落成新的一行）
@@ -1081,7 +1086,7 @@ fun MainScreen(
         return
     }
 
-    // 光鸭登录页：全屏覆盖（账号密码登录）
+    // 光鸭登录页：全屏覆盖（账号密码 / 短信验证码）
     if (showGuangYaLogin) {
         GuangYaLoginScreen(
             viewModel = guangyaViewModel,
@@ -1089,7 +1094,25 @@ fun MainScreen(
                 showGuangYaLogin = false
                 guangyaViewModel.cancelAddAccount()
             },
-            onSaved = { showGuangYaLogin = false }
+            onSaved = { showGuangYaLogin = false },
+            onWebLogin = {
+                // 网页登录：纯接口遇到服务端下发的人机验证（/v1/shield/captcha/init）只能放弃
+                showGuangYaLogin = false
+                showGuangYaWebLogin = true
+            }
+        )
+        return
+    }
+
+    // 光鸭网页登录页：全屏覆盖（WebView 打开官网登录页，提取 localStorage 的网页令牌）
+    if (showGuangYaWebLogin) {
+        GuangYaWebLoginScreen(
+            viewModel = guangyaViewModel,
+            onBack = {
+                showGuangYaWebLogin = false
+                guangyaViewModel.cancelAddAccount()
+            },
+            onSaved = { showGuangYaWebLogin = false }
         )
         return
     }
@@ -1115,7 +1138,25 @@ fun MainScreen(
                 showLanzouLogin = false
                 lanzouViewModel.cancelAddAccount()
             },
-            onSaved = { showLanzouLogin = false }
+            onSaved = { showLanzouLogin = false },
+            onWebLogin = {
+                // 网页登录：原生接口遇到滑块 / 短信 / 扫码这些网页侧形态只能放弃
+                showLanzouLogin = false
+                showLanzouWebLogin = true
+            }
+        )
+        return
+    }
+
+    // 蓝奏云网页登录页：全屏覆盖（WebView 打开官网登录页，读取会话 Cookie）
+    if (showLanzouWebLogin) {
+        LanzouWebLoginScreen(
+            viewModel = lanzouViewModel,
+            onBack = {
+                showLanzouWebLogin = false
+                lanzouViewModel.cancelAddAccount()
+            },
+            onSaved = { showLanzouWebLogin = false }
         )
         return
     }

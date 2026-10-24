@@ -92,7 +92,8 @@ private const val SMS_COUNTDOWN_SECONDS = 60
 fun GuangYaLoginScreen(
     viewModel: GuangYaAccountViewModel,
     onBack: () -> Unit,
-    onSaved: () -> Unit
+    onSaved: () -> Unit,
+    onWebLogin: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     var account by rememberSaveable { mutableStateOf("") }
@@ -258,16 +259,27 @@ fun GuangYaLoginScreen(
                     }
                 }
 
-                // 登录按键下方的「验证码登录」入口：切到手机号短信验证码表单
-                TextButton(
-                    onClick = {
-                        smsMode = true
-                        error = null
-                    },
-                    enabled = !isSaving,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                // 登录按键下方的两个入口：验证码登录（短信）/ 网页登录（官网页面手动登录）
+                Row(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("验证码登录", style = MaterialTheme.typography.bodyMedium)
+                    TextButton(
+                        onClick = {
+                            smsMode = true
+                            error = null
+                        },
+                        enabled = !isSaving
+                    ) {
+                        Text("验证码登录", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    TextButton(
+                        onClick = onWebLogin,
+                        enabled = !isSaving
+                    ) {
+                        Text("网页登录", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             } else {
                 OutlinedTextField(
@@ -391,11 +403,16 @@ fun GuangYaLoginScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        "3. 登录成功后 access / refresh 令牌与设备标识会加密保存在本机。",
+                        "3. 若提示需要安全验证（滑块 / 短信），点「网页登录」在官网页面里完成，" +
+                            "纯接口登录绕不过这条。",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        "4. 若提示需要安全验证，请重试或改用其它登录方式。",
+                        "4. 登录成功后 access / refresh 令牌与设备标识会加密保存在本机。",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "5. 网页登录的令牌可自动续期；失效后需重新登录。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

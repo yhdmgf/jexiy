@@ -31,11 +31,12 @@ import java.nio.charset.StandardCharsets
 object C139Constants {
 
     /**
-     * WebView 登录页：139 云盘主站（网盘账号，手机号登录）。
-     * 用手机 UA 加载（139 移动版页面渲染稳定）；PC 版 SPA 在 WebView 环境会因深度环境检测（navigator.plugins/
-     * window.chrome 等特征缺失）而 JS 渲染空白，故不用 PC UA 直连。
+     * WebView 登录页：139 云盘 PC 版登录页（对齐 wenxi-main 的 yun.139.com/w/）。
+     * WebView 的 UA 仍用移动版默认值（wenxi 同样未覆盖 UA）：139 若按 UA 判定会把 /w/ 重定向
+     * 回移动版页面，两种情况抓到的 cookie 域相同，不影响后续接口；不换成 PC UA 是因为 PC
+     * 版 SPA 在 WebView 里会因深度环境检测（navigator.plugins/window.chrome 缺失）白屏。
      */
-    const val LOGIN_URL = "https://yun.139.com/m/#/login"
+    const val LOGIN_URL = "https://yun.139.com/w/"
 
     /** 提取 Cookie 的主域名（fast login 核心：Os_SSo_Sid + RMKEY 在此域） */
     const val COOKIE_DOMAIN = "https://mail.10086.cn"
