@@ -26,9 +26,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 /**
- * 平台账号目录：把 10 张账号表统一成「列表 / 设主账号 / 改备注 / 退出」四件事。
+ * 平台账号目录：把 12 张账号表统一成「列表 / 设主账号 / 改备注 / 退出」四件事。
  *
- * ★ 为什么集中在这里而不是给 10 个 `*AccountRepository` 各加一套：账号管理 UI 与多账号
+ * ★ 为什么集中在这里而不是给 12 个 `*AccountRepository` 各加一套：账号管理 UI 与多账号
  *   下载轮询只关心公共字段（见 [MultiAccountEntity]），各平台的凭证差异（cookie / token /
  *   设备号…）不该渗进这些逻辑；集中后加新平台只需在下面几个 when 里各加一条分支。
  *
@@ -49,6 +49,8 @@ class AccountDirectory(private val db: AppDatabase) {
         DownloadPlatform.GUANGYA -> db.guangyaAccountDao().observeAccounts()
         DownloadPlatform.ILANZOU -> db.ilanzouAccountDao().observeAccounts()
         DownloadPlatform.LANZOU -> db.lanzouAccountDao().observeAccounts()
+        DownloadPlatform.FEIJI -> db.feijiAccountDao().observeAccounts()
+        DownloadPlatform.ALIYUN -> db.aliyunAccountDao().observeAccounts()
         else -> flowOf(emptyList())
     }
 
@@ -64,6 +66,8 @@ class AccountDirectory(private val db: AppDatabase) {
         DownloadPlatform.GUANGYA -> db.guangyaAccountDao().getAccounts()
         DownloadPlatform.ILANZOU -> db.ilanzouAccountDao().getAccounts()
         DownloadPlatform.LANZOU -> db.lanzouAccountDao().getAccounts()
+        DownloadPlatform.FEIJI -> db.feijiAccountDao().getAccounts()
+        DownloadPlatform.ALIYUN -> db.aliyunAccountDao().getAccounts()
         else -> emptyList()
     }
 
@@ -96,8 +100,8 @@ class AccountDirectory(private val db: AppDatabase) {
     }
 
     /**
-     * 10 个平台账号 DAO 的写操作方法名完全一致，这里统一取出来，
-     * 免得 setPrimary / setRemark / remove 各写一遍 10 分支的 when。
+     * 12 个平台账号 DAO 的写操作方法名完全一致，这里统一取出来，
+     * 免得 setPrimary / setRemark / remove 各写一遍 12 分支的 when。
      */
     private fun writeOps(platform: String): WriteOps? = when (platform) {
         DownloadPlatform.QUARK -> db.quarkAccountDao().let { d ->
@@ -137,6 +141,14 @@ class AccountDirectory(private val db: AppDatabase) {
         }
 
         DownloadPlatform.LANZOU -> db.lanzouAccountDao().let { d ->
+            WriteOps({ d.setPrimary(it) }, { id, r -> d.updateRemark(id, r) }, { d.deleteById(it) })
+        }
+
+        DownloadPlatform.FEIJI -> db.feijiAccountDao().let { d ->
+            WriteOps({ d.setPrimary(it) }, { id, r -> d.updateRemark(id, r) }, { d.deleteById(it) })
+        }
+
+        DownloadPlatform.ALIYUN -> db.aliyunAccountDao().let { d ->
             WriteOps({ d.setPrimary(it) }, { id, r -> d.updateRemark(id, r) }, { d.deleteById(it) })
         }
 

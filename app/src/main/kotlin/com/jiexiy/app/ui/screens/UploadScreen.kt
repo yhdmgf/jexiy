@@ -18,8 +18,12 @@
 
 package com.jiexiy.app.ui.screens
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +38,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Cancel
@@ -45,58 +50,71 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.jiexiy.app.data.db.AppDatabase
 import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.SharePlatform
+import com.jiexiy.app.data.repository.AccountDirectory
 import com.jiexiy.app.data.upload.CloudUploadManager
+import com.jiexiy.app.data.upload.SelectedFile
 import com.jiexiy.app.data.upload.UploadPhase
 import com.jiexiy.app.data.upload.UploadStatus
 import com.jiexiy.app.data.upload.UploadTask
 import com.jiexiy.app.ui.SnackbarController
 import com.jiexiy.app.ui.components.jexiyWavyProgress
+import com.jiexiy.app.ui.items.drivePlatformLogoRes
 
 /**
- * 上传页：选择文件加入 [platform] 平台的上传队列，展示进度 / 失败原因，可取消、重试、删除记录。
+ * 上传页：右上角「+ 添加文件」→ 系统文件选择器 → 弹出网盘选择弹窗（只显示已登录的网盘）→ 入队。
+ *
+ * 目标网盘不在进页时写死：每个账号平台都可能没登录，写死会让用户点「添加文件」才发现传不上去。
  */
 @Composable
 fun UploadScreen(
     modifier: Modifier = Modifier,
-    platform: String = DownloadPlatform.FEIJI,
     folderId: String = "0"
 ) {
     val context = LocalContext.current
     val tasks by CloudUploadManager.tasks.collectAsState()
-    val label = CloudUploadManager.labelOf(platform)
-        ?.ifBlank { "网盘" }
-        .orEmpty().ifEmpty { "网盘" }
+
+    // 选完文件先暂存，等用户在弹窗里选完网盘再真正入队
+    var pending by remember { mutableStateOf<List<UploadPick>>(emptyList()) }
+    var showTargetPicker by remember { mutableStateOf(false) }
+
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
     ) { uris ->
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
-        var added = 0
-        uris.forEach { uri ->
-            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
-            CloudUploadManager.enqueue(
-                context = context,
-                platform = platform,
-                uri = uri,
-                fileName = info.name,
-                size = info.size,
-                mimeType = info.mimeType,
-                folderId = folderId
-            )
-            added++
+        val picked = uris.mapNotNull { uri ->
+            CloudUploadManager.describe(context, uri)?.let { info -> UploadPick(uri, info) }
         }
-        if (added > 0) SnackbarController.show("已加入 $added 个上传任务")
+        if (picked.isEmpty()) {
+            SnackbarController.show("无法读取所选文件")
+            return@rememberLauncherForActivityResult
+        }
+        pending = picked
+        showTargetPicker = true
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -133,10 +151,12 @@ fun UploadScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = { picker.launch(arrayOf("*/*")) }) {
-                        Text("选择文件上传到$label")
-                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "点击右上角「添加文件」开始上传",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         } else {
@@ -150,6 +170,215 @@ fun UploadScreen(
                         onCancel = { CloudUploadManager.cancel(task.id) },
                         onRetry = { CloudUploadManager.retry(task.id) },
                         onRemove = { CloudUploadManager.remove(task.id) }
+                    )
+                }
+            }
+        }
+    }
+
+    if (showTargetPicker && pending.isNotEmpty()) {
+        UploadTargetSheet(
+            files = pending,
+            folderId = folderId,
+            onDismiss = { showTargetPicker = false },
+            onPicked = { target ->
+                CloudUploadManager.init(context)
+                var added = 0
+                pending.forEach { pick ->
+                    CloudUploadManager.enqueue(
+                        context = context,
+                        platform = target.platform,
+                        uri = pick.uri,
+                        fileName = pick.info.name,
+                        size = pick.info.size,
+                        mimeType = pick.info.mimeType,
+                        folderId = folderId
+                    )
+                    added++
+                }
+                showTargetPicker = false
+                pending = emptyList()
+                SnackbarController.show("已加入 $added 个上传任务 · ${target.title}")
+            }
+        )
+    }
+}
+
+/** 已描述过的一个待上传文件：Uri + 显示名/大小/MIME */
+private data class UploadPick(val uri: Uri, val info: SelectedFile)
+
+/** 弹窗里的一行网盘：平台标识 + 展示名 + 主账号昵称 + logo */
+private data class UploadTarget(
+    val platform: String,
+    val title: String,
+    val accountName: String,
+    @DrawableRes val logoRes: Int?
+)
+
+/** 可上传的平台清单，与 [CloudUploadManager.init] 里的注册顺序一致 */
+private val UPLOADABLE_PLATFORMS = listOf(
+    DownloadPlatform.FEIJI,
+    DownloadPlatform.ALIYUN,
+    DownloadPlatform.QUARK,
+    DownloadPlatform.UC,
+    DownloadPlatform.XUNLEI,
+    DownloadPlatform.BAIDU,
+    DownloadPlatform.C139,
+    DownloadPlatform.PAN123,
+    DownloadPlatform.PAN115,
+    DownloadPlatform.GUANGYA,
+    DownloadPlatform.LANZOU,
+    DownloadPlatform.ILANZOU
+)
+
+/**
+ * 读「已登录」的网盘账号，一行一个平台（同平台多账号时取主账号）。
+ *
+ * 上传走主账号：凭证刷新、会话续期这些平台语义都在主账号那套 Repository 里维护，
+ * 非主账号只做下载轮询，拿它们上传会把会话状态搞乱。
+ */
+private suspend fun loadUploadTargets(context: android.content.Context): List<UploadTarget> {
+    CloudUploadManager.init(context)
+    val directory = AccountDirectory(AppDatabase.get(context))
+    val result = mutableListOf<UploadTarget>()
+    UPLOADABLE_PLATFORMS.forEach { platform ->
+        if (!CloudUploadManager.supports(platform)) return@forEach
+        val accounts = directory.list(platform)
+        if (accounts.isEmpty()) return@forEach
+        val primary = accounts.firstOrNull { it.isPrimary } ?: accounts.first()
+        result += UploadTarget(
+            platform = platform,
+            title = platformTitle(platform),
+            accountName = primary.remark.ifBlank { primary.nickname },
+            logoRes = drivePlatformLogoRes(platform)
+        )
+    }
+    return result
+}
+
+private fun platformTitle(platform: String): String =
+    SharePlatform.entries.first { it.name.equals(platform, ignoreCase = true) }.displayName
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UploadTargetSheet(
+    files: List<UploadPick>,
+    folderId: String,
+    onDismiss: () -> Unit,
+    onPicked: (UploadTarget) -> Unit
+) {
+    val context = LocalContext.current
+    var targets by remember { mutableStateOf<List<UploadTarget>?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+
+    LaunchedEffect(Unit) {
+        targets = loadUploadTargets(context)
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(modifier = Modifier.padding(bottom = 24.dp)) {
+            Text(
+                text = "上传到哪个网盘",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
+            )
+            Text(
+                text = "已选 ${files.size} 个文件",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+            )
+
+            val list = targets
+            when {
+                list == null -> Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) { CircularProgressIndicator() }
+
+                list.isEmpty() -> Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "还没有登录任何网盘",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "请先在「网盘」页登录一个网盘，再回来上传",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                else -> LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    items(list, key = { it.platform }) { target ->
+                        UploadTargetRow(target, onClick = { onPicked(target) })
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UploadTargetRow(target: UploadTarget, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val res = target.logoRes
+            if (res != null) {
+                Image(
+                    painter = painterResource(res),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = target.title.take(1),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = target.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (target.accountName.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = target.accountName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

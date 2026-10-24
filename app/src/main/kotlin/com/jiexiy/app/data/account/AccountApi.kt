@@ -40,13 +40,14 @@ import org.json.JSONObject
  * - `POST auth.php?action=register`        body `{email, password, password2, mail_code, captcha}`
  * - `POST auth.php?action=login`           body `{email, password, captcha}`
  * - `POST auth.php?action=logout`
- * - `GET  auth.php?action=check`           → `data:{loggedIn, email}`
+ * - `GET  auth.php?action=check`            → `data:{login, email}`；login=true 已登录，login=false 未登录
  *
- * 成功 `{"success":true,"message":...,"data":{}}`；失败 `{"success":false,"message":...}`。
+ * 成功 `{"code":200,"msg":...,"data":{}}`；失败 `{"code":<非200>,"msg":...}`。
  *
  * ★ 请求必须走 [client]（带 CookieJar 的独立实例），不能用全局 [HttpClients.apiClient]：
- *   后端把图形验证码、邮箱验证码、发码冷却都写在 PHP Session 里，靠 `PHPSESSID` 关联；
- *   指纹风控靠 `jiexiy_fp`，登录态靠 `jiexiy_user`。三个 Cookie 漏一个，验证码就永远对不上。
+ *   后端把图形验证码、邮箱验证码、发码冷却写在 PHP Session 里（`PHPSESSID`），
+ *   设备指纹靠 `jiexiy_fp`、登录态靠 `jiexiy_user`（登录后由服务端 Set-Cookie 下发）。
+ *   这三个 Cookie 漏一个，验证码就对不上、登录态也丢。
  *   会话由 [AccountCookieJar] 持久化，应用重启后仍连着。
  */
 object AccountApi {
@@ -99,7 +100,8 @@ object AccountApi {
             "?action=login",
             "POST",
             JSONObject().put("email", email).put("password", password).put("captcha", captcha),
-        ) { data, _ -> Session(data?.optString("email").orEmpty()) }
+            // 后端登录成功不回 data（只 Set-Cookie jiexiy_user），邮箱用用户输入的
+        ) { _, _ -> Session(email) }
 
     suspend fun register(
         context: Context,
@@ -119,7 +121,8 @@ object AccountApi {
                 .put("password2", password2)
                 .put("mail_code", mailCode)
                 .put("captcha", captcha),
-        ) { data, _ -> Session(data?.optString("email").orEmpty()) }
+            // 后端注册成功不回 data，邮箱用用户输入的
+        ) { _, _ -> Session(email) }
 
     /** 发送邮箱验证码。服务端进入校验即锁定 60 秒（成功失败都上锁），失败原因原样带回 */
     suspend fun sendMailCode(context: Context, captcha: String, email: String): Result<Unit> =
@@ -171,13 +174,15 @@ object AccountApi {
     }
 
     /**
-     * 检查登录态。
-     * 返回 `Success(null)` 表示「未登录」（Cookie 缺失或已过期），网络失败才走 `Failure` ——
+     * 检查登录态（后端 `action=check`）。
+     *
+     * 返回 `Success(null)` 表示「未登录」，`Success(Session)` 表示已登录；网络失败才走 `Failure` ——
      * 调用方据此区分「确实退出」与「只是没网」，后者不应清掉本地登录态。
+     * ★ 后端「未登录」也回 `code:200` + `data.login=false`（不是失败码），所以能直接走 [request]。
      */
     suspend fun check(context: Context): Result<Session?> =
         request(context, "?action=check", "GET", null) { data, _ ->
-            if (data?.optBoolean("loggedIn") == true) {
+            if (data?.optBoolean("login") == true) {
                 Session(data.optString("email").orEmpty())
             } else {
                 null
@@ -250,9 +255,24 @@ object AccountApi {
         body: JSONObject?,
         baseUrl: String = BASE_URL,
         fromData: (JSONObject?, Any) -> T,
-    ): Result<T> = withContext(Dispatchers.IO) {
-        val url = baseUrl + path
-        val text = try {
+    ): Result<T> = when (val raw = fetchJson(context, baseUrl + path, method, body)) {
+        is Result.Failure -> raw
+        is Result.Success -> parseEnvelope(raw.data, baseUrl + path, fromData)
+    }
+
+    /**
+     * 发请求并返回 JSON 对象，不判 `success`。
+     *
+     * `Failure` 表示网络/解析层失败（超时、断网、响应为空或不是 JSON）——调用方应视同「未知」；
+     * `Success(json)` 才交给 [parseEnvelope] 判 `code` 字段。
+     */
+    private suspend fun fetchJson(
+        context: Context,
+        url: String,
+        method: String,
+        body: JSONObject?,
+    ): Result<JSONObject?> = withContext(Dispatchers.IO) {
+        try {
             // OkHttp 不允许 POST 带空 body：logout 这类无参数接口显式发一个空对象
             val requestBody = body?.toString()?.toRequestBody(JSON)
                 ?: if (method == "POST") "{}".toRequestBody(JSON) else null
@@ -264,37 +284,35 @@ object AccountApi {
                     .method(method, requestBody)
                     .build()
             ).execute().use { resp ->
-                val body = resp.body?.string().orEmpty()
-                if (body.isBlank()) {
+                val text = resp.body?.string().orEmpty()
+                if (text.isBlank()) {
                     Log.e(TAG, "账号响应为空（HTTP ${resp.code}，$url）")
                     return@withContext Result.Failure("响应为空（HTTP ${resp.code}）")
                 }
-                // 非 2xx 也可能带合法 JSON（业务失败），先取 body 再交给 parseEnvelope 判 success
-                body
+                try {
+                    Result.Success(JSONObject(text))
+                } catch (e: Exception) {
+                    Log.e(TAG, "账号响应不是合法 JSON（前 200 字=${text.take(200)}）", e)
+                    Result.Failure("响应格式异常")
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "账号请求异常（$url）：${e.javaClass.simpleName}: ${e.message}", e)
-            return@withContext Result.Failure("${e.javaClass.simpleName}: ${e.message ?: "网络异常"}")
+            Result.Failure("${e.javaClass.simpleName}: ${e.message ?: "网络异常"}")
         }
-        parseEnvelope(text, url, fromData)
     }
 
-    /** 解析统一响应结构：`success` 为 false 时把服务端 message 原样带回 */
+    /** 解析统一响应结构：`code` 非 200 时把服务端 msg 原样带回 */
     private fun <T> parseEnvelope(
-        body: String,
+        json: JSONObject?,
         url: String,
         fromData: (JSONObject?, Any) -> T,
     ): Result<T> {
-        val json = try {
-            JSONObject(body)
-        } catch (e: Exception) {
-            Log.e(TAG, "账号响应不是合法 JSON（前 200 字=${body.take(200)}）", e)
-            return Result.Failure("响应格式异常")
-        }
-        if (!json.optBoolean("success")) {
-            val code = json.optInt("code")
-            val message = json.optString("message").ifBlank { "请求失败" }
-            Log.e(TAG, "账号接口业务失败：[$code] $message（$url）")
+        if (json == null) return Result.Failure("响应格式异常")
+        val code = json.optInt("code")
+        if (code !== 200) {
+            val message = json.optString("msg").ifBlank { "请求失败" }
+            Log.e(TAG, "账号接口业务失败：[code=$code] $message（$url）")
             return Result.Failure(message)
         }
         return try {

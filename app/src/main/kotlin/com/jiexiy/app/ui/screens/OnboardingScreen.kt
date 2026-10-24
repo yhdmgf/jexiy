@@ -360,7 +360,7 @@ private fun WelcomePage(context: Context) {
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            FactChip("10 大网盘")
+            FactChip("11 大网盘")
             FactChip("7 大视频平台")
             FactChip("分片下载")
             FactChip("完全免费")
