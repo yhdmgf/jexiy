@@ -324,6 +324,12 @@ fun AccountScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedButton(
+                    onClick = { runSync(true) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy
+                ) { Text("双向同步") }
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
                     onClick = logout,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !busy

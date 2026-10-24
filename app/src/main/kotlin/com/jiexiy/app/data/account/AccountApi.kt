@@ -302,16 +302,25 @@ object AccountApi {
         }
     }
 
-    /** 解析统一响应结构：`code` 非 200 时把服务端 msg 原样带回 */
+    /**
+     * 解析统一响应结构。
+     *
+     * ★ auth.php 用 `code`/`msg`（成功 code=200），sync.php 用 `success`/`code`/`message`/`data`
+     *   （成功 success=true，code 可能省略）。两套壳都兼容：
+     *   成功 = `success==true` 或 `code==200`；失败原因取 `msg`，没有再取 `message`。
+     */
     private fun <T> parseEnvelope(
         json: JSONObject?,
         url: String,
         fromData: (JSONObject?, Any) -> T,
     ): Result<T> {
         if (json == null) return Result.Failure("响应格式异常")
-        val code = json.optInt("code")
-        if (code !== 200) {
-            val message = json.optString("msg").ifBlank { "请求失败" }
+        val ok = json.optBoolean("success") || json.optInt("code") == 200
+        if (!ok) {
+            val message = json.optString("msg")
+                .ifBlank { json.optString("message") }
+                .ifBlank { "请求失败" }
+            val code = json.optInt("code")
             Log.e(TAG, "账号接口业务失败：[code=$code] $message（$url）")
             return Result.Failure(message)
         }
