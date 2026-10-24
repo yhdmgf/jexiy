@@ -110,6 +110,7 @@ import com.jiexiy.app.ui.screens.AddToBookmarkDialog
 import com.jiexiy.app.ui.screens.BaiduSaveContent
 import com.jiexiy.app.ui.screens.C139SaveContent
 import com.jiexiy.app.ui.screens.GuangYaSaveContent
+import com.jiexiy.app.ui.screens.FeijSaveContent
 import com.jiexiy.app.ui.screens.Pan115SaveContent
 import com.jiexiy.app.ui.screens.Pan123SaveContent
 import com.jiexiy.app.ui.screens.SaveToCloudContent
@@ -604,6 +605,7 @@ fun ShareDetailScreen(
                     viewModel.isSavePan123 -> Pan123SaveContent(viewModel, pan123CloudViewModel, onBack)
                     viewModel.isSavePan115 -> Pan115SaveContent(viewModel, pan115CloudViewModel, onBack)
                     viewModel.isSaveGuangYa -> GuangYaSaveContent(viewModel, guangyaCloudViewModel, onBack)
+                    viewModel.isSaveFeiji -> FeijSaveContent(viewModel, onBack)
                     else -> SaveToCloudContent(viewModel, quarkCloudViewModel, onBack)
                 }
             }

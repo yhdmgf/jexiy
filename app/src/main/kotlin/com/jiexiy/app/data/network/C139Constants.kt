@@ -31,10 +31,9 @@ import java.nio.charset.StandardCharsets
 object C139Constants {
 
     /**
-     * WebView 登录页：139 云盘 PC 版登录页（对齐 wenxi-main 的 yun.139.com/w/）。
-     * WebView 的 UA 仍用移动版默认值（wenxi 同样未覆盖 UA）：139 若按 UA 判定会把 /w/ 重定向
-     * 回移动版页面，两种情况抓到的 cookie 域相同，不影响后续接口；不换成 PC UA 是因为 PC
-     * 版 SPA 在 WebView 里会因深度环境检测（navigator.plugins/window.chrome 缺失）白屏。
+     * WebView 登录页：139 云盘 PC 版登录页（对齐 wenxi-main lib/domain/auth.dart 的 yun.139.com/w/）。
+     * 必须搭配 [PC_UA] 一起用：139 只对桌面版页面下发 authorization cookie，
+     * WebView 用移动版 UA 会被判成手机端、拿不到登录态。
      */
     const val LOGIN_URL = "https://yun.139.com/w/"
 

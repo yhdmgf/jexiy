@@ -120,9 +120,9 @@ fun C139LoginScreen(
             settings.loadWithOverviewMode = true
             settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NARROW_COLUMNS
             setInitialScale(0)
-            // 登录页地址已切 PC 版（C139Constants.LOGIN_URL），UA 保持移动版默认值：
-            // 不换成 PC_UA，否则 PC 版 SPA 在 WebView 会因环境检测白屏
-            settings.userAgentString = WebSettings.getDefaultUserAgent(context)
+            // 必须用 PC UA：139 只对桌面版页面下发 authorization cookie，WebView 用移动版 UA
+            // 会被判成手机端、拿不到登录态（wenxi 的 c139 目标同样用桌面 UA 打开 /w/）
+            settings.userAgentString = C139Constants.PC_UA
             settings.suppressRequestedWithHeader()
             webViewClient = object : DiagnosticWebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {

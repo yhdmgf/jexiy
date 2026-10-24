@@ -207,7 +207,7 @@ class ResolveViewModel(
     var saveMessage by mutableStateOf<String?>(null)
         private set
 
-    /** 当前分享是否支持转存（夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭） */
+    /** 当前分享是否支持转存（夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭 / 小飞机） */
     val canSave: Boolean
         get() = currentPlatform == SharePlatform.QUARK ||
             currentPlatform == SharePlatform.UC ||
@@ -216,7 +216,8 @@ class ResolveViewModel(
             currentPlatform == SharePlatform.C139 ||
             currentPlatform == SharePlatform.PAN123 ||
             currentPlatform == SharePlatform.PAN115 ||
-            currentPlatform == SharePlatform.GUANGYA
+            currentPlatform == SharePlatform.GUANGYA ||
+            currentPlatform == SharePlatform.FEIJI
 
     /** 当前分享是否为迅雷（UI 选择迅雷版转存目录选择器） */
     val isSaveXunlei: Boolean
@@ -249,6 +250,10 @@ class ResolveViewModel(
     /** 当前分享是否为光鸭云盘（UI 选择光鸭版转存目录选择器） */
     val isSaveGuangYa: Boolean
         get() = currentPlatform == SharePlatform.GUANGYA
+
+    /** 当前分享是否为小飞机网盘（UI 选择小飞机版转存目录选择器） */
+    val isSaveFeiji: Boolean
+        get() = currentPlatform == SharePlatform.FEIJI
 
     /** 请求转存：记录目标文件并打开目录选择弹窗 */
     fun requestSave(file: ShareFile) {
@@ -386,6 +391,22 @@ class ResolveViewModel(
                                 saveMessage = it.message ?: "转存失败"
                             }
                     }
+                    SharePlatform.FEIJI -> {
+                        // 小飞机保存到个人盘：/app/file/transfer（shareId + code + folderId）
+                        val credential = currentCredential()
+                        if (credential.isNullOrBlank()) {
+                            saveMessage = "请先登录小飞机网盘"
+                            return@launch
+                        }
+                        feijiResolveRepository.transferFile(s, file, toDirFid, credential)
+                            .onSuccess {
+                                saveMessage = "已保存到小飞机网盘"
+                                saveTarget = null
+                            }
+                            .onFailure {
+                                saveMessage = it.message ?: "转存失败"
+                            }
+                    }
                     else -> {
                         val credential = currentCredential()
                         if (credential.isNullOrBlank()) {
@@ -515,6 +536,10 @@ class ResolveViewModel(
                             SharePlatform.GUANGYA -> {
                                 // 光鸭批量转存到根目录（parentId ""）
                                 guangyaResolveRepository.transferFile(s, file, "", credential)
+                            }
+                            SharePlatform.FEIJI -> {
+                                // 小飞机批量转存到根目录（folderId "0"）
+                                feijiResolveRepository.transferFile(s, file, "0", credential)
                             }
                             SharePlatform.ILANZOU -> {
                                 // 蓝奏优享批量转存到根目录（folderId "0"）
