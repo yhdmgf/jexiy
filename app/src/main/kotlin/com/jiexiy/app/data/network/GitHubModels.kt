@@ -70,6 +70,8 @@ data class GitHubRelease(
     /** 发布时间（API published_at，ISO8601 字符串） */
     val publishedAt: String?,
     val assets: List<GitHubAsset>,
+    /** 更新说明正文（API body，Markdown）；该版本没写说明时为 null */
+    val body: String? = null,
     /** 是否预发布（prerelease=true） */
     val prerelease: Boolean = false,
     /** 是否草稿（draft=true，不可公开下载） */

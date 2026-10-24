@@ -305,6 +305,7 @@ class GitHubApi(
             name = o.optString("name").ifBlank { null },
             publishedAt = o.optString("published_at").ifBlank { null },
             assets = assets,
+            body = o.optString("body").ifBlank { null },
             prerelease = o.optBoolean("prerelease", false),
             draft = o.optBoolean("draft", false)
         )

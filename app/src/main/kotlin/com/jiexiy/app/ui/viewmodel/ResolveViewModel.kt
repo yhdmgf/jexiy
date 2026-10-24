@@ -844,6 +844,14 @@ class ResolveViewModel(
     var githubParentFullName: String? by mutableStateOf(null)
         private set
 
+    /** 当前 Release 的更新说明原文（API body，Markdown）；该版本没写说明时为 null */
+    var githubReleaseNotes: String? by mutableStateOf(null)
+        private set
+
+    /** 当前 Release 的展示标题（name 优先，回退 tag） */
+    var githubReleaseTitle: String? by mutableStateOf(null)
+        private set
+
     /** 文件徽章映射：fid -> 徽章文本（Releases 的 最新/预发布/草稿，账号 repo 的 Fork/语言） */
     var githubBadges: Map<String, String> by mutableStateOf(emptyMap())
         private set
@@ -873,6 +881,17 @@ class ResolveViewModel(
     val githubAtRepoRoot: Boolean
         get() = isGitHubPlatform &&
             (currentDirFid == "github:root" || currentDirFid.startsWith("github:repo:"))
+
+    /**
+     * 当前是否停在某个 Release 的资产列表（fid = `github:release:{tag}`）。
+     * 更新说明只在这一层渲染；回到 Releases 列表或仓库根不残留。
+     */
+    val githubAtReleaseAssets: Boolean
+        get() = isGitHubPlatform && currentDirFid.startsWith("github:release:")
+
+    /** 当前 Release 的 tag：更新说明里的相对链接按它解析（GitHub 渲染 release body 也是相对 tag） */
+    val githubReleaseTag: String?
+        get() = if (githubAtReleaseAssets) currentDirFid.removePrefix("github:release:") else null
 
     /** GitHub 下拉刷新指示器状态 */
     var githubRefreshing by mutableStateOf(false)
@@ -1349,6 +1368,8 @@ class ResolveViewModel(
         currentGitHubRepos.clear()
         githubReadme = null
         githubParentFullName = null
+        githubReleaseTitle = null
+        githubReleaseNotes = null
         githubBadges = emptyMap()
         dirStack.clear()
         pathNames = emptyList()
@@ -1417,6 +1438,9 @@ class ResolveViewModel(
         val repo = currentGitHubRepo ?: return
         githubParentFullName = if (repo.fork) repo.parentFullName else null
         githubBadges = emptyMap()
+        // 仓库根只显示 README，清掉上一个 Release 残留的更新说明
+        githubReleaseTitle = null
+        githubReleaseNotes = null
         // README 并行加载，不阻塞根目录列表
         viewModelScope.launch {
             githubReadme = githubApi?.getReadme(repo.owner, repo.name, repo.defaultBranch)
@@ -1535,6 +1559,9 @@ class ResolveViewModel(
         val repo = currentGitHubRepo ?: return
         if (firstPage) {
             currentGitHubReleases.clear()
+            // 回到 Releases 列表层，清掉上一个版本残留的更新说明
+            githubReleaseTitle = null
+            githubReleaseNotes = null
         }
         val rels = githubApi?.getReleases(repo.owner, repo.name, page = page)
         if (rels == null && page == 1) {
@@ -1597,6 +1624,9 @@ class ResolveViewModel(
             return
         }
         githubBadges = emptyMap()
+        // 更新说明（release body）在资产列表下方按 Markdown 渲染；标题优先用 name，回退 tag
+        githubReleaseTitle = rel.name?.takeIf { it.isNotBlank() } ?: rel.tagName
+        githubReleaseNotes = rel.body?.takeIf { it.isNotBlank() }
         val files = rel.assets.map { a ->
             ShareFile(
                 fid = "github:asset:${a.downloadUrl}",
@@ -1814,6 +1844,8 @@ class ResolveViewModel(
         currentGitHubRepos.clear()
         githubReadme = null
         githubParentFullName = null
+        githubReleaseTitle = null
+        githubReleaseNotes = null
         githubBadges = emptyMap()
         isGuest = false
         uiState = ResolveUiState.Idle

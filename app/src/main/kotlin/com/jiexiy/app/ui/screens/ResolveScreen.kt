@@ -319,13 +319,26 @@ fun ResolveScreen(
                             }
                         }
                     } else null,
-                    extraFooterContent = if (viewModel.githubAtRepoRoot) {
+                    // 仓库根显示 README；Release 详情显示该版本的更新说明（共用同一份 Markdown 渲染）
+                    extraFooterContent = if (viewModel.githubAtRepoRoot || viewModel.githubAtReleaseAssets) {
                         {
-                            val md = viewModel.githubReadme
+                            // 仓库根与 Release 详情互斥：不在仓库根时就是 Release 详情
+                            val showReleaseNotes = !viewModel.githubAtRepoRoot
+                            val md = if (showReleaseNotes) viewModel.githubReleaseNotes else viewModel.githubReadme
+                            // README 的相对链接按仓库默认分支解析；更新说明按该 Release 的 tag 解析
+                            val ref = if (showReleaseNotes) {
+                                viewModel.githubReleaseTag
+                            } else {
+                                viewModel.githubDefaultBranch
+                            }
+                            val title = if (showReleaseNotes) {
+                                viewModel.githubReleaseTitle ?: "更新说明"
+                            } else {
+                                "README"
+                            }
                             val owner = viewModel.githubRepoOwner
                             val repo = viewModel.githubRepoName
-                            val branch = viewModel.githubDefaultBranch
-                            if (!md.isNullOrBlank() && owner != null && repo != null && branch != null) {
+                            if (!md.isNullOrBlank() && owner != null && repo != null && ref != null) {
                                 Column(modifier = Modifier.padding(top = 12.dp)) {
                                     Box(
                                         modifier = Modifier
@@ -335,22 +348,22 @@ fun ResolveScreen(
                                     )
                                     Spacer(Modifier.height(8.dp))
                                     Text(
-                                        text = "README",
+                                        text = title,
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Spacer(Modifier.height(4.dp))
-                                    // 用成熟 GFM 库渲染 README（表格/任务列表/代码高亮/HTML 子集/emoji/自动链接）
+                                    // 用成熟 GFM 库渲染（表格/任务列表/代码高亮/HTML 子集/emoji/自动链接）
                                     // 预处理：相对链接与相对图片补全为绝对 URL（raw.githubusercontent.com）
-                                    val processed = remember(md, owner, repo, branch) {
-                                        preprocessReadme(md, owner, repo, branch)
+                                    val processed = remember(md, owner, repo, ref) {
+                                        preprocessReadme(md, owner, repo, ref)
                                     }
                                     // 注入自定义图片加载器（OkHttp 自研，无 Coil）
                                     GitHubMarkdownImageTransformer.mirrorPrefix = remember {
                                         com.jiexiy.app.data.prefs.SettingsRepository(context)
                                             .githubMirrorPrefix?.ifBlank { null }
                                     }
-                                    // 紧凑字号：与更新说明共用同一份排版（见 ui/components/MarkdownTypography.kt）
+                                    // 紧凑字号：README 与更新说明共用同一份排版（见 ui/components/MarkdownTypography.kt）
                                     val compactTypography = remember { compactMarkdownTypography() }
                                     Markdown(
                                         content = processed,
