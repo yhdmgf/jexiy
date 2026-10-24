@@ -100,6 +100,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.jiexiy.app.data.account.AccountApi
 import com.jiexiy.app.data.account.AccountStore
 import com.jiexiy.app.data.network.ShareLinkParser
 import com.jiexiy.app.data.network.SharePlatform
@@ -515,7 +516,16 @@ fun MainScreen(
     // 删除的触发点在 AccountDirectory.remove。
     val accountSyncManager = remember(backupManager) { AccountSyncManager(backupManager) }
     LaunchedEffect(accountSyncManager) {
-        accountStore.session.value?.let { accountSyncManager.sync(context) }
+        if (accountStore.session.value != null) {
+            // 同步前先 check() 刷新服务端子会话：PHP 会话过期后 sync.php 会 401（auth.php 的
+            // check 会用 jiexiy_user cookie 重建 $_SESSION['email'] 并回传新 PHPSESSID），
+            // 不先 check 的话，重启 APP 后的首次同步必失败。
+            val loggedIn = when (val c = AccountApi.check(context)) {
+                is AccountApi.Result.Failure -> true   // 网络异常：仍尝试同步，按原样失败
+                is AccountApi.Result.Success -> c.data != null
+            }
+            if (loggedIn) accountSyncManager.sync(context)
+        }
         AccountSyncTrigger.events.collectLatest { event ->
             val session = accountStore.session.value ?: return@collectLatest
             // 连续保存多个账号时合并成一次同步
