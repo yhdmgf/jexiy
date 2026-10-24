@@ -35,7 +35,9 @@ import java.io.IOException
  *
  * 转存（保存到自己网盘）暂未接入：`transferFile` 直接返回失败。
  */
-class AliyunResolveRepository : ShareResolveRepository {
+class AliyunResolveRepository(
+    private val api: AliyunApi = AliyunApi()
+) : ShareResolveRepository {
 
     private fun shareSession(s: ShareSession) =
         AliyunShareSession(s.shareId, s.stoken, s.title)
@@ -47,7 +49,7 @@ class AliyunResolveRepository : ShareResolveRepository {
     ): Result<ShareSession> = runCatching {
         val parsed = ShareLinkParser.parse(link)
             ?: throw IOException("无法识别阿里云盘分享链接")
-        val s = AliyunApi.shareToken(parsed.shareId, pwd.orEmpty())
+        val s = api.shareToken(parsed.shareId, pwd.orEmpty())
         ShareSession(shareId = s.shareId, stoken = s.stoken, title = s.title)
     }
 
@@ -56,7 +58,7 @@ class AliyunResolveRepository : ShareResolveRepository {
         dirFid: String,
         cookie: String
     ): Result<List<ShareFile>> = runCatching {
-        AliyunApi.listByShare(shareSession(session), dirFid.ifBlank { "root" })
+        api.listByShare(shareSession(session), dirFid.ifBlank { "root" })
     }
 
     override suspend fun getShareDownloadLink(
@@ -64,7 +66,7 @@ class AliyunResolveRepository : ShareResolveRepository {
         file: ShareFile,
         cookie: String
     ): Result<DownloadLink> = runCatching {
-        val url = AliyunApi.shareDownloadUrl(shareSession(session), file.fid)
+        val url = api.shareDownloadUrl(shareSession(session), file.fid)
         DownloadLink(
             fid = file.fid,
             filename = file.fname,
