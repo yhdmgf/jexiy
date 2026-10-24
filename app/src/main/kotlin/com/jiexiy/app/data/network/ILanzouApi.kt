@@ -201,7 +201,7 @@ class ILanzouApi(
         if (size <= 0) throw IllegalStateException("无法读取文件大小，请重新选择文件")
         if (account.isBlank()) throw IllegalStateException("蓝奏优享未返回上传账号信息，请重新登录")
 
-        val md5 = UploadIo.digest(open, size, "MD5") { read -> onProgress(read) }
+        val md5 = UploadIo.digest(open, size, "MD5", onProgress = { read -> onProgress(read) })
         val pre = exec(
             Request.Builder()
                 .url(buildUrl(ILanzouConstants.GET_UPLOAD_TOKEN, uuid, appToken, extra = true, params = emptyList()))

@@ -123,9 +123,11 @@ object UploadIo {
         return callClient.newCall(builder.build()).execute()
     }
 
-    /** [start, end) 区间流式请求体；回调给出绝对字节位置。 */
-    /** [start, end) 区间流式请求体（不带 Content-Type，用于百度 superfile2 这类纯二进制接口）。 */
-    fun chunkBody(
+    /** 执行已构造好的请求；[followRedirects] 为 false 时不跟随 302/307（OSS/S3 直传要求）。 */
+    fun execute(request: Request, followRedirects: Boolean = true): Response =
+        (if (followRedirects) client else noRedirectClient).newCall(request).execute()
+
+    /** [start, end) 区间流式请求体（不带 Content-Type，用于百度 superfile2 这类纯二进制接口）。 */    fun chunkBody(
         open: (Long, Long) -> InputStream,
         start: Long,
         end: Long,

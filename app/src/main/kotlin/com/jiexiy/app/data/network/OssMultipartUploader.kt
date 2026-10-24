@@ -61,12 +61,12 @@ object OssMultipartUploader {
         open: (Long, Long) -> InputStream,
         onProgress: (Long) -> Unit = {}
     ): Unit {
-        require(bucket.isNotBlank(), "上传凭据缺少 bucket")
-        require(objectKey.isNotBlank(), "上传凭据缺少对象路径")
-        require(accessKey.isNotBlank() && secretKey.isNotBlank(), "上传凭据缺少密钥")
+        require(bucket.isNotBlank()) { "上传凭据缺少 bucket" }
+        require(objectKey.isNotBlank()) { "上传凭据缺少对象路径" }
+        require(accessKey.isNotBlank() && secretKey.isNotBlank()) { "上传凭据缺少密钥" }
 
         val rawEndpoint = if (endpoint.contains("://")) endpoint else "https://$endpoint"
-        val parsed = UriParse(rawEndpoint)
+        val parsed = UriParts(rawEndpoint)
         var host = parsed.host
         if (host.isNotBlank() && !host.startsWith("$bucket.")) host = "$bucket.$host"
         if (host.isBlank()) throw IllegalStateException("网盘返回的上传服务器无效")
@@ -199,7 +199,7 @@ object OssMultipartUploader {
     private fun Base64Encode(bytes: ByteArray): String = java.util.Base64.getEncoder().encodeToString(bytes)
 
     /** 极简 URL 拆分（只需 host + path，不解析 query）。 */
-    private class UriParse(url: String) {
+    private class UriParts(url: String) {
         val host: String
         val path: String
         init {

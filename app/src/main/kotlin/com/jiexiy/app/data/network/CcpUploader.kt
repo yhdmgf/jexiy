@@ -165,7 +165,7 @@ object CcpUploader {
 
         post(config.uploadFinishUrl, JSONObject()
             .put("obj_key", json.objectKey).put("task_id", json.taskId).toString())
-        json.objectKey
+        return json.objectKey
     }
 
     private fun pre(
@@ -215,9 +215,9 @@ object CcpUploader {
     }
 
     private fun partSize(data: JSONObject, fallback: Long): Long {
-        val meta = data.optJSONObject("metadata")
-            ?: runCatching { JSONObject(data.toString()) }.getOrNull()
-                ?.optJSONObject("metadata").orNull()
+        val meta: JSONObject? = data.optJSONObject("metadata")
+            ?: runCatching { JSONObject(data.optJSONObject("file_metadata").toString()) }
+                .getOrNull()?.optJSONObject("metadata")
         val raw = meta?.optString("part_size").orEmpty()
         raw.toLongOrNull()?.takeIf { it > 0 }?.let { return it }
         val number = meta?.optLong("part_size")
@@ -280,12 +280,7 @@ object CcpUploader {
         val body = xml.toByteArray(Charsets.UTF_8).toRequestBody("application/xml".toMediaType())
         val builder = Request.Builder().url(url).post(body)
         headers.forEach { (key, value) -> builder.header(key, value) }
-        return HttpClients.apiClient()
-            .newBuilder()
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .newCall(builder.build())
-            .execute()
+        return UploadIo.execute(builder.build(), followRedirects = false)
     }
 
     private fun xmlEscape(value: String): String = value

@@ -66,12 +66,12 @@ object S3v4Uploader {
         open: (Long, Long) -> InputStream,
         onProgress: (Long) -> Unit = {}
     ) {
-        require(bucket.isNotBlank(), "上传凭据缺少 bucket")
-        require(objectKey.isNotBlank(), "上传凭据缺少对象路径")
-        require(accessKey.isNotBlank() && secretKey.isNotBlank(), "上传凭据缺少密钥")
-        require(region.isNotBlank(), "上传凭据缺少区域")
+        require(bucket.isNotBlank()) { "上传凭据缺少 bucket" }
+        require(objectKey.isNotBlank()) { "上传凭据缺少对象路径" }
+        require(accessKey.isNotBlank() && secretKey.isNotBlank()) { "上传凭据缺少密钥" }
+        require(region.isNotBlank()) { "上传凭据缺少区域" }
 
-        val parsed = UriParse(if (endpoint.contains("://")) endpoint else "https://$endpoint")
+        val parsed = UriParts(if (endpoint.contains("://")) endpoint else "https://$endpoint")
         val authority = if (pathStyle || parsed.host.startsWith("$bucket.")) parsed.host
         else "$bucket.${parsed.host}"
         if (authority.isBlank()) throw IllegalStateException("网盘返回的上传服务器无效")
@@ -217,7 +217,7 @@ object S3v4Uploader {
     }
 
     /** 极简 URL 拆分（只需 host + path）。 */
-    private class UriParse(url: String) {
+    private class UriParts(url: String) {
         val host: String
         val path: String
         init {

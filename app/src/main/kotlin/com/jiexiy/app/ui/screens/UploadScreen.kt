@@ -44,7 +44,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,6 +62,7 @@ import com.jiexiy.app.data.upload.UploadPhase
 import com.jiexiy.app.data.upload.UploadStatus
 import com.jiexiy.app.data.upload.UploadTask
 import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.components.jexiyWavyProgress
 
 /**
  * 上传页：选择文件加入 [platform] 平台的上传队列，展示进度 / 失败原因，可取消、重试、删除记录。
@@ -227,12 +227,15 @@ private fun UploadTaskRow(
             }
             if (task.status == UploadStatus.RUNNING || task.status == UploadStatus.PENDING) {
                 Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
+                jexiyWavyProgress(
                     progress = {
                         if (task.size > 0) (task.progress.toFloat() / task.size).coerceIn(0f, 1f)
                         else 0f
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    waving = task.status == UploadStatus.RUNNING
                 )
             }
             if (task.status == UploadStatus.FAILED && task.error.isNotBlank()) {

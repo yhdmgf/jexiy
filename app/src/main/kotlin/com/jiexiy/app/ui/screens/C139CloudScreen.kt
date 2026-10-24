@@ -163,10 +163,8 @@ fun C139CloudScreen(
     var showBatchActions by remember { mutableStateOf(false) }
     var batchInitial by remember { mutableStateOf(BatchStep.MENU) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    // 「+」菜单的两个弹窗：创建文件夹 / 上传目标选择
+    // 「+」菜单的弹窗：创建文件夹（上传文件直接调系统选择器，传到当前目录）
     var showCreateFolder by remember { mutableStateOf(false) }
-    var showUploadDestination by remember { mutableStateOf(false) }
-    var uploadTargetFolderId by remember { mutableStateOf("/") }
 
     val uploadPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
@@ -182,7 +180,7 @@ fun C139CloudScreen(
                 fileName = info.name,
                 size = info.size,
                 mimeType = info.mimeType,
-                folderId = uploadTargetFolderId
+                folderId = (viewModel.uiState.value as? C139CloudUiState.Loaded)?.dirId ?: "/"
             )
             added++
         }
@@ -330,7 +328,7 @@ fun C139CloudScreen(
                                             }
                                             // 「+」新建菜单（创建文件夹 / 上传文件，Agent.md §3.26）
                                             CloudAddMenu(onCreateFolder = { showCreateFolder = true },
-                                    onUploadFile = { showUploadDestination = true })
+                                    onUploadFile = { uploadPicker.launch(arrayOf("*/*")) })
                                         }
                                     }
                                     if (!viewModel.multiSelectMode) {
@@ -557,22 +555,6 @@ fun C139CloudScreen(
                 viewModel.createFolder(name)
             }
         )
-    }
-
-    // 上传目标选择器：先选目录再选文件
-    if (showUploadDestination) {
-        OperationSheet(busy = false, onDismiss = { showUploadDestination = false }) {
-            C139MoveStep(
-                subtitle = "上传文件到",
-                viewModel = viewModel,
-                onBack = { showUploadDestination = false },
-                onDone = {
-                    uploadTargetFolderId = (viewModel.moveUiState.value as? C139CloudUiState.Loaded)?.dirId ?: "/"
-                    showUploadDestination = false
-                    uploadPicker.launch(arrayOf("*/*"))
-                }
-            )
-        }
     }
 
     viewModel.shareResult?.let { info ->

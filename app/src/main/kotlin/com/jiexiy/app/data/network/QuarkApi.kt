@@ -395,6 +395,44 @@ class QuarkApi(
         }.getOrNull()
     }
 
+    // ---------- 上传（阿里云 CCP，对齐 wenxi 的 quark_upload.dart） ----------
+
+    /**
+     * 上传文件（阿里云 CCP，与 UC 同一套接口，仅域名/产品码/防盗链不同）：
+     * `upload/pre` 取凭据 → `update/hash` 提交 MD5+SHA1 试秒传 → 逐片 `upload/auth` 签发授权后 PUT →
+     * `CompleteMultipartUpload` 合并 → `upload/finish` 入库。
+     *
+     * @param open 打开文件的 [start, end) 输入流（算 hash 与分片都会重新调用）
+     * @param onProgress 已传输字节数
+     * @return 新文件的标识（CCP 的 obj_key）
+     */
+    suspend fun uploadFile(
+        cookie: String,
+        pdirFid: String,
+        fileName: String,
+        size: Long,
+        mimeType: String,
+        open: (Long, Long) -> InputStream,
+        onProgress: (Long) -> Unit = {}
+    ): String = withContext(Dispatchers.IO) {
+        if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
+        if (size <= 0) throw IllegalStateException("夸克不支持上传空文件")
+        val parent = pdirFid.ifBlank { QuarkConstants.DEFAULT_PDIR_FID }
+        val exists = listCloudFiles(parent, cookie)
+            ?.any { !it.isdir && it.fname == fileName }
+            ?: false
+        if (exists) throw IllegalStateException("目录中已有同名文件，请重命名后上传")
+        CcpUploader.upload(
+            config = ccpConfig,
+            post = { url, body -> parseData(postJson(url, cookie, body), { it }) },
+            fileName = fileName,
+            size = size,
+            parentFid = parent,
+            mimeType = mimeType,
+            open = open,
+            onProgress = onProgress
+        )
+    }
     // ---------- 下载直链 ----------
 
     /**
@@ -706,7 +744,6 @@ class QuarkApi(
 
     // ---------- 请求构造与响应解析 ----------
 
-    /** 上传任务凭证（`upload/pre` 一次性下发） */
     /** CCP 上传平台配置：夸克产品码 ucpro，OSS 防盗链指向 pan.quark.cn。 */
     private val ccpConfig = CcpUploader.Config(
         label = "夸克",

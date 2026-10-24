@@ -155,10 +155,8 @@ fun CloudDriveScreen(
     var batchInitial by remember { mutableStateOf(com.jiexiy.app.ui.screens.BatchStep.MENU) }
     // 批量删除二次确认
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    // 「+」菜单的两个弹窗：创建文件夹 / 上传目标选择
+    // 「+」菜单的弹窗：创建文件夹（上传文件直接调系统选择器，传到当前目录）
     var showCreateFolder by remember { mutableStateOf(false) }
-    var showUploadDestination by remember { mutableStateOf(false) }
-    var uploadTargetFolderId by remember { mutableStateOf("0") }
 
     val uploadPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
@@ -174,7 +172,7 @@ fun CloudDriveScreen(
                 fileName = info.name,
                 size = info.size,
                 mimeType = info.mimeType,
-                folderId = uploadTargetFolderId
+                folderId = (viewModel.uiState.value as? QuarkCloudUiState.Loaded)?.dirFid ?: "0"
             )
             added++
         }
@@ -330,7 +328,7 @@ fun CloudDriveScreen(
                             }
                             // 「+」新建菜单（创建文件夹 / 上传文件，Agent.md §3.26）
                             CloudAddMenu(onCreateFolder = { showCreateFolder = true },
-                                    onUploadFile = { showUploadDestination = true })
+                                    onUploadFile = { uploadPicker.launch(arrayOf("*/*")) })
                         }
                     }
                     // 可点击面包屑（多选模式下隐藏）
@@ -570,23 +568,6 @@ fun CloudDriveScreen(
     }
 
     // 分享创建成功：展示链接与提取码（单文件/批量共用）
-    // 上传目标选择器：先选目录再选文件
-    if (showUploadDestination) {
-        OperationSheet(busy = false, onDismiss = { showUploadDestination = false }) {
-            QuarkMoveStep(
-                subtitle = "上传文件到",
-                viewModel = viewModel,
-                operating = false,
-                onBack = { showUploadDestination = false },
-                onDone = {
-                    uploadTargetFolderId = (viewModel.moveUiState.value as? QuarkCloudUiState.Loaded)?.dirFid ?: "0"
-                    showUploadDestination = false
-                    uploadPicker.launch(arrayOf("*/*"))
-                }
-            )
-        }
-    }
-
     viewModel.shareResult?.let { info ->
         ShareResultDialog(
             info = info,

@@ -994,7 +994,40 @@ class XunleiApi(
         return "1.$h"
     }
 
+    /** MD5 十六进制摘要（[buildCaptchaSign] 的 10 层迭代用）。 */
+    private fun md5Hex(input: String): String {
+        val digest = MessageDigest.getInstance("MD5").digest(input.toByteArray())
         return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    /**
+     * 迅雷中文口令（如「张三丰资源」）→ 带提取码的分享链接（免登录）。
+     *
+     * 口令是「分享链接 + 提取码」的打包形式：把口令当关键词打 shoulei 的搜索跳转接口，
+     * `ext.kouling_type == "share_page"` 时 `location` 就是带 `pwd` 的分享页地址（明文，无需解密）；
+     * 没有对应资源时只返回 `search_url`，这里按「口令无效」抛出。
+     * 纯逻辑（判定 / 拼 URL / 解 location）在 [XunleiKouling]，便于单测。
+     */
+    suspend fun parseKouling(keyword: String): String = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url(XunleiKouling.buildJumpUrl(keyword))
+            .header("User-Agent", XunleiKouling.USER_AGENT)
+            .header("Accept", "*/*")
+            .header("Origin", XunleiKouling.ORIGIN)
+            .header("Referer", XunleiKouling.REFERER)
+            .header("Accept-Language", "zh-CN")
+            .get()
+            .build()
+        client.newCall(request).execute().use { resp ->
+            val body = resp.body?.string().orEmpty()
+            if (!resp.isSuccessful) throw IllegalStateException("口令解析失败（HTTP ${resp.code}）")
+            val json = runCatching { JSONObject(body) }.getOrNull()
+                ?: throw IllegalStateException("口令解析失败：响应格式异常")
+            val type = json.optJSONObject("ext")?.optString("kouling_type").orEmpty()
+            if (type != "share_page") throw IllegalStateException("口令「$keyword」没有对应的网盘分享")
+            XunleiKouling.shareUrlFromLocation(json.optString("location"))
+                ?: throw IllegalStateException("口令「$keyword」没有对应的网盘分享")
+        }
     }
 
     /**
@@ -1028,9 +1061,9 @@ class XunleiApi(
         // 逐块 SHA-1 后聚合一次：块边界参与校验，客户端重传不会误判成秒传
         val blockHashes = ArrayList<ByteArray>()
         for (start in 0L until size step blockSize) {
-            blockHashes.add(sha1Bytes(open(start, minOf(size, start + blockSize))))
+            blockHashes.add(sha1Range(open(start, minOf(size, start + blockSize))))
         }
-        val gcid = sha1Bytes(blockHashes.toByteArray()).joinToString("") { "%02X".format(it) }
+        val gcid = sha1Bytes(blockHashes.toTypedArray()).joinToString("") { "%02X".format(it) }
 
         val data = panCall(captchaToken, deviceId, "POST:/drive/v1/files", { token ->
             panRequest(
@@ -1053,8 +1086,9 @@ class XunleiApi(
             ?: data.optJSONObject("file")?.optString("id").orEmpty()
         if (id.isBlank()) throw IllegalStateException("迅雷未创建上传任务")
 
-        val params = data.optJSONObject("resumable")?.optJSONObject("params").orNull()
-        if (params != null && !params.isEmpty()) {
+        val params = data.optJSONObject("resumable")?.optJSONObject("params")
+            ?.takeIf { it.length() > 0 }
+        if (params != null) {
             S3v4Uploader.upload(
                 endpoint = params.optString("endpoint"),
                 bucket = params.optString("bucket"),
@@ -1072,7 +1106,8 @@ class XunleiApi(
         id
     }
 
-    private fun sha1Bytes(source: InputStream): ByteArray {
+    /** 流式 SHA-1：逐块摘要用，边读边算，不把整块读进内存 */
+    private fun sha1Range(source: InputStream): ByteArray {
         val digest = MessageDigest.getInstance("SHA-1")
         val buffer = ByteArray(64 * 1024)
         source.use { input ->
@@ -1084,3 +1119,36 @@ class XunleiApi(
         }
         return digest.digest()
     }
+
+    /** 把各分块摘要按序拼在一起再做一次 SHA-1，得到服务端要求的聚合校验值 gcid */
+    private fun sha1Bytes(buffers: Array<ByteArray>): ByteArray {
+        val digest = MessageDigest.getInstance("SHA-1")
+        buffers.forEach { digest.update(it) }
+        return digest.digest()
+    }
+
+    companion object {
+        /** 设备 ID：动态生成的设备指纹（进程启动时由 Application 初始化并持久化） */
+        fun newDeviceId(): String = XunleiDeviceFingerprint.deviceId()
+
+        /**
+         * 解析 reviewurl（review_panel 返回的验证面板链接）的查询参数。
+         * 响应体通常自带 creditkey / token，可优先用于自有短信登录流，而非跳外部浏览器。
+         */
+        fun parseReviewUrl(reviewUrl: String): Map<String, String> {
+            val map = mutableMapOf<String, String>()
+            runCatching {
+                val q = reviewUrl.substringAfter('?', "")
+                q.split('&').forEach { pair ->
+                    val parts = pair.split('=', limit = 2)
+                    if (parts.size == 2) {
+                        map[parts[0]] = java.net.URLDecoder.decode(parts[1], "UTF-8")
+                    } else if (parts.size == 1 && parts[0].isNotBlank()) {
+                        map[parts[0]] = ""
+                    }
+                }
+            }
+            return map
+        }
+    }
+}

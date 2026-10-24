@@ -148,8 +148,6 @@ fun GuangYaCloudScreen(
     var batchInitial by remember { mutableStateOf(BatchStep.MENU) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showCreateFolder by remember { mutableStateOf(false) }
-    var showUploadDestination by remember { mutableStateOf(false) }
-    var uploadTargetFolderId by remember { mutableStateOf("") }
 
     val uploadPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
@@ -165,7 +163,7 @@ fun GuangYaCloudScreen(
                 fileName = info.name,
                 size = info.size,
                 mimeType = info.mimeType,
-                folderId = uploadTargetFolderId
+                folderId = (viewModel.uiState.value as? GuangYaCloudUiState.Loaded)?.dirId ?: ""
             )
             added++
         }
@@ -303,7 +301,7 @@ fun GuangYaCloudScreen(
                                                 )
                                             }
                                             CloudAddMenu(onCreateFolder = { showCreateFolder = true },
-                                    onUploadFile = { showUploadDestination = true })
+                                    onUploadFile = { uploadPicker.launch(arrayOf("*/*")) })
                                         }
                                     }
                                     if (!viewModel.multiSelectMode) {
@@ -507,22 +505,6 @@ fun GuangYaCloudScreen(
                 viewModel.createFolder(name)
             }
         )
-    }
-
-    // 上传目标选择器：先选目录再选文件
-    if (showUploadDestination) {
-        OperationSheet(busy = false, onDismiss = { showUploadDestination = false }) {
-            GuangYaMoveStep(
-                subtitle = "上传文件到",
-                viewModel = viewModel,
-                onBack = { showUploadDestination = false },
-                onDone = {
-                    uploadTargetFolderId = (viewModel.moveUiState.value as? GuangYaCloudUiState.Loaded)?.dirId ?: ""
-                    showUploadDestination = false
-                    uploadPicker.launch(arrayOf("*/*"))
-                }
-            )
-        }
     }
 
     viewModel.shareResult?.let { info ->

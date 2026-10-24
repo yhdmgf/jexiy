@@ -168,8 +168,6 @@ fun FeijiCloudScreen(
     var batchInitial by remember { mutableStateOf(BatchStep.MENU) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showCreateFolder by remember { mutableStateOf(false) }
-    var showUploadDestination by remember { mutableStateOf(false) }
-    var uploadTargetFolderId by remember { mutableStateOf("0") }
     var shareResult by remember { mutableStateOf<ShareInfo?>(null) }
     var downloadLink by remember { mutableStateOf<DownloadLink?>(null) }
 
@@ -204,7 +202,7 @@ fun FeijiCloudScreen(
                 fileName = info.name,
                 size = info.size,
                 mimeType = info.mimeType,
-                folderId = uploadTargetFolderId
+                folderId = currentFolderId()
             )
             added++
         }
@@ -408,7 +406,7 @@ fun FeijiCloudScreen(
                                 }
                                 CloudAddMenu(
                                     onCreateFolder = { showCreateFolder = true },
-                                    onUploadFile = { showUploadDestination = true }
+                                    onUploadFile = { uploadPicker.launch(arrayOf("*/*")) }
                                 )
                             }
                         }
@@ -772,21 +770,6 @@ fun FeijiCloudScreen(
         ShareResultDialog(
             info = info,
             onDismiss = { shareResult = null }
-        )
-    }
-
-    // 上传目标选择器：先选目录再选文件
-    if (showUploadDestination) {
-        FeijiMoveStep(
-            subtitle = "上传文件到",
-            uuid = uuid,
-            token = token,
-            onBack = { showUploadDestination = false },
-            onDone = { folderId ->
-                uploadTargetFolderId = folderId
-                showUploadDestination = false
-                uploadPicker.launch(arrayOf("*/*"))
-            }
         )
     }
 

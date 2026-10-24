@@ -22,6 +22,7 @@ import com.jiexiy.app.data.network.model.QuotaInfo
 import com.jiexiy.app.data.network.model.ShareFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -618,7 +619,7 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
 
         val blockList = JSONArray(blocks).toString()
         val pre = postForm(
-            "$baseQuery${BaiduConstants.PRECREATE_URL}",
+            "$baseQuery${BaiduConstants.PRECREATE_URL}", cookie,
             form(
                 "path" to path,
                 "isdir" to "0",
@@ -660,7 +661,7 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
                 }
             }
             val created = postForm(
-                "$baseQuery${BaiduConstants.CREATE_URL}?a=commit",
+                "$baseQuery${BaiduConstants.CREATE_URL}?a=commit", cookie,
                 form(
                     "path" to path,
                     "isdir" to "0",
@@ -681,7 +682,7 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
     }
 
     /** 上传通用参数串（app_id + clienttype + bdstoken），precreate / create / superfile2 共用。 */
-    private fun baiduQuery(cookie: String): String {
+    private suspend fun baiduQuery(cookie: String): String {
         val token = getBdstoken(cookie).orEmpty()
         val params = linkedMapOf(
             "app_id" to BaiduConstants.APP_ID,
@@ -704,7 +705,7 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
             .header("Referer", "https://yun.baidu.com/disk/main")
             .get()
             .build()
-        val json = runCatching { executeJson(request) }.getOrElse { return emptyList() }
+        val json = runCatching { executeJson(request) }.getOrNull() ?: return emptyList()
         val hosts = LinkedHashSet<String>()
         for (key in listOf("servers", "bak_servers")) {
             val array = json.optJSONArray(key) ?: continue
@@ -717,7 +718,7 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
         json.optString("host").orEmpty().let { raw ->
             if (raw.isNotBlank()) hosts.add("https://$raw".trimEnd('/'))
         }
-        hosts.toList()
+        return hosts.toList()
     }
 
     /** 上传单个 4 MB 分段；POST 原始字节，无表单字段。 */
@@ -746,6 +747,26 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
         val response = client.newCall(request).execute()
         val text = response.use { it.body?.string() ?: "" }
         return JSONObject(text)
+    }
+
+    /** 构造 urlencoded 表单请求体（按传入顺序提交字段）。 */
+    private fun form(vararg pairs: Pair<String, String>): RequestBody {
+        val builder = FormBody.Builder()
+        for ((key, value) in pairs) builder.add(key, value)
+        return builder.build()
+    }
+
+    /** POST urlencoded 表单并返回 JSON 响应（precreate / create 提交共用）。 */
+    private fun postForm(url: String, cookie: String, body: RequestBody): JSONObject {
+        val request = Request.Builder()
+            .url(url)
+            .header("Cookie", cookie)
+            .header("User-Agent", BaiduConstants.UA_NETDISK)
+            .header("Referer", "https://yun.baidu.com/disk/main")
+            .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+            .post(body)
+            .build()
+        return executeJson(request)
     }
 
     private fun executeJson(request: Request): JSONObject {
