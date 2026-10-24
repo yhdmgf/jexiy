@@ -44,6 +44,7 @@ enum class LinkOpenTarget(
     PAN115("com.jiexiy.app.link.Pan115Link", "115 网盘", "115.com/s/…"),
     GUANGYA("com.jiexiy.app.link.GuangyaLink", "光鸭云盘", "www.guangyapan.com/s/…"),
     FEIJI("com.jiexiy.app.link.FeijiLink", "小飞机网盘", "share.feijipan.com/s/…"),
+    ALIYUN("com.jiexiy.app.link.AliyunLink", "阿里云盘", "www.alipan.com/s/…"),
     LANZOU("com.jiexiy.app.link.LanzouLink", "蓝奏云 / 优享版", "lanzou*.com/…"),
     MAGNET("com.jiexiy.app.link.MagnetLink", "磁力链接", "magnet:?xt=…"),
     JIEXIY("com.jiexiy.app.link.YunxLink", "jexiy:// 自有协议", "jexiy://resolve?url=…"),

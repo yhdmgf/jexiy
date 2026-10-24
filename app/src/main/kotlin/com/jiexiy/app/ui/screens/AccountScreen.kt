@@ -18,16 +18,24 @@
 
 package com.jiexiy.app.ui.screens
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -57,16 +65,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jiexiy.app.data.account.AccountApi
 import com.jiexiy.app.data.account.AccountStore
 import com.jiexiy.app.data.account.AccountSyncManager
 import com.jiexiy.app.data.backup.AuthBackupManager
 import com.jiexiy.app.ui.SnackbarController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -76,6 +91,9 @@ import kotlinx.coroutines.launch
  *
  * 登录态完全由后端 Cookie 决定（[AccountStore] 只负责持久化），所以进页面时先 `check` 一次：
  * Cookie 已失效（用户手动退出）就清掉本地，网络失败则保留 —— 不能把「没网」当成「已退出」。
+ *
+ * 验证码是服务端一次性的：提交过 / 发过邮箱码之后都必须换一张，
+ * 否则下一次提交一定报「图形验证码错误」。收到该文案时自动刷新（见 [AccountApi.isCaptchaRefresh]）。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,16 +112,78 @@ fun AccountScreen(
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var password2 by rememberSaveable { mutableStateOf("") }
+    var captchaText by rememberSaveable { mutableStateOf("") }
+    var mailCode by rememberSaveable { mutableStateOf("") }
+    var captchaImage by remember { mutableStateOf<Bitmap?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var captchaLoading by remember { mutableStateOf(false) }
+    var mailSending by remember { mutableStateOf(false) }
+    var mailCooldown by remember { mutableStateOf(0) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    // 拉一张新的图形验证码。失败不致命（不覆盖旧图），只在 error 里给出原因
+    val loadCaptcha: () -> Unit = {
+        if (!captchaLoading) {
+            scope.launch {
+                captchaLoading = true
+                when (val result = AccountApi.fetchCaptcha(context)) {
+                    is AccountApi.Result.Success -> {
+                        captchaImage = BitmapFactory.decodeByteArray(result.data, 0, result.data.size)
+                    }
+                    is AccountApi.Result.Failure -> error = "验证码获取失败：${result.message}"
+                }
+                captchaLoading = false
+            }
+        }
+    }
+
+    // 验证码 60 秒发送冷却倒计时（服务端成功失败都上锁，前端按钮同步禁用）
+    LaunchedEffect(mailCooldown) {
+        while (mailCooldown > 0) {
+            delay(1_000L)
+            mailCooldown--
+        }
+    }
+
+    // 进页面立即拉一张图
+    LaunchedEffect(Unit) { loadCaptcha() }
+
+    // 切 Tab 时清掉错误提示
+    val switchTab: (Int) -> Unit = { index ->
+        tab = index
+        error = null
+    }
+
+    val sendMailCode: () -> Unit = {
+        if (!(mailSending || mailCooldown > 0 || email.isBlank() || captchaText.isBlank())) {
+            scope.launch {
+                mailSending = true
+                error = null
+                when (val result = AccountApi.sendMailCode(context, captchaText.trim(), email.trim())) {
+                    is AccountApi.Result.Success -> {
+                        mailCooldown = MailCodeCooldownSeconds
+                        mailCode = ""
+                        // 图形验证码已被这一次提交消费，立刻换一张
+                        loadCaptcha()
+                        SnackbarController.show("邮箱验证码已发送，10 分钟内有效")
+                    }
+                    is AccountApi.Result.Failure -> {
+                        error = result.message
+                        // 图形验证码错了：自动换一张，用户只需重填验证码文本
+                        if (AccountApi.isCaptchaRefresh(result.message)) loadCaptcha()
+                    }
+                }
+                mailSending = false
+            }
+        }
+    }
 
     // 同步不需要用户手动触发：登录 / 注册成功后自动跑一次（拉云端独有 + 推本地独有），
     // 已登录时进页面也自动跟云端对一次。notify=false 时静默，避免每次进页都弹提示。
     val runSync: (Boolean) -> Unit = { notify ->
-        val cookie = store.session.value?.cookie
-        if (cookie != null) {
+        if (store.session.value != null) {
             scope.launch {
-                when (val result = syncManager.sync(cookie, context)) {
+                when (val result = syncManager.sync(context)) {
                     is AccountApi.Result.Success -> if (notify) {
                         SnackbarController.show("已同步 ${result.data.applied} 个平台")
                     }
@@ -117,7 +197,7 @@ fun AccountScreen(
 
     LaunchedEffect(Unit) {
         val current = store.session.value ?: return@LaunchedEffect
-        when (val result = AccountApi.check(current.cookie)) {
+        when (val result = AccountApi.check(context)) {
             is AccountApi.Result.Success -> {
                 val checked = result.data
                 if (checked == null) {
@@ -137,11 +217,17 @@ fun AccountScreen(
             scope.launch {
                 busy = true
                 error = null
-                val cookie = store.session.value?.cookie
                 val result = if (tab == 0) {
-                    AccountApi.login(email.trim(), password, cookie)
+                    AccountApi.login(context, email.trim(), password, captchaText.trim())
                 } else {
-                    AccountApi.register(email.trim(), password, password2, cookie)
+                    AccountApi.register(
+                        context,
+                        email.trim(),
+                        password,
+                        password2,
+                        mailCode.trim(),
+                        captchaText.trim()
+                    )
                 }
                 busy = false
                 when (result) {
@@ -149,11 +235,16 @@ fun AccountScreen(
                         store.save(result.data)
                         password = ""
                         password2 = ""
+                        mailCode = ""
                         SnackbarController.show(if (tab == 0) "登录成功" else "注册成功")
                         // 登录：云端已有的账号拉下来；注册：本地账号推上去。双向合并一次到位
                         runSync(true)
                     }
-                    is AccountApi.Result.Failure -> error = result.message
+                    is AccountApi.Result.Failure -> {
+                        error = result.message
+                        // 图形验证码错误：服务端要求刷新图片重试
+                        if (AccountApi.isCaptchaRefresh(result.message)) loadCaptcha()
+                    }
                 }
             }
         }
@@ -164,7 +255,7 @@ fun AccountScreen(
             scope.launch {
                 busy = true
                 // 服务端只是清 Cookie，本地无论如何都要清，失败也不该把用户卡在「已登录」
-                AccountApi.logout(store.session.value?.cookie)
+                AccountApi.logout(context)
                 store.clear()
                 busy = false
                 SnackbarController.show("已退出登录")
@@ -228,18 +319,12 @@ fun AccountScreen(
                 TabRow(selectedTabIndex = tab) {
                     Tab(
                         selected = tab == 0,
-                        onClick = {
-                            tab = 0
-                            error = null
-                        },
+                        onClick = { switchTab(0) },
                         text = { Text("登录") }
                     )
                     Tab(
                         selected = tab == 1,
-                        onClick = {
-                            tab = 1
-                            error = null
-                        },
+                        onClick = { switchTab(1) },
                         text = { Text("注册") }
                     )
                 }
@@ -259,7 +344,7 @@ fun AccountScreen(
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("密码") },
                         supportingText = if (tab == 1) {
-                            { Text("8-64 位，需同时包含字母和数字") }
+                            { Text("至少 6 位") }
                         } else {
                             null
                         },
@@ -277,6 +362,79 @@ fun AccountScreen(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             singleLine = true
                         )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = mailCode,
+                                onValueChange = { mailCode = it },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("邮箱验证码") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            OutlinedButton(
+                                onClick = sendMailCode,
+                                modifier = Modifier.height(56.dp),
+                                enabled = !mailSending && mailCooldown == 0 &&
+                                    email.isNotBlank() && captchaText.isNotBlank()
+                            ) {
+                                when {
+                                    mailSending -> CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    mailCooldown > 0 -> Text("${mailCooldown}s 后重发")
+                                    else -> Text("发送验证码")
+                                }
+                            }
+                        }
+                    }
+                    // 图形验证码：左边输入框 + 右边可点击的图片（点击即刷新）
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = captchaText,
+                            onValueChange = { captchaText = it },
+                            modifier = Modifier.weight(1f),
+                            label = { Text("图形验证码") },
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(CaptchaImageWidth, CaptchaImageHeight)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { loadCaptcha() }
+                        ) {
+                            val bitmap = captchaImage
+                            if (bitmap != null) {
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "图形验证码，点击刷新",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else if (captchaLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text(
+                                    text = "点击\n刷新",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
                     }
                     error?.let { message ->
                         Text(
@@ -291,7 +449,8 @@ fun AccountScreen(
                         enabled = !busy &&
                             email.isNotBlank() &&
                             password.isNotEmpty() &&
-                            (tab == 0 || password2.isNotEmpty())
+                            captchaText.isNotBlank() &&
+                            (tab == 0 || (password2.isNotEmpty() && mailCode.isNotBlank()))
                     ) {
                         if (busy) {
                             CircularProgressIndicator(
@@ -308,3 +467,8 @@ fun AccountScreen(
         }
     }
 }
+
+private const val MailCodeCooldownSeconds = 60
+
+private val CaptchaImageWidth: Dp = 108.dp
+private val CaptchaImageHeight: Dp = 38.dp

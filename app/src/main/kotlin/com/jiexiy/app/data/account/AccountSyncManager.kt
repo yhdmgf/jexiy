@@ -45,9 +45,9 @@ class AccountSyncManager(private val backupManager: AuthBackupManager) {
     /** 同步串行化：启动对齐、登录保存、删除账号可能同时触发，避免两轮合并交叉写入 */
     private val mutex = Mutex()
 
-    suspend fun sync(cookie: String?, context: Context): AccountApi.Result<Stats> =
+    suspend fun sync(context: Context): AccountApi.Result<Stats> =
         mutex.withLock {
-            doSync(cookie, context)
+            doSync(context)
         }
 
     /**
@@ -56,17 +56,16 @@ class AccountSyncManager(private val backupManager: AuthBackupManager) {
      */
     suspend fun deleteAndSync(
         platform: String,
-        cookie: String?,
         context: Context,
     ): AccountApi.Result<Stats> {
-        when (val deleted = AccountApi.deleteAccount(platform, cookie)) {
+        when (val deleted = AccountApi.deleteAccount(context, platform)) {
             is AccountApi.Result.Failure -> return deleted
             is AccountApi.Result.Success -> Unit
         }
-        return sync(cookie, context)
+        return sync(context)
     }
 
-    private suspend fun doSync(cookie: String?, context: Context): AccountApi.Result<Stats> =
+    private suspend fun doSync(context: Context): AccountApi.Result<Stats> =
         withContext(Dispatchers.IO) {
             val local = runCatching {
                 JSONObject(backupManager.exportJson(onlyLoggedIn = true, context))
@@ -79,7 +78,7 @@ class AccountSyncManager(private val backupManager: AuthBackupManager) {
                 .put("version", 1)
                 .put("accounts", local.optJSONArray("accounts") ?: JSONArray())
 
-            when (val result = AccountApi.sync(payload, cookie)) {
+            when (val result = AccountApi.sync(context, payload)) {
                 is AccountApi.Result.Failure -> result
                 is AccountApi.Result.Success -> {
                     val merged = JSONObject()

@@ -38,8 +38,8 @@ import org.json.JSONObject
  */
 object UpdateChecker {
 
-    /** 本应用自己的仓库（更新检测默认走它） */
-    const val APP_REPO = "yhdmgf/jiexiy"
+    /** 本应用自己的仓库（更新检测默认走它）；仓库名是 jexiy，不是 jiexiy */
+    const val APP_REPO = "yhdmgf/jexiy"
 
     private fun latestUrl(repo: String) = "https://api.github.com/repos/$repo/releases/latest"
 

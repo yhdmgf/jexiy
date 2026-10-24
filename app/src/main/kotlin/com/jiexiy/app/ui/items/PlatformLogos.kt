@@ -59,6 +59,7 @@ fun SharePlatform.logoRes(): Int = when (this) {
     SharePlatform.PAN115 -> R.drawable.logo_pan115
     SharePlatform.GUANGYA -> R.drawable.logo_guangya
     SharePlatform.FEIJI -> R.drawable.logo_feijipan
+    SharePlatform.ALIYUN -> R.drawable.logo_aliyun
     SharePlatform.ILANZOU -> R.drawable.logo_ilanzou
     SharePlatform.LANZOU -> R.drawable.logo_lanzou
     SharePlatform.GITHUB -> R.drawable.logo_github

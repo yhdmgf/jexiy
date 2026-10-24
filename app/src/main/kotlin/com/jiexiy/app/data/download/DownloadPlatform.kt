@@ -38,6 +38,7 @@ object DownloadPlatform {
     const val LANZOU = "lanzou"
     /** 小飞机网盘 */
     const val FEIJI = "feiji"
+    const val ALIYUN = "aliyun"
     /** 磁力链接（BT）：只能交给 Gopeed 引擎，内置分片下载器不支持 */
     const val MAGNET = "magnet"
     /** GitHub 仓库/Release 下载 */

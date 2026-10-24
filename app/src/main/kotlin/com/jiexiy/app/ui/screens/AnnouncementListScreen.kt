@@ -122,7 +122,8 @@ fun AnnouncementListPage(
                     }
                 },
                 actions = {
-                    if (state.items.isNotEmpty()) {
+                    // 只有还有未读时才给「全部标为已读」：全部已读后按钮与红点一起消失
+                    if (state.items.any { it.id !in readIds }) {
                         IconButton(onClick = onMarkAllRead) {
                             Icon(Icons.Outlined.DoneAll, contentDescription = "全部标为已读")
                         }

@@ -290,6 +290,31 @@ internal object SecureAccountDaos {
         override suspend fun clear() = raw.clear()
     }
 
+    fun aliyun(raw: AliyunAccountDao, cipher: CredentialCipher): AliyunAccountDao = object : AliyunAccountDao {
+        override fun observeAccount(): Flow<AliyunAccountEntity?> = raw.observeAccount().map { value ->
+            value?.let { decryptOrNull { decryptAliyun(raw, cipher, it) } }
+        }.catch { emit(null) }
+        override suspend fun upsert(account: AliyunAccountEntity) = withContext(Dispatchers.IO) {
+            raw.upsert(encryptAliyun(cipher, account))
+        }
+        override suspend fun getAccount(): AliyunAccountEntity? = decryptOrNull {
+            raw.getAccount()?.let { decryptAliyun(raw, cipher, it) }
+        }
+        override fun observeAccounts(): Flow<List<AliyunAccountEntity>> = raw.observeAccounts().map { list ->
+            list.mapNotNull { decryptOrNull { decryptAliyun(raw, cipher, it) } }
+        }.catch { emit(emptyList()) }
+        override suspend fun getAccounts(): List<AliyunAccountEntity> = decryptOrNull {
+            raw.getAccounts().mapNotNull { decryptOrNull { decryptAliyun(raw, cipher, it) } }
+        } ?: emptyList()
+        override suspend fun setPrimary(id: String) = raw.setPrimary(id)
+        override suspend fun updateRemark(id: String, remark: String) = raw.updateRemark(id, remark)
+        override suspend fun updateAccessToken(id: String, accessToken: String, updatedAt: Long) =
+            raw.updateAccessToken(id, accessToken, updatedAt)
+        override suspend fun deleteById(id: String) = raw.deleteById(id)
+        override suspend fun clear() = raw.clear()
+    }
+
+
     fun xunlei(raw: XunleiAccountDao, cipher: CredentialCipher): XunleiAccountDao = object : XunleiAccountDao {
         override fun observeAccount(): Flow<XunleiAccountEntity?> = raw.observeAccount().map { value ->
             // 单条失败只让这次 emit 为 null，**不能让 Flow 终止**（见 decryptOrNull）
@@ -342,6 +367,20 @@ internal object SecureAccountDaos {
             }
             plain
         }
+
+    private suspend fun decryptAliyun(
+        raw: AliyunAccountDao,
+        cipher: CredentialCipher,
+        stored: AliyunAccountEntity
+    ): AliyunAccountEntity = withContext(Dispatchers.IO) {
+        val plain = stored.copy(
+            accessToken = cipher.decrypt(stored.accessToken, "aliyun.accessToken"),
+            refreshToken = cipher.decrypt(stored.refreshToken, "aliyun.refreshToken")
+        )
+        if (!cipher.isEncrypted(stored.accessToken)) raw.upsert(encryptAliyun(cipher, plain))
+        plain
+    }
+
 
     private suspend fun decryptFeiji(raw: FeijiAccountDao, cipher: CredentialCipher, stored: FeijiAccountEntity): FeijiAccountEntity =
         withContext(Dispatchers.IO) {
@@ -496,6 +535,11 @@ internal object SecureAccountDaos {
     )
     private fun encryptFeiji(cipher: CredentialCipher, value: FeijiAccountEntity) =
         value.copy(appToken = cipher.encrypt(value.appToken, "feiji.appToken"))
+    private fun encryptAliyun(cipher: CredentialCipher, value: AliyunAccountEntity) =
+        value.copy(
+            accessToken = cipher.encrypt(value.accessToken, "aliyun.accessToken"),
+            refreshToken = cipher.encrypt(value.refreshToken, "aliyun.refreshToken")
+        )
     private fun encryptLanzou(cipher: CredentialCipher, value: LanzouAccountEntity) =
         value.copy(cookie = cipher.encrypt(value.cookie, "lanzou.cookie"))
     private fun encryptQuark(cipher: CredentialCipher, value: QuarkAccountEntity) =

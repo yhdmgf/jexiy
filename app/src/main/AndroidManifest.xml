@@ -89,6 +89,21 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- 阿里云盘分享链接：由「链接唤起」设置页控制启停（见 LinkOpenTarget.ALIYUN） -->
+        <activity-alias
+            android:name="com.jiexiy.app.link.AliyunLink"
+            android:enabled="true"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.alipan.com" android:pathPrefix="/s/" />
+                <data android:scheme="https" android:host="www.aliyundrive.com" android:pathPrefix="/s/" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- 桌面图标动态切换（新图标）：默认禁用，主题与外观页切换后经 setComponentEnabledSetting 启用。
              图标走 @drawable/ic_launcher_new：API 26+ 为自适应图标（drawable-v26），API 24-25 为位图回退。
              roundIcon 必须一并声明：部分启动器优先取 roundIcon，缺省会回落到 application 的经典图标。 -->

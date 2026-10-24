@@ -64,6 +64,7 @@ object CloudUploadManager {
         val app = context.applicationContext
         appContext = app
         register(DownloadPlatform.FEIJI) { FeijiUploader(app) }
+        register(DownloadPlatform.ALIYUN) { AliyunUploader(app) }
         register(DownloadPlatform.QUARK) { QuarkUploader(app) }
         register(DownloadPlatform.UC) { UCUploader(app) }
         register(DownloadPlatform.XUNLEI) { XunleiUploader(app) }

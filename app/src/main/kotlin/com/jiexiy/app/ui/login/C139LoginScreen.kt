@@ -118,7 +118,7 @@ fun C139LoginScreen(
             settings.displayZoomControls = false
             settings.useWideViewPort = true
             settings.loadWithOverviewMode = true
-            settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NARROW_COLUMNS
+            settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
             setInitialScale(0)
             // 必须用 PC UA：139 只对桌面版页面下发 authorization cookie，WebView 用移动版 UA
             // 会被判成手机端、拿不到登录态（wenxi 的 c139 目标同样用桌面 UA 打开 /w/）
@@ -138,7 +138,7 @@ fun C139LoginScreen(
                     // 强制覆盖页面 viewport：适配屏幕宽度 + 允许双指缩放（139 移动版页面 viewport 缺失或限制缩放时生效）
                     view?.evaluateJavascript(
                         "(function(){var m=document.querySelector('meta[name=\"viewport\"]');" +
-                            "var c='width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes';" +
+                            "var c='width=1280,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes';" +
                             "if(m){m.setAttribute('content',c);}else{var n=document.createElement('meta');n.name='viewport';n.content=c;document.head.appendChild(n);}" +
                             "window.dispatchEvent(new Event('resize'));})()",
                         null

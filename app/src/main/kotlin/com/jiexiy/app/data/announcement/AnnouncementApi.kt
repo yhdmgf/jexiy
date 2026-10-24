@@ -53,8 +53,7 @@ object AnnouncementApi {
      * - `GET api.php?action=detail&id=xxx`   → `{success, code, message, data:{…}}`
      *
      * 响应外壳与旧版完全一致（`success` / `code` / `message` / `data`），
-     * 所以 [parseEnvelope] 不用改；只有 `data` 里的字段名简化了：
-     * 旧版 `coverImage` + `images[]` 两个图片字段，新版统一成一个 `image`（单图）。
+     * 所以 [parseEnvelope] 不用改；`data` 里的图片字段：`image` 是封面，`images[]` 是正文图集（可选，缺省则图集只有封面）。
      */
     const val BASE_URL = "https://qlyyz.xyz/jiexiy/api.php"
 
@@ -77,11 +76,11 @@ object AnnouncementApi {
     /**
      * 公告对象。
      *
-     * ★ 新版后端只返回三个业务字段：`title` / `content` / `image`（单张图片）。
+     * ★ 后端图片字段：`image`（封面，必传）+ `images[]`（正文图集，可选）；时间字段 `createdAt` / `updatedAt`。
      *   为了让界面层（列表、详情、共享元素动画）不用大改，这里保留了旧版的字段名，
      *   只是把「封面 + 图集」两块合并成一个：
-     *   - [coverImage] 直接取后端的 `image`（列表缩略图 / 详情大图都用它）；
-     *   - [images] 恒为空列表（单图模型下没有图集了，见 [announcementGallery]）；
+     *   - [coverImage] 直接取后端的 `image`（列表缩略图 / 详情首图都用它）；
+     *   - [images] 取后端的 `images[]`（没有该字段则为空，图集就只剩封面，见 [announcementGallery]）；
      *   - [summary] 取后端的 `content` 截断（列表页副标题用，旧版是服务端单独给的字段）；
      *   - [publisher] / [isPinned] / [sortOrder] 等旧字段后端不再下发，走默认值。
      */
@@ -222,30 +221,36 @@ object AnnouncementApi {
     /**
      * 解析一条公告。
      *
-     * ★ 新版后端只有三个业务字段：`title` / `content` / `image`。
-     *   这里做「旧字段 → 新字段」的映射，让界面层（列表缩略图、详情大图、共享元素动画）不用改：
+     * ★ 后端图片字段有两代：旧版只有单图 `image`；新版同时下发 `image`（封面）与 `images[]`（正文图集）。
+     *   这里两个都读，两代后端都能跑：只有单图时图集就只有一张（等于封面），多图时详情页自动出现滑动图集。
      *
      *   | 界面层读的字段 | 数据来源 |
      *   |---|---|
      *   | `title`        | 后端 `title` |
      *   | `content`      | 后端 `content`（详情页正文） |
-     *   | `coverImage`   | 后端 `image`（列表缩略图 + 详情大图，**同一张**） |
+     *   | `coverImage`   | 后端 `image`（列表缩略图 + 详情首图） |
      *   | `summary`      | `content` 压掉换行后截断 80 字（列表副标题） |
-     *   | `images`       | 恒为空（单图模型，图集已废弃） |
+     *   | `images`       | 后端 `images[]`（没有该字段则为空，图集退化成只有封面） |
      *   | `viewCount`    | 后端 `viewCount` |
      *   | 其余字段       | 后端不下发，走默认值 |
      */
     private fun parseAnnouncement(json: JSONObject): Announcement {
         val content = json.stringOrNull("content").orEmpty()
-        // 后端只有一张图，统一塞进 coverImage；images 恒为空（单图模型下没有图集）
         val image = json.stringOrNull("image")
+        val images = json.optJSONArray("images")?.let { arr ->
+            buildList {
+                for (i in 0 until arr.length()) {
+                    arr.optString(i).trim().takeIf { it.isNotEmpty() }?.let(::add)
+                }
+            }
+        }.orEmpty()
         return Announcement(
             id = json.stringOrNull("id").orEmpty(),
             title = json.stringOrNull("title").orEmpty(),
             summary = summaryOf(content),
             content = content,
             coverImage = image,
-            images = emptyList(),
+            images = images,
             publishAt = json.stringOrNull("publishAt"),
             author = json.stringOrNull("author").orEmpty(),
             viewCount = json.optLong("viewCount"),

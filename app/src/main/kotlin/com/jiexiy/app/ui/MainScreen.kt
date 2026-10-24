@@ -514,16 +514,16 @@ fun MainScreen(
     // 删除的触发点在 AccountDirectory.remove。
     val accountSyncManager = remember(backupManager) { AccountSyncManager(backupManager) }
     LaunchedEffect(accountSyncManager) {
-        accountStore.session.value?.let { accountSyncManager.sync(it.cookie, context) }
+        accountStore.session.value?.let { accountSyncManager.sync(context) }
         AccountSyncTrigger.events.collectLatest { event ->
             val session = accountStore.session.value ?: return@collectLatest
             // 连续保存多个账号时合并成一次同步
             delay(1_200)
             when (event) {
                 is AccountSyncTrigger.Event.Deleted ->
-                    accountSyncManager.deleteAndSync(event.platform, session.cookie, context)
+                    accountSyncManager.deleteAndSync(event.platform, context)
                 AccountSyncTrigger.Event.Saved ->
-                    accountSyncManager.sync(session.cookie, context)
+                    accountSyncManager.sync(context)
             }
         }
     }

@@ -50,9 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.jiexiy.app.data.network.FeijApi
+import com.jiexiy.app.data.network.FeijiApi
 import com.jiexiy.app.data.network.model.ShareFile
-import com.jiexiy.app.data.parse.FeijAccountStore
+import com.jiexiy.app.data.parse.FeijiAccountStore
 import com.jiexiy.app.ui.SnackbarController
 import com.jiexiy.app.ui.components.jexiyLoading
 import com.jiexiy.app.ui.rememberGlobalSnackbarHostState
@@ -71,7 +71,7 @@ private const val FEIJ_ROOT_FOLDER_ID = "0"
 /**
  * 「转存到小飞机网盘」步骤内容：浏览小飞机个人网盘目录（只进文件夹），确认后转存到当前目录。
  *
- * 与网盘页同一条数据链路（[FeijApi.list]，本地直连不经服务器）；转存走 /app/file/transfer。
+ * 与网盘页同一条数据链路（[FeijiApi.list]，本地直连不经服务器）；转存走 /app/file/transfer。
  * 之所以不复用网盘页的浏览状态，是因为转存时用户可能同时开着网盘页浏览别处，
  * 两条链路共用状态会互相踩目录栈。
  */
@@ -80,7 +80,7 @@ internal fun FeijSaveContent(
     resolveViewModel: ResolveViewModel,
     onBack: () -> Unit
 ) {
-    val account = FeijAccountStore.account.collectAsState().value
+    val account = FeijiAccountStore.account.collectAsState().value
     val token = account?.appToken.orEmpty()
     val uuid = account?.uuid.orEmpty()
 
@@ -106,7 +106,7 @@ internal fun FeijSaveContent(
         }
         loading = true
         loadError = null
-        runCatching { FeijApi.list(token, uuid, currentFolderId) }
+        runCatching { FeijiApi.list(token, uuid, currentFolderId) }
             .onSuccess { files ->
                 dirs = files.filter { it.isDir }.map { f ->
                     ShareFile(

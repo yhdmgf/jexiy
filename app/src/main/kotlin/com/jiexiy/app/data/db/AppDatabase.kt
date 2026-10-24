@@ -30,8 +30,8 @@ import com.jiexiy.app.data.security.CredentialStore
 import com.jiexiy.app.util.DiagnosticLog
 
 @Database(
-    entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, Pan115AccountEntity::class, GuangYaAccountEntity::class, ILanzouAccountEntity::class, LanzouAccountEntity::class, FeijiAccountEntity::class, BookmarkEntity::class, VideoAccountEntity::class],
-    version = 23,
+    entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, Pan115AccountEntity::class, GuangYaAccountEntity::class, ILanzouAccountEntity::class, LanzouAccountEntity::class, FeijiAccountEntity::class, AliyunAccountEntity::class, BookmarkEntity::class, VideoAccountEntity::class],
+    version = 24,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -59,6 +59,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun rawLanzouAccountDao(): LanzouAccountDao
 
     abstract fun rawFeijiAccountDao(): FeijiAccountDao
+    abstract fun rawAliyunAccountDao(): AliyunAccountDao
 
     abstract fun bookmarkDao(): BookmarkDao
 
@@ -78,6 +79,7 @@ abstract class AppDatabase : RoomDatabase() {
     fun ilanzouAccountDao(): ILanzouAccountDao = SecureAccountDaos.ilanzou(rawILanzouAccountDao(), credentialCipher)
     fun lanzouAccountDao(): LanzouAccountDao = SecureAccountDaos.lanzou(rawLanzouAccountDao(), credentialCipher)
     fun feijiAccountDao(): FeijiAccountDao = SecureAccountDaos.feiji(rawFeijiAccountDao(), credentialCipher)
+    fun aliyunAccountDao(): AliyunAccountDao = SecureAccountDaos.aliyun(rawAliyunAccountDao(), credentialCipher)
 
     /** 视频解析账号：Cookie 与网盘凭证同等加密后落库 */
     fun videoAccountDao(): VideoAccountDao = SecureAccountDaos.videoAccount(rawVideoAccountDao(), credentialCipher)
@@ -107,7 +109,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_19_20,
                         MIGRATION_20_21,
                         MIGRATION_21_22,
-                        MIGRATION_22_23
+                        MIGRATION_22_23,
+                        MIGRATION_23_24
                     )
                     // 早期开发版（1-8）无可靠 schema；从 v9 起必须保留凭证和下载任务
                     .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7, 8)
@@ -363,6 +366,27 @@ abstract class AppDatabase : RoomDatabase() {
                         "`uuid` TEXT NOT NULL, " +
                         "`account` TEXT NOT NULL, " +
                         "`userId` TEXT NOT NULL, " +
+                        "`nickname` TEXT NOT NULL, " +
+                        "`updatedAt` INTEGER NOT NULL, " +
+                        "`isPrimary` INTEGER NOT NULL, " +
+                        "`remark` TEXT NOT NULL, " +
+                        "PRIMARY KEY(`id`))"
+                )
+            }
+        }
+
+        /** v24：阿里云盘多账号凭证表。 */
+        private val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `aliyun_account` (" +
+                        "`id` TEXT NOT NULL, " +
+                        "`accessToken` TEXT NOT NULL, " +
+                        "`refreshToken` TEXT NOT NULL, " +
+                        "`deviceId` TEXT NOT NULL, " +
+                        "`devicePrivateKey` TEXT NOT NULL, " +
+                        "`userId` TEXT NOT NULL, " +
+                        "`driveId` TEXT NOT NULL, " +
                         "`nickname` TEXT NOT NULL, " +
                         "`updatedAt` INTEGER NOT NULL, " +
                         "`isPrimary` INTEGER NOT NULL, " +
