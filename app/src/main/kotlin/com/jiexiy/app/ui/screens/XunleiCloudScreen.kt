@@ -498,6 +498,7 @@ fun XunleiCloudScreen(
             file = viewModel.actionFile!!,
             operating = viewModel.isOperating,
             onDownload = { viewModel.downloadFile() },
+            onPreview = { viewModel.previewFile() },
             onDownloadFolder = { viewModel.downloadFolder() },
             // 迅雷分享必须带提取码（可自定义 4 位，留空由服务端生成）
             passcodeMode = PasscodeMode.REQUIRED_OR_AUTO,

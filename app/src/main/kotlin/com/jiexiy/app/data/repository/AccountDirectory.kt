@@ -51,6 +51,7 @@ class AccountDirectory(private val db: AppDatabase) {
         DownloadPlatform.LANZOU -> db.lanzouAccountDao().observeAccounts()
         DownloadPlatform.FEIJI -> db.feijiAccountDao().observeAccounts()
         DownloadPlatform.ALIYUN -> db.aliyunAccountDao().observeAccounts()
+        DownloadPlatform.PIKPAK -> db.pikpakAccountDao().observeAccounts()
         else -> flowOf(emptyList())
     }
 
@@ -68,6 +69,7 @@ class AccountDirectory(private val db: AppDatabase) {
         DownloadPlatform.LANZOU -> db.lanzouAccountDao().getAccounts()
         DownloadPlatform.FEIJI -> db.feijiAccountDao().getAccounts()
         DownloadPlatform.ALIYUN -> db.aliyunAccountDao().getAccounts()
+        DownloadPlatform.PIKPAK -> db.pikpakAccountDao().getAccounts()
         else -> emptyList()
     }
 
@@ -149,6 +151,10 @@ class AccountDirectory(private val db: AppDatabase) {
         }
 
         DownloadPlatform.ALIYUN -> db.aliyunAccountDao().let { d ->
+            WriteOps({ d.setPrimary(it) }, { id, r -> d.updateRemark(id, r) }, { d.deleteById(it) })
+        }
+
+        DownloadPlatform.PIKPAK -> db.pikpakAccountDao().let { d ->
             WriteOps({ d.setPrimary(it) }, { id, r -> d.updateRemark(id, r) }, { d.deleteById(it) })
         }
 

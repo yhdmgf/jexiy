@@ -501,6 +501,7 @@ fun CloudDriveScreen(
                 file = file,
                 operating = viewModel.isOperating,
                 onDownload = { viewModel.downloadFile() },
+                onPreview = { viewModel.previewFile() },
                 onDownloadFolder = { viewModel.downloadFolder() },
                 onShare = { withPassword, passcode, expiredType ->
                     viewModel.shareFile(

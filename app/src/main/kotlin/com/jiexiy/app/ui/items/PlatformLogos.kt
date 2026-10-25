@@ -42,6 +42,7 @@ import com.jiexiy.app.data.network.video.VideoPlatform
  *   | `Pixiv.png` | `logo_pixiv` | `115网盘` | `logo_pan115` |
  *   | `github.png` | `logo_github` | `光鸭云盘.png` | `logo_guangya` |
  *   | `蓝奏云盘.png` | `logo_lanzou` | `蓝奏云优享版.png` | `logo_ilanzou` |
+ *   | `PikPak` | `logo_pikpak` |
  *
  * ★ 换图只要覆盖同名 PNG 即可，不用改代码；新增平台在这里补一行。
  * ★ 渲染约定：**按 Logo 自身形状原样画**（不裁圆、不加底色）——这些图标有的是带底色的
@@ -62,6 +63,7 @@ fun SharePlatform.logoRes(): Int = when (this) {
     SharePlatform.ALIYUN -> R.drawable.logo_aliyun
     SharePlatform.ILANZOU -> R.drawable.logo_ilanzou
     SharePlatform.LANZOU -> R.drawable.logo_lanzou
+    SharePlatform.PIKPAK -> R.drawable.logo_pikpak
     SharePlatform.GITHUB -> R.drawable.logo_github
 }
 

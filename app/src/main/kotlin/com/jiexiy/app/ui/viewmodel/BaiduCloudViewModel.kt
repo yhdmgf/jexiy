@@ -33,6 +33,8 @@ import com.jiexiy.app.data.network.model.ShareExpire
 import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.data.network.model.ShareInfo
+import com.jiexiy.app.ui.preview.CloudPreview
+import com.jiexiy.app.ui.preview.PreviewTypes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.Flow
@@ -244,6 +246,27 @@ class BaiduCloudViewModel(
         "Cookie" to cookie,
         "User-Agent" to BaiduConstants.UA_NETDISK
     )
+
+    /** 在线预览：与下载同一份直链与请求头，取到就交预览页，不落盘不入队 */
+    fun previewFile() {
+        val file = actionFile ?: return
+        if (PreviewTypes.kindOf(file.fname) == null) return
+        viewModelScope.launch {
+            isOperating = true
+            try {
+                val url = api.locateDownload(file.fidToken, cookie())
+                CloudPreview.open(
+                    fileName = file.fname,
+                    url = url,
+                    headers = downloadHeaders(cookie())
+                )
+            } catch (e: Exception) {
+                cloudMessage = e.message ?: "预览失败"
+            } finally {
+                isOperating = false
+            }
+        }
+    }
 
     /**
      * 递归收集文件夹内所有文件（保持目录结构）。

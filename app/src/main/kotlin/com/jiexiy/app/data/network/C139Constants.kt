@@ -35,7 +35,7 @@ object C139Constants {
      * 必须搭配 [PC_UA] 一起用：139 只对桌面版页面下发 authorization cookie，
      * WebView 用移动版 UA 会被判成手机端、拿不到登录态。
      */
-    const val LOGIN_URL = "https://yun.139.com/w/"
+    const val LOGIN_URL = "https://yun.139.com/w/#/"
 
     /** 提取 Cookie 的主域名（fast login 核心：Os_SSo_Sid + RMKEY 在此域） */
     const val COOKIE_DOMAIN = "https://mail.10086.cn"

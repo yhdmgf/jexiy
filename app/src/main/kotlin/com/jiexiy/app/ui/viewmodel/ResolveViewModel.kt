@@ -77,6 +77,8 @@ import com.jiexiy.app.data.repository.Pan115AccountRepository
 import com.jiexiy.app.data.repository.Pan115ResolveRepository
 import com.jiexiy.app.data.repository.Pan123AccountRepository
 import com.jiexiy.app.data.repository.Pan123ResolveRepository
+import com.jiexiy.app.data.repository.PikPakAccountRepository
+import com.jiexiy.app.data.repository.PikPakResolveRepository
 import com.jiexiy.app.data.repository.QuarkAccountRepository
 import com.jiexiy.app.data.repository.QuarkResolveRepository
 import com.jiexiy.app.data.repository.ShareResolveRepository
@@ -135,6 +137,8 @@ class ResolveViewModel(
     private val lanzouResolveRepository: LanzouResolveRepository,
     private val feijiResolveRepository: ShareResolveRepository,
     private val aliyunResolveRepository: ShareResolveRepository,
+    private val pikpakAccountRepository: PikPakAccountRepository,
+    private val pikpakResolveRepository: PikPakResolveRepository,
     private val downloadManager: DownloadManager,
     private val bookmarkDao: BookmarkDao,
     /** GitHub 解析器实例（null 表示未启用 GitHub 平台） */
@@ -964,6 +968,7 @@ class ResolveViewModel(
         SharePlatform.ILANZOU -> ilanzouAccountRepository.getAccount()?.appToken
         SharePlatform.LANZOU -> lanzouAccountRepository.getAccount()?.cookie
         SharePlatform.FEIJI -> com.jiexiy.app.data.parse.FeijiAccountStore.token.value.orEmpty()
+        SharePlatform.PIKPAK -> pikpakAccountRepository.ensureAccessToken()
         SharePlatform.ALIYUN -> null
         SharePlatform.GITHUB -> null
         else -> accountRepository.getAccount()?.cookie
@@ -1040,6 +1045,7 @@ class ResolveViewModel(
         SharePlatform.LANZOU -> lanzouResolveRepository
         SharePlatform.FEIJI -> feijiResolveRepository
         SharePlatform.ALIYUN -> aliyunResolveRepository
+        SharePlatform.PIKPAK -> pikpakResolveRepository
         else -> resolveRepository
     }
 
@@ -1054,6 +1060,7 @@ class ResolveViewModel(
         SharePlatform.ILANZOU -> ""
         SharePlatform.LANZOU -> ""
         SharePlatform.FEIJI -> com.jiexiy.app.data.network.FeijiApi.SHARE_ROOT
+        SharePlatform.PIKPAK -> ""
         SharePlatform.GITHUB -> "github:root"
         else -> QuarkConstants.DEFAULT_PDIR_FID
     }
@@ -1069,6 +1076,7 @@ class ResolveViewModel(
         SharePlatform.FEIJI -> "小飞机网盘"
         SharePlatform.ILANZOU -> "蓝奏云优享版"
         SharePlatform.LANZOU -> "蓝奏云"
+        SharePlatform.PIKPAK -> "PikPak网盘"
         SharePlatform.GITHUB -> "GitHub"
         else -> "夸克网盘"
     }
@@ -1385,8 +1393,34 @@ class ResolveViewModel(
                     }
                     session = ShareSession(shareId = "github:${repo.fullName}", stoken = "", title = repo.fullName)
                     currentGitHubRepo = repo
-                    currentDirFid = "github:root"
-                    loadGitHubRoot()
+                    // subPath 支持直达仓库根 / 代码 / Releases 列表 / 具体 Release 资产；
+                    // 不支持的代码目录子路径回退到仓库根（避免直接报“未找到文件”无入口）。
+                    val subPath = linkType.subPath?.trim('/').trim().orEmpty()
+                    when {
+                        subPath.isEmpty() || subPath == "code" -> {
+                            currentDirFid = "github:root"
+                            loadGitHubRoot()
+                        }
+                        subPath == "releases" -> {
+                            currentDirFid = "github:releases"
+                            loadGitHubReleases(firstPage = true)
+                        }
+                        subPath.startsWith("releases/tag/") -> {
+                            val tag = subPath.removePrefix("releases/tag/")
+                                .substringBefore('/')
+                                .takeIf { it.isNotBlank() }
+                            if (tag == null) {
+                                uiState = ResolveUiState.Error("Release tag 无效")
+                            } else {
+                                currentDirFid = "github:release:$tag"
+                                loadGitHubReleaseAssets(tag)
+                            }
+                        }
+                        else -> {
+                            currentDirFid = "github:root"
+                            loadGitHubRoot()
+                        }
+                    }
                 }
                 is GitHubLinkType.Account -> {
                     currentLink = "https://github.com/${linkType.owner}"
@@ -1618,7 +1652,13 @@ class ResolveViewModel(
 
     /** 单个 Release 的资产列表 */
     private suspend fun loadGitHubReleaseAssets(tag: String) {
-        val rel = currentGitHubReleases.firstOrNull { it.tagName == tag }
+        var rel = currentGitHubReleases.firstOrNull { it.tagName == tag }
+        // 直接粘贴 `/releases/tag/{tag}` 直达 assets 时 currentGitHubReleases 为空，
+        // 按 tag 单拉一次 Release（GitHub 支持），不走分页列表。
+        if (rel == null) {
+            val repo = currentGitHubRepo
+            rel = repo?.let { githubApi?.getReleaseByTag(it.owner, it.name, tag) }
+        }
         if (rel == null) {
             uiState = ResolveUiState.Error("未找到 Release：$tag")
             return
@@ -2377,6 +2417,8 @@ class ResolveViewModel(
         private val lanzouResolveRepository: LanzouResolveRepository,
         private val feijiResolveRepository: ShareResolveRepository,
         private val aliyunResolveRepository: ShareResolveRepository,
+        private val pikpakAccountRepository: PikPakAccountRepository,
+        private val pikpakResolveRepository: PikPakResolveRepository,
         private val downloadManager: DownloadManager,
         private val bookmarkDao: BookmarkDao,
         private val githubApi: GitHubApi? = null,
@@ -2403,6 +2445,8 @@ class ResolveViewModel(
                 lanzouAccountRepository, lanzouResolveRepository,
                 feijiResolveRepository,
                 aliyunResolveRepository,
+                pikpakAccountRepository,
+                pikpakResolveRepository,
                 downloadManager,
                 bookmarkDao,
                 githubApi,

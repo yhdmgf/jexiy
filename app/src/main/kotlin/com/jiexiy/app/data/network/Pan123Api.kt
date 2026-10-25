@@ -589,7 +589,10 @@ class Pan123Api(
                     size = size,
                     contentType = "application/octet-stream",
                     open = { start, end -> open(start, end) },
-                    onProgress = onProgress
+                    onProgress = onProgress,
+                    // 断点续传用的稳定任务标识：对象 key 是网盘每次下发的、每次都不同，
+                    // 用它命名状态文件就永远续不上
+                    stateKey = "123/$parentFileId/$fileName/$size"
                 )
                 post(
                     Pan123Constants.FILE_UPLOAD_COMPLETE_URL,

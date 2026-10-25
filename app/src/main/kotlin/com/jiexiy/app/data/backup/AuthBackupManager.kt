@@ -41,6 +41,8 @@ import com.jiexiy.app.data.db.Pan123AccountDao
 import com.jiexiy.app.data.db.Pan123AccountEntity
 import com.jiexiy.app.data.db.QuarkAccountDao
 import com.jiexiy.app.data.db.QuarkAccountEntity
+import com.jiexiy.app.data.db.PikPakAccountDao
+import com.jiexiy.app.data.db.PikPakAccountEntity
 import com.jiexiy.app.data.db.UCAccountDao
 import com.jiexiy.app.data.db.UCAccountEntity
 import com.jiexiy.app.data.db.XunleiAccountDao
@@ -70,7 +72,8 @@ class AuthBackupManager(
     private val pan115Dao: Pan115AccountDao,
     private val guangyaDao: GuangYaAccountDao,
     private val ilanzouDao: ILanzouAccountDao,
-    private val lanzouDao: LanzouAccountDao
+    private val lanzouDao: LanzouAccountDao,
+    private val pikpakDao: PikPakAccountDao
 ) {
 
     private companion object {
@@ -202,6 +205,20 @@ class AuthBackupManager(
                     .put("platform", "lanzou")
                     .put("cookie", a.cookie)
                     .put("nickname", a.nickname)
+                    .put("updatedAt", a.updatedAt)
+            )
+        }
+        pikpakDao.getAccount()?.let { a ->
+            if (!onlyLoggedIn || a.accessToken.isNotBlank()) accounts.put(
+                JSONObject()
+                    .put("platform", "pikpk")
+                    .put("accessToken", a.accessToken)
+                    .put("refreshToken", a.refreshToken)
+                    .put("deviceId", a.deviceId)
+                    .put("account", a.account)
+                    .put("userId", a.userId)
+                    .put("nickname", a.nickname)
+                    .put("expiresAt", a.expiresAtMs)
                     .put("updatedAt", a.updatedAt)
             )
         }
@@ -372,6 +389,24 @@ class AuthBackupManager(
                             LanzouAccountEntity(
                                 id = "lanzou", cookie = c,
                                 nickname = obj.optString("nickname"),
+                                updatedAt = obj.optLong("updatedAt", System.currentTimeMillis())
+                            )
+                        ); count++
+                    }
+                }
+                "pikpk" -> {
+                    val t = obj.optString("accessToken")
+                    if (t.isNotBlank()) {
+                        pikpakDao.upsert(
+                            PikPakAccountEntity(
+                                id = "pikpak",
+                                accessToken = t,
+                                refreshToken = obj.optString("refreshToken"),
+                                deviceId = obj.optString("deviceId"),
+                                account = obj.optString("account"),
+                                userId = obj.optString("userId"),
+                                nickname = obj.optString("nickname"),
+                                expiresAtMs = obj.optLong("expiresAt", 0L),
                                 updatedAt = obj.optLong("updatedAt", System.currentTimeMillis())
                             )
                         ); count++

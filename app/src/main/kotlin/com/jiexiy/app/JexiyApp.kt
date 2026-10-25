@@ -34,6 +34,8 @@ class JexiyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // 应用级 Context：断点续传等底层工具类拿不到注入的 Context，只能从这里取
+        com.jiexiy.app.util.AppContextHolder.install(this)
         // 移除调试日志
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
         // 上传队列：注册各平台上传实现，让上传页在还没入队文件时也能展示平台名

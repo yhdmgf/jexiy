@@ -74,10 +74,13 @@ object GuangYaWebCredential {
     const val CURRENT_SUB_KEY = "current_sub"
 
     /**
-     * 网页登录页（未登录会自动进入登录流程；账号密码 / 短信 / 滑块都由官网页面自己处理）。
-     * hash 路由：WebView 抓 localStorage 时页面必须已经进到 `#/oauth/login`。
+     * 网页登录入口（未登录会自动进入登录流程；账号密码 / 短信 / 滑块都由官网页面自己处理）。
+     *
+     * 使用 `/pan` 而不是 `/#/oauth/login`：后者是内部专用登录路由，直接打开会卡白屏；
+     * `/pan` 是官网根页，未登录时官网自己会重定向到登录页。
+     * WebView 抓 localStorage 只需域名匹配（[TRUSTED_HOSTS]），不依赖具体的 hash 路由。
      */
-    const val LOGIN_URL = "https://www.guangyapan.com/#/oauth/login"
+    const val LOGIN_URL = "https://www.guangyapan.com/pan"
 
     /** 网页版桌面 UA（与 [GuangYaConstants.WEB_UA] 一致，Chrome 131 / Windows） */
     const val DESKTOP_UA = GuangYaConstants.WEB_UA

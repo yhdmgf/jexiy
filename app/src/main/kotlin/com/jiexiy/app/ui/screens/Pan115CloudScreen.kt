@@ -500,6 +500,7 @@ fun Pan115CloudScreen(
             file = viewModel.actionFile!!,
             operating = viewModel.isOperating,
             onDownload = { viewModel.downloadFile() },
+            onPreview = { viewModel.previewFile() },
             onDownloadFolder = { viewModel.downloadFolder() },
             // 115 的访问码由服务端生成（不可自定义/取消），有效期是 115 专属档位
             onShare = { _, _, expiredType -> viewModel.shareFile(expiredType) },

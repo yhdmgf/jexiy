@@ -471,7 +471,11 @@ class C139Api(
     ): String = withContext(Dispatchers.IO) {
         if (name.isBlank()) throw IllegalStateException("文件名为空，无法上传")
         val authorization = C139Constants.extractAuthorization(cookie)
-            ?: throw IllegalStateException("登录态缺少 authorization，请重新登录")
+            ?: throw IllegalStateException(
+                "登录态缺少 authorization：fast login 拿到的 Cookie 只有 Os_SSo_Sid/RMKEY，" +
+                    "不带 authorization 无法上传。请到 139 云盘网页版（yun.139.com）完整登录一次，"
+                    + "再重新粘贴登录后的完整 Cookie"
+            )
         val hash = UploadIo.digest(open, size, "SHA-256", onProgress)
         val partSize = if (size > 30L * 1024 * 1024 * 1024) 512L * 1024 * 1024 else 100L * 1024 * 1024
         val count = maxOf(1, ((size + partSize - 1) / partSize).toInt())

@@ -81,6 +81,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -104,7 +106,10 @@ import com.jiexiy.app.data.account.AccountApi
 import com.jiexiy.app.data.account.AccountStore
 import com.jiexiy.app.data.network.ShareLinkParser
 import com.jiexiy.app.data.network.SharePlatform
+import com.jiexiy.app.data.network.PikPakApi
 import com.jiexiy.app.data.repository.FeijiResolveRepository
+import com.jiexiy.app.data.repository.PikPakAccountRepository
+import com.jiexiy.app.data.repository.PikPakResolveRepository
 import com.jiexiy.app.data.repository.AliyunResolveRepository
 import com.jiexiy.app.data.account.AccountSyncManager
 import com.jiexiy.app.data.account.AccountSyncTrigger
@@ -164,6 +169,7 @@ import com.jiexiy.app.ui.login.GuangYaWebLoginScreen
 import com.jiexiy.app.ui.login.ILanzouLoginScreen
 import com.jiexiy.app.ui.login.LanzouLoginScreen
 import com.jiexiy.app.ui.login.LanzouWebLoginScreen
+import com.jiexiy.app.ui.login.PikPakLoginScreen
 import com.jiexiy.app.ui.login.Pan115LoginScreen
 import com.jiexiy.app.ui.login.Pan123LoginScreen
 import com.jiexiy.app.ui.login.FeijiLoginScreen
@@ -214,6 +220,7 @@ import com.jiexiy.app.ui.viewmodel.Pan115AccountViewModel
 import com.jiexiy.app.ui.viewmodel.Pan115CloudViewModel
 import com.jiexiy.app.ui.viewmodel.Pan123AccountViewModel
 import com.jiexiy.app.ui.viewmodel.Pan123CloudViewModel
+import com.jiexiy.app.ui.viewmodel.PikPakAccountViewModel
 import com.jiexiy.app.ui.viewmodel.QuarkAccountViewModel
 import com.jiexiy.app.ui.viewmodel.QuarkCloudViewModel
 import com.jiexiy.app.ui.viewmodel.ResolveViewModel
@@ -322,6 +329,8 @@ fun MainScreen(
     var showGuangYaLogin by rememberSaveable { mutableStateOf(false) }
     var showILanzouLogin by rememberSaveable { mutableStateOf(false) }
     var showLanzouLogin by rememberSaveable { mutableStateOf(false) }
+    var showPikPakLogin by rememberSaveable { mutableStateOf(false) }
+    var pikPakLoginAsNewAccount by rememberSaveable { mutableStateOf(false) }
     // 光鸭 / 蓝奏的网页登录页：官网页面手动登录，纯接口绕不过滑块 / 短信 / 扫码时走这条
     var showGuangYaWebLogin by rememberSaveable { mutableStateOf(false) }
     var showLanzouWebLogin by rememberSaveable { mutableStateOf(false) }
@@ -451,6 +460,7 @@ fun MainScreen(
     val guangyaApi = remember { GuangYaApi() }
     val ilanzouApi = remember { ILanzouApi() }
     val lanzouApi = remember { LanzouApi() }
+    val pikPakApi = remember { PikPakApi() }
     val db = remember { AppDatabase.get(context) }
 
     /**
@@ -496,6 +506,9 @@ fun MainScreen(
     val lanzouRepository = remember {
         LanzouAccountRepository(db.lanzouAccountDao(), lanzouApi)
     }
+    val pikPakRepository = remember {
+        PikPakAccountRepository(db.pikpakAccountDao(), pikPakApi)
+    }
     // 网盘认证备份：打包/恢复各平台凭证
     val backupManager = remember {
         AuthBackupManager(
@@ -508,7 +521,8 @@ fun MainScreen(
             db.pan115AccountDao(),
             db.guangyaAccountDao(),
             db.ilanzouAccountDao(),
-            db.lanzouAccountDao()
+            db.lanzouAccountDao(),
+            db.pikpakAccountDao()
         )
     }
     // 账号同步：启动时对齐一次；之后任何网盘账号保存 / 删除都会触发一次。
@@ -638,6 +652,9 @@ fun MainScreen(
     val lanzouViewModel: LanzouAccountViewModel = viewModel(
         factory = LanzouAccountViewModel.Factory(lanzouRepository)
     )
+    val pikPakViewModel: PikPakAccountViewModel = viewModel(
+        factory = PikPakAccountViewModel.Factory(pikPakRepository)
+    )
     // 多账号：账号列表 / 设主账号 / 改备注 / 退出 的统一入口
     // （这四件事对 10 个平台同构，见 AccountDirectory；平台专属的凭证读写仍在各平台仓库里）
     val multiAccountViewModel: MultiAccountViewModel = viewModel(
@@ -662,6 +679,7 @@ fun MainScreen(
     val guangyaLoginState = remember { guangyaRepository.observeAccount().map { it != null } }
     val ilanzouLoginState = remember { ilanzouRepository.observeAccount().map { it != null } }
     val lanzouLoginState = remember { lanzouRepository.observeAccount().map { it != null } }
+    val pikPakLoginState = remember { pikPakRepository.observeAccount().map { it != null } }
     // 夸克云盘浏览：作为网盘 Tab 内容展示（非全屏），cookie 从数据库读取（避免 StateFlow 初始值为空的竞态）；
     // 下载前经 getFreshCookie 惰性刷新 __puus（修复 AlistGo/alist#830 下载 412）
     val quarkCloudViewModel: QuarkCloudViewModel = viewModel(
@@ -861,6 +879,8 @@ fun MainScreen(
             lanzouResolveRepository,
             feijiResolveRepository,
             aliyunResolveRepository,
+            pikPakRepository,
+            PikPakResolveRepository(pikPakApi, pikPakRepository),
             downloadManager,
             db.bookmarkDao(),
             githubApi,
@@ -890,6 +910,7 @@ fun MainScreen(
     val guangyaAccount by guangyaViewModel.guangyaAccount.collectAsState()
     val ilanzouAccount by ilanzouViewModel.ilanzouAccount.collectAsState()
     val lanzouAccount by lanzouViewModel.lanzouAccount.collectAsState()
+    val pikPakAccount by pikPakViewModel.pikpakAccount.collectAsState()
 
     // 解析页发起下载后，自动切换到「下载」Tab
     LaunchedEffect(resolveViewModel.downloadStarted) {
@@ -1170,6 +1191,22 @@ fun MainScreen(
         return
     }
 
+    // PikPak 登录页：全屏覆盖（邮箱+密码，两步协议：captcha init → password grant）
+    if (showPikPakLogin) {
+        PikPakLoginScreen(
+            viewModel = pikPakViewModel,
+            onBack = {
+                showPikPakLogin = false
+                pikPakViewModel.cancelAddAccount()
+            },
+            onSaved = {
+                showPikPakLogin = false
+                pikPakLoginAsNewAccount = false
+            }
+        )
+        return
+    }
+
     // 视频平台登录页：全屏覆盖（通用 WebView Cookie 登录页，按 platform 参数化）
     val videoLoginTarget = videoLoginPlatform
     if (videoLoginTarget != null) {
@@ -1422,6 +1459,10 @@ fun MainScreen(
                                     guangyaAccount = guangyaAccount,
                                     ilanzouAccount = ilanzouAccount,
                                     lanzouAccount = lanzouAccount,
+                                    pikPakAccount = pikPakAccount,
+                                    pikPakAccountRepository = pikPakRepository,
+                                    pikPakApi = pikPakApi,
+                                    pikPakDownloadManager = downloadManager,
                                     quarkCloudViewModel = quarkCloudViewModel,
                                     ucCloudViewModel = ucCloudViewModel,
                                     xunleiCloudViewModel = xunleiCloudViewModel,
@@ -1488,6 +1529,10 @@ fun MainScreen(
                                                 lanzouViewModel.beginAddAccount(); showLanzouLogin = true
                                             }
 
+                                            DownloadPlatform.PIKPAK -> {
+                                                pikPakViewModel.beginAddAccount(); showPikPakLogin = true
+                                            }
+
                                             DownloadPlatform.FEIJI -> {
                                                 feijiLoginAsNewAccount = true
                                                 showFeijiLogin = true
@@ -1506,6 +1551,12 @@ fun MainScreen(
                                     onGuangYaLogin = { showGuangYaLogin = true },
                                     onILanzouLogin = { showILanzouLogin = true },
                                     onLanzouLogin = { showLanzouLogin = true },
+                                    onPikPakLogin = {
+                                        multiAccountViewModel.prepareAddAccount()
+                                        pikPakLoginAsNewAccount = false
+                                        pikPakViewModel.beginAddAccount()
+                                        showPikPakLogin = true
+                                    },
                                     githubHasToken = githubHasTokenState,
                                     onGitHubTokenClick = { showGitHubTokenDialog = true },
                                     // 已配置 Token 点卡片主体：用 GET /user 取 login，经统一解析入口进入该账号仓库列表
@@ -1973,7 +2024,15 @@ private fun MainBottomBar(
     currentTab: MainTab,
     onTabSelected: (MainTab) -> Unit
 ) {
-    val barColor = ShortNavigationBarDefaults.containerColor
+    // 毛玻璃：底色半透明，让背景预设（尤其「液态玻璃」渐变）与内容透上来；
+    // 再叠一条顶部玻璃分界线与由下而上的边缘高光，模拟玻璃面板的质感。
+    // 开关存在 ThemeController.glassBottomBar，与背景预设独立。
+    val glass = ThemeController.glassBottomBar
+    val barColor = if (glass) {
+        ShortNavigationBarDefaults.containerColor.copy(alpha = 0.64f)
+    } else {
+        ShortNavigationBarDefaults.containerColor
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1981,6 +2040,28 @@ private fun MainBottomBar(
             .background(barColor),
         contentAlignment = Alignment.Center
     ) {
+        if (glass) {
+            // 顶部 1dp 玻璃分界线：与内容区的视觉边界
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.16f))
+            )
+            // 底部 32dp 由下而上的柔光渐变：玻璃面板的边缘高光
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .height(32.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, barColor.copy(alpha = 0.55f))
+                        )
+                    )
+            )
+        }
         ShortNavigationBar(containerColor = barColor) {
             MainTab.values().forEach { tab ->
                 // 按下放大、松开回原样（只观察事件，不消费，不影响 item 自己的点击）

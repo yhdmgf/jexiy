@@ -498,6 +498,7 @@ fun C139CloudScreen(
             file = viewModel.actionFile!!,
             operating = viewModel.isOperating,
             onDownload = { viewModel.downloadFile() },
+            onPreview = { viewModel.previewFile() },
             onDownloadFolder = { viewModel.downloadFolder() },
             // 139 的提取码由系统自动生成，不提供自定义入口
             // 139 的提取码由服务端自动生成，不可设置

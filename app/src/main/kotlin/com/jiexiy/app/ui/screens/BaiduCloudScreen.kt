@@ -523,6 +523,7 @@ fun BaiduCloudScreen(
                     maybeShowBaiduLimit(listOf(f), "single") { viewModel.downloadFile() }
                 }
             },
+            onPreview = { viewModel.previewFile() },
             onDownloadFolder = { viewModel.downloadFolder() },
             // 百度分享必须带 4 位提取码
             passcodeMode = PasscodeMode.REQUIRED,

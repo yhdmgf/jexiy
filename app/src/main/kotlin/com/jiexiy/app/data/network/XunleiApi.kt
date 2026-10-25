@@ -1100,7 +1100,8 @@ class XunleiApi(
                 size = size,
                 contentType = "application/octet-stream",
                 open = { start, end -> open(start, end) },
-                onProgress = onProgress
+                onProgress = onProgress,
+                stateKey = "xunlei/$parentId/$fileName/$size"
             )
         }
         id

@@ -59,6 +59,8 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material.icons.outlined.Visibility
+import com.jiexiy.app.ui.preview.PreviewTypes
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -143,6 +145,11 @@ internal fun FileActionSheet(
     /** 确认删除后执行（页面的 deleteFile()）：确认步骤在本弹窗内部完成 */
     onConfirmDelete: () -> Unit,
     onDismiss: () -> Unit,
+    /**
+     * 在线预览（免下载直接看图片/视频/音频/文本）。
+     * 传 null 则不显示预览项——各网盘页的取直链能力不同，不支持的平台不必强行传入。
+     */
+    onPreview: (() -> Unit)? = null,
     /** 提取码规则（各平台不同，见 [PasscodeMode]） */
     passcodeMode: PasscodeMode = PasscodeMode.OPTIONAL,
     /** 有效期档位（默认六平台通用档；115 传 [ShareExpire.PAN115_OPTIONS]） */
@@ -172,6 +179,12 @@ internal fun FileActionSheet(
                         }
                     } else {
                         null
+                    },
+                    onPreview = onPreview?.let { cb ->
+                        {
+                            cb()
+                            onDismiss()
+                        }
                     },
                     onShare = { step = ActionStep.SHARE },
                     onMove = { step = ActionStep.MOVE },
@@ -375,6 +388,8 @@ private fun ActionMenu(
     file: ShareFile,
     onDownload: () -> Unit,
     onDownloadFolder: (() -> Unit)? = null,
+    /** 非空且文件可预览时才显示「在线预览」项（[PreviewTypes.kindOf] 判定） */
+    onPreview: (() -> Unit)? = null,
     onShare: () -> Unit,
     onMove: () -> Unit,
     onRename: () -> Unit,
@@ -409,6 +424,17 @@ private fun ActionMenu(
                 desc = "递归下载整个文件夹，保持目录结构",
                 tint = MaterialTheme.colorScheme.primary,
                 onClick = onDownloadFolder
+            )
+        }
+        // 在线预览：仅可预览类型且调用方支持时显示（放在「下载」之后、「分享」之前，
+        // 与解析页文件菜单的顺序一致）
+        if (!file.isdir && onPreview != null && PreviewTypes.kindOf(file.fname) != null) {
+            ActionItem(
+                icon = Icons.Outlined.Visibility,
+                title = "在线预览",
+                desc = "免下载直接查看（图片/视频/音频/文本）",
+                tint = MaterialTheme.colorScheme.primary,
+                onClick = onPreview
             )
         }
         ActionItem(

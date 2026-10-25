@@ -75,6 +75,7 @@ object CloudUploadManager {
         register(DownloadPlatform.GUANGYA) { GuangYaUploader(app) }
         register(DownloadPlatform.LANZOU) { LanzouUploader(app) }
         register(DownloadPlatform.ILANZOU) { ILanzouUploader(app) }
+        register(DownloadPlatform.PIKPAK) { PikPakUploader(app) }
     }
 
     /** 注册一个平台的上传实现；同名平台后注册覆盖先注册。 */
@@ -188,11 +189,22 @@ object CloudUploadManager {
                         error = ""
                     )
                 }
+            } catch (e: UploadException) {
+                if (jobs[id]?.isCancelled == true) {
+                    update(id) { it.copy(status = UploadStatus.CANCELLED) }
+                } else {
+                    // 完整原因：阶段 + 消息 + HTTP 码 + 服务端响应片段
+                    update(id) { it.copy(status = UploadStatus.FAILED, error = e.detailText) }
+                }
             } catch (e: Exception) {
                 if (jobs[id]?.isCancelled == true) {
                     update(id) { it.copy(status = UploadStatus.CANCELLED) }
                 } else {
-                    update(id) { it.copy(status = UploadStatus.FAILED, error = e.message ?: "上传失败") }
+                    // 平台自己抛的普通异常：带上异常类名，便于区分超时/网络/磁盘满/解析错
+                    val msg = e.message?.takeIf { it.isNotBlank() } ?: "上传失败"
+                    update(id) {
+                        it.copy(status = UploadStatus.FAILED, error = "$msg（${e.javaClass.simpleName}）")
+                    }
                 }
             } finally {
                 jobs.remove(id)

@@ -301,6 +301,36 @@ fun ThemeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ---------- 毛玻璃效果 ----------
+            SectionLabel("毛玻璃效果")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("底部导航毛玻璃", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "底栏底色半透明并叠玻璃边缘高光；搭配「液态玻璃」背景效果最明显",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = ThemeController.glassBottomBar,
+                        onCheckedChange = { ThemeController.setGlassBottomBar(context, it) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // ---------- 文件名显示 ----------
             SectionLabel("文件名显示")
             Card(

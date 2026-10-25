@@ -201,8 +201,9 @@ class GuangYaApi(
             .put("phone_number", phoneNumber)
             .put("target", "ANY")
         val builder = accountRequest(GuangYaConstants.VERIFICATION, body.toString(), device)
-        // 始终带上 X-Captcha-Token（即使为空串）：服务端以该头存在与否判定"no captcha"
-        builder.header("X-Captcha-Token", captchaToken.orEmpty())
+        // 与 wenxi 对齐：验证码为空时**不带**该头，而不是带一个空值头——服务端会区分
+        // 「没提供验证码」与「提供了空验证码」两种情况，后者会被当成无效验证码拒绝
+        if (!captchaToken.isNullOrBlank()) builder.header("X-Captcha-Token", captchaToken)
         val json = executeJson(builder.build())
         val code = json.optString("code")
         val error = json.optString("error")

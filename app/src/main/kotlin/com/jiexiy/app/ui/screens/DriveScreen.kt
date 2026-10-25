@@ -97,11 +97,13 @@ import com.jiexiy.app.data.db.ILanzouAccountEntity
 import com.jiexiy.app.data.db.LanzouAccountEntity
 import com.jiexiy.app.data.db.Pan115AccountEntity
 import com.jiexiy.app.data.db.Pan123AccountEntity
+import com.jiexiy.app.data.db.PikPakAccountEntity
 import com.jiexiy.app.data.db.QuarkAccountEntity
 import com.jiexiy.app.data.db.UCAccountEntity
 import com.jiexiy.app.data.db.XunleiAccountEntity
 import com.jiexiy.app.data.db.VideoAccountEntity
 import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.network.PikPakApi
 import com.jiexiy.app.data.network.model.QuotaInfo
 import com.jiexiy.app.data.network.video.VideoPlatform
 import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel
@@ -154,6 +156,12 @@ fun DriveScreen(
     guangyaAccount: GuangYaAccountEntity?,
     ilanzouAccount: ILanzouAccountEntity?,
     lanzouAccount: LanzouAccountEntity?,
+    /** PikPak 账号（登录后显示卡片、支持浏览云盘） */
+    pikPakAccount: PikPakAccountEntity?,
+    /** PikPak 云盘页直接依赖：仓库 / API / 下载器 */
+    pikPakAccountRepository: PikPakAccountRepository,
+    pikPakApi: PikPakApi,
+    pikPakDownloadManager: DownloadManager,
     /** 夸克云盘浏览 ViewModel（网盘 Tab 内切换展示，非全屏） */
     quarkCloudViewModel: QuarkCloudViewModel,
     /** UC 网盘云盘浏览 ViewModel */
@@ -206,6 +214,8 @@ fun DriveScreen(
     onFeijiLogin: () -> Unit = {},
     /** 小飞机「我的文件」：已登录后浏览云盘目录 */
     onFeijiCloud: () -> Unit = {},
+    /** PikPak 登录（打开 PikPakLoginScreen） */
+    onPikPakLogin: () -> Unit = {},
     /** 视频平台登录态（platform → 当前账号）：驱动「视频解析」区的状态与右侧按钮 */
     videoLoginState: Map<VideoPlatform, VideoAccountEntity> = emptyMap(),
     /** 全部平台的视频账号：用于「共 N 个账号」统计与账号弹窗列表 */
@@ -278,6 +288,21 @@ fun DriveScreen(
     var showILanzouCloud by rememberSaveable { mutableStateOf(false) }
     // 蓝奏云浏览：网盘 Tab 内切换（非全屏）
     var showLanzouCloud by rememberSaveable { mutableStateOf(false) }
+    // PikPak 云盘浏览：网盘 Tab 内切换（非全屏）
+    var showPikPakCloud by rememberSaveable { mutableStateOf(false) }
+    // PikPak 卡片「三个点」账号弹窗
+    var showPikPakSheet by remember { mutableStateOf(false) }
+    // PikPak 账号配额（登录后拉取一次）
+    val pikPakAccountEntity = pikPakAccount
+    var pikPakQuota by remember { mutableStateOf<QuotaInfo?>(null) }
+    LaunchedEffect(pikPakAccountEntity?.id, pikPakAccountEntity?.accessToken) {
+        val acc = pikPakAccountEntity ?: return@LaunchedEffect
+        if (acc.accessToken.isBlank() || acc.deviceId.isBlank()) {
+            pikPakQuota = null
+            return@LaunchedEffect
+        }
+        pikPakQuota = runCatching { pikPakApi.getQuota(acc.accessToken, acc.deviceId) }.getOrNull()
+    }
 
     // 上传入队后：先退出当前云盘浏览，再交给 MainScreen 切到「传输」Tab
     // （否则用户停留在云盘页，看不到上传进度，得手动切过去）
@@ -292,6 +317,7 @@ fun DriveScreen(
         showGuangYaCloud = false
         showILanzouCloud = false
         showLanzouCloud = false
+        showPikPakCloud = false
         onUploadStarted()
     }
 
@@ -398,6 +424,7 @@ fun DriveScreen(
             showGuangYaCloud -> 8
             showILanzouCloud -> 9
             showLanzouCloud -> 10
+            showPikPakCloud -> 11
             else -> 0
         },
         transitionSpec = {
@@ -474,6 +501,13 @@ fun DriveScreen(
             viewModel = lanzouCloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showLanzouCloud = false },
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
+        )
+        11 -> PikPakCloudScreen(
+            account = pikPakAccount,
+            scrollBehavior = scrollBehavior,
+            onExit = { showPikPakCloud = false },
             onDownloadStarted = onDownloadStarted,
             onUploadStarted = onCloudUploadStarted
         )
@@ -678,6 +712,24 @@ fun DriveScreen(
                         }
                     )
                 }
+                item(key = "pikpak") {
+                    PikPakDriveCard(
+                        loggedIn = pikPakAccount != null,
+                        account = pikPakAccount,
+                        quota = pikPakQuota,
+                        onClick = {
+                            if (pikPakAccount == null) onPikPakLogin() else showPikPakCloud = true
+                        },
+                        onLongClick = {
+                            if (pikPakAccount != null) showPikPakSheet = true
+                        },
+                        onMoreClick = if (pikPakAccount != null) {
+                            { showPikPakSheet = true }
+                        } else {
+                            null
+                        }
+                    )
+                }
                 item(key = github.id) {
                     // GitHub：已配置 Token 点击主体进入「我的主页」；未配置打开 Token 弹窗；更多按钮在登录后显示
                     DriveAccountCard(
@@ -868,6 +920,20 @@ fun DriveScreen(
         )
     }
 
+    // PikPak 卡片「三个点」：账号信息 / 登出
+    if (showPikPakSheet && pikPakAccount != null) {
+        val pikPakAccounts by multiAccountViewModel.accountsOf(DownloadPlatform.PIKPAK).collectAsState()
+        PikPakAccountSheet(
+            account = pikPakAccount,
+            accounts = pikPakAccounts,
+            onSetPrimary = { multiAccountViewModel.setPrimary(DownloadPlatform.PIKPAK, it) },
+            onRename = { id, remark -> multiAccountViewModel.rename(DownloadPlatform.PIKPAK, id, remark) },
+            onRemove = { multiAccountViewModel.remove(DownloadPlatform.PIKPAK, it) },
+            onAddAccount = { onAddAccount(DownloadPlatform.PIKPAK) },
+            onDismiss = { showPikPakSheet = false }
+        )
+    }
+
     // 视频平台账号弹窗：需要登录且已登录的平台点「管理」打开
     showVideoSheet?.let { platform ->
         VideoAccountSheet(
@@ -1003,6 +1069,89 @@ private fun FeijiDriveCard(
                 }
             }
             // ★ 与 DriveAccountCardContent 的尾部逻辑保持一致
+            when {
+                loggedIn && onMoreClick != null -> IconButton(onClick = onMoreClick) {
+                    Icon(
+                        imageVector = Icons.Outlined.MoreVert,
+                        contentDescription = "更多",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                loggedIn -> LoginBadge(isLoggedIn = true)
+                else -> Text(
+                    text = "去登录",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+/**
+ * PikPak 账号卡片（与 [FeijiDriveCard] 对齐：图标 + 昵称 + 登录态 + 配额条 + 三个点菜单）。
+ */
+@Composable
+private fun PikPakDriveCard(
+    loggedIn: Boolean,
+    account: PikPakAccountEntity?,
+    quota: QuotaInfo? = null,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    /** 已登录时右侧「三个点」更多按钮；null 则不显示 */
+    onMoreClick: (() -> Unit)? = null
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.logo_pikpak),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .alpha(if (loggedIn) 1f else 0.45f),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (loggedIn && account != null) {
+                        account.nickname.ifBlank { account.account }.ifBlank { "PikPak 网盘" }
+                    } else {
+                        "PikPak 网盘"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = if (loggedIn) "已登录 · 点击浏览文件" else "未登录，点击登录",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                AnimatedVisibility(
+                    visible = loggedIn && quota != null,
+                    enter = fadeIn(effectsDefault()) + expandVertically(
+                        expandFrom = Alignment.Top,
+                        animationSpec = spatialDefault()
+                    ),
+                    exit = fadeOut(effectsFast()) + shrinkVertically(animationSpec = spatialFast())
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        quota?.let { QuotaInlineBar(it) }
+                    }
+                }
+            }
             when {
                 loggedIn && onMoreClick != null -> IconButton(onClick = onMoreClick) {
                     Icon(

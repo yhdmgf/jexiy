@@ -228,7 +228,8 @@ private val UPLOADABLE_PLATFORMS = listOf(
     DownloadPlatform.PAN115,
     DownloadPlatform.GUANGYA,
     DownloadPlatform.LANZOU,
-    DownloadPlatform.ILANZOU
+    DownloadPlatform.ILANZOU,
+    DownloadPlatform.PIKPAK
 )
 
 /**

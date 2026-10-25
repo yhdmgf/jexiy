@@ -53,6 +53,41 @@ data class CloudUploadResult(
 )
 
 /**
+ * 上传失败异常：除用户可读描述外，还携带三件定位失败位置的信息——
+ * [phase]（准备/传输/收尾哪一步）、[httpCode]（服务端状态码）、[detail]（响应体片段）。
+ *
+ * 之前各平台直接抛 `IOException("上传失败")`，用户只看到一句话，根本不知道是登录过期、
+ * 签名不匹配、内容校验失败还是磁盘满；现在 [CloudUploadManager] 会把四者拼成完整原因展示。
+ */
+class UploadException(
+    message: String,
+    val phase: UploadPhase = UploadPhase.PREPARING,
+    val httpCode: Int = 0,
+    val detail: String = "",
+    cause: Throwable? = null
+) : IOException(message, cause) {
+
+    /** 展示给用户的完整失败原因。 */
+    val detailText: String
+        get() = buildString {
+            append(when (phase) {
+                UploadPhase.PREPARING -> "准备阶段"
+                UploadPhase.UPLOADING -> "上传阶段"
+                UploadPhase.FINISHING -> "收尾阶段"
+            })
+            append("：").append(message)
+            if (httpCode > 0) append("（HTTP ").append(httpCode).append("）")
+            if (detail.isNotBlank()) append("｜服务端返回：").append(detail)
+        }
+
+    companion object {
+        /** 把服务端响应体压成一行片段，供失败原因展示（避免整段 XML/JSON 淹没任务卡片）。 */
+        fun snip(body: String?, max: Int = 220): String = body.orEmpty()
+            .replace(Regex("\\s+"), " ").trim().take(max)
+    }
+}
+
+/**
  * 待上传文件源：文件已被用户选中，调用方按 [start, end) 区间重开流读取。
  *
  * ContentResolver 的流只能顺序读，所以分片上传不能缓存已读部分，而是每次重新打开再跳过前缀。

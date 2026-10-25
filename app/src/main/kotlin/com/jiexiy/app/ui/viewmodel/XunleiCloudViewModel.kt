@@ -33,6 +33,8 @@ import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.ShareExpire
 import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.data.network.model.ShareInfo
+import com.jiexiy.app.ui.preview.CloudPreview
+import com.jiexiy.app.ui.preview.PreviewTypes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.Flow
@@ -253,6 +255,29 @@ class XunleiCloudViewModel(
     private fun downloadHeaders(): Map<String, String> = mapOf(
         "User-Agent" to XunleiConstants.APP_UA
     )
+
+    /** 在线预览：与下载同一份直链与请求头，取到就交预览页，不落盘不入队 */
+    fun previewFile() {
+        val file = actionFile ?: return
+        if (PreviewTypes.kindOf(file.fname) == null) return
+        viewModelScope.launch {
+            isOperating = true
+            try {
+                val c = creds() ?: throw IllegalStateException("请先登录迅雷网盘")
+                val link = api.getFileDetail(file.fid, c.first, c.second, c.third)
+                    ?: throw IllegalStateException("获取预览链接失败")
+                CloudPreview.open(
+                    fileName = link.filename.ifBlank { file.fname },
+                    url = link.downloadUrl,
+                    headers = downloadHeaders()
+                )
+            } catch (e: Exception) {
+                cloudMessage = e.message ?: "预览失败"
+            } finally {
+                isOperating = false
+            }
+        }
+    }
 
     /**
      * 递归收集文件夹内所有文件（保持目录结构）。

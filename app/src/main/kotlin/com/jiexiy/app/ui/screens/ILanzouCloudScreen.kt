@@ -446,6 +446,7 @@ fun ILanzouCloudScreen(
             file = viewModel.actionFile!!,
             operating = viewModel.isOperating,
             onDownload = { viewModel.downloadFile() },
+            onPreview = { viewModel.previewFile() },
             onDownloadFolder = { viewModel.downloadFolder() },
             onShare = { _, _, _ -> viewModel.shareFile() },
             onRename = { viewModel.renameFile(it) },

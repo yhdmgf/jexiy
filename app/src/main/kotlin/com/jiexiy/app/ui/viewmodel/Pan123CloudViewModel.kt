@@ -33,6 +33,8 @@ import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.ShareExpire
 import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.data.network.model.ShareInfo
+import com.jiexiy.app.ui.preview.CloudPreview
+import com.jiexiy.app.ui.preview.PreviewTypes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.Flow
@@ -248,6 +250,28 @@ class Pan123CloudViewModel(
         "User-Agent" to Pan123Constants.WEB_UA,
         "Referer" to Pan123Constants.DOWNLOAD_REFERER
     )
+
+    /** 在线预览：与下载同一份直链与请求头，取到就交预览页，不落盘不入队 */
+    fun previewFile() {
+        val file = actionFile ?: return
+        if (PreviewTypes.kindOf(file.fname) == null) return
+        viewModelScope.launch {
+            isOperating = true
+            try {
+                val link = api.getDownloadLink(file, token())
+                    ?: throw IllegalStateException("获取预览链接失败")
+                CloudPreview.open(
+                    fileName = file.fname.ifBlank { link.filename },
+                    url = link.downloadUrl,
+                    headers = downloadHeaders()
+                )
+            } catch (e: Exception) {
+                cloudMessage = e.message ?: "预览失败"
+            } finally {
+                isOperating = false
+            }
+        }
+    }
 
     /** 递归收集文件夹内所有文件（保持目录结构） */
     private suspend fun collectFolderFiles(

@@ -290,6 +290,45 @@ internal object SecureAccountDaos {
         override suspend fun clear() = raw.clear()
     }
 
+    fun pikpak(raw: PikPakAccountDao, cipher: CredentialCipher): PikPakAccountDao = object : PikPakAccountDao {
+        override fun observeAccount(): Flow<PikPakAccountEntity?> = raw.observeAccount().map { value ->
+            value?.let { decryptOrNull { decryptPikPak(raw, cipher, it) } }
+        }.catch { emit(null) }
+        override suspend fun upsert(account: PikPakAccountEntity) = withContext(Dispatchers.IO) {
+            raw.upsert(encryptPikPak(cipher, account))
+        }
+        override suspend fun getAccount(): PikPakAccountEntity? = decryptOrNull {
+            raw.getAccount()?.let { decryptPikPak(raw, cipher, it) }
+        }
+        override fun observeAccounts(): Flow<List<PikPakAccountEntity>> = raw.observeAccounts().map { list ->
+            list.mapNotNull { decryptOrNull { decryptPikPak(raw, cipher, it) } }
+        }.catch { emit(emptyList()) }
+        override suspend fun getAccounts(): List<PikPakAccountEntity> = decryptOrNull {
+            raw.getAccounts().mapNotNull { decryptOrNull { decryptPikPak(raw, cipher, it) } }
+        } ?: emptyList()
+        override suspend fun setPrimary(id: String) = raw.setPrimary(id)
+        override suspend fun updateRemark(id: String, remark: String) = raw.updateRemark(id, remark)
+        override suspend fun updateTokens(
+            id: String,
+            accessToken: String,
+            refreshToken: String,
+            expiresAtMs: Long,
+            updatedAt: Long
+        ) = withContext(Dispatchers.IO) {
+            val account = raw.getAccount()?.takeIf { it.id == id }
+                ?: PikPakAccountEntity(id = id)
+            val encrypted = account.copy(
+                accessToken = cipher.encrypt(accessToken, "pikpak.accessToken"),
+                refreshToken = cipher.encrypt(refreshToken, "pikpak.refreshToken"),
+                expiresAtMs = expiresAtMs,
+                updatedAt = updatedAt
+            )
+            raw.upsert(encrypted)
+        }
+        override suspend fun deleteById(id: String) = raw.deleteById(id)
+        override suspend fun clear() = raw.clear()
+    }
+
     fun aliyun(raw: AliyunAccountDao, cipher: CredentialCipher): AliyunAccountDao = object : AliyunAccountDao {
         override fun observeAccount(): Flow<AliyunAccountEntity?> = raw.observeAccount().map { value ->
             value?.let { decryptOrNull { decryptAliyun(raw, cipher, it) } }
@@ -378,6 +417,21 @@ internal object SecureAccountDaos {
             refreshToken = cipher.decrypt(stored.refreshToken, "aliyun.refreshToken")
         )
         if (!cipher.isEncrypted(stored.accessToken)) raw.upsert(encryptAliyun(cipher, plain))
+        plain
+    }
+
+    private suspend fun decryptPikPak(
+        raw: PikPakAccountDao,
+        cipher: CredentialCipher,
+        stored: PikPakAccountEntity
+    ): PikPakAccountEntity = withContext(Dispatchers.IO) {
+        val plain = stored.copy(
+            accessToken = cipher.decrypt(stored.accessToken, "pikpak.accessToken"),
+            refreshToken = cipher.decrypt(stored.refreshToken, "pikpak.refreshToken")
+        )
+        if (!cipher.isEncrypted(stored.accessToken) || !cipher.isEncrypted(stored.refreshToken)) {
+            raw.upsert(encryptPikPak(cipher, plain))
+        }
         plain
     }
 
@@ -539,6 +593,11 @@ internal object SecureAccountDaos {
         value.copy(
             accessToken = cipher.encrypt(value.accessToken, "aliyun.accessToken"),
             refreshToken = cipher.encrypt(value.refreshToken, "aliyun.refreshToken")
+        )
+    private fun encryptPikPak(cipher: CredentialCipher, value: PikPakAccountEntity) =
+        value.copy(
+            accessToken = cipher.encrypt(value.accessToken, "pikpak.accessToken"),
+            refreshToken = cipher.encrypt(value.refreshToken, "pikpak.refreshToken")
         )
     private fun encryptLanzou(cipher: CredentialCipher, value: LanzouAccountEntity) =
         value.copy(cookie = cipher.encrypt(value.cookie, "lanzou.cookie"))

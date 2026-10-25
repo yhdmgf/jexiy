@@ -114,6 +114,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.jiexiy.app.data.parse.FeijiAccountStore
 import com.jiexiy.app.data.upload.CloudUploadManager
 import com.jiexiy.app.ui.SnackbarController
+import com.jiexiy.app.ui.preview.CloudPreview
+import com.jiexiy.app.ui.preview.PreviewTypes
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -260,6 +262,19 @@ fun FeijiCloudScreen(
                     size = file.size
                 )
             }
+            isOperating = false
+        }
+    }
+
+    /** 在线预览：与下载同一份直链与请求头，取到就交预览页，不落盘不入队 */
+    fun showPreview(file: FeijiApi.File) {
+        if (PreviewTypes.kindOf(file.name) == null) return
+        scope.launch {
+            isOperating = true
+            runCatching {
+                val spec = FeijiApi.download(token, uuid, userId, file.id)
+                CloudPreview.open(fileName = file.name, url = spec.url, headers = spec.headers)
+            }.onFailure { error = it.message ?: "预览失败" }
             isOperating = false
         }
     }
@@ -597,6 +612,10 @@ fun FeijiCloudScreen(
             onDownload = {
                 val f = actionFile ?: return@FileActionSheet
                 showDownloadDialog(f)
+            },
+            onPreview = {
+                val f = actionFile ?: return@FileActionSheet
+                showPreview(f)
             },
             onDownloadFolder = {
                 val f = actionFile ?: return@FileActionSheet

@@ -114,6 +114,24 @@ class GitHubApi(
             }.getOrNull()
         }
 
+    /**
+     * 单个 Release：GET /repos/{owner}/{repo}/releases/tags/{tag}
+     *
+     * 直接粘贴 `/releases/tag/{tag}` 直达 assets 页时需要：这时 [currentGitHubReleases] 为空，
+     * 走 [getReleases] 翻到目标页又得猜分页；GitHub 支持按 tag 直取单个 Release。
+     */
+    suspend fun getReleaseByTag(owner: String, repo: String, tag: String): GitHubRelease? =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val encoded = tag.replace(" ", "%20")
+                val raw = cachedBody(
+                    "release:$owner/$repo:$tag",
+                    "https://api.github.com/repos/$owner/$repo/releases/tags/$encoded"
+                ) ?: return@withContext null
+                parseRelease(JSONObject(raw))
+            }.getOrNull()
+        }
+
     /** 用户公开仓库列表（分页）：GET /users/{owner}/repos?sort=updated（带 Token 指纹 key，结果经缓存） */
     suspend fun getUserRepos(owner: String, page: Int = 1): List<GitHubRepo>? =
         withContext(Dispatchers.IO) {

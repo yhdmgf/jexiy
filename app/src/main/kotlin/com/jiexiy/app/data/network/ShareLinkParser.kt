@@ -38,6 +38,7 @@ enum class SharePlatform(val displayName: String) {
     ALIYUN("阿里云盘"),
     ILANZOU("蓝奏云优享版"),
     LANZOU("蓝奏云"),
+    PIKPAK("PikPak网盘"),
     GITHUB("GitHub")
 }
 
@@ -87,6 +88,12 @@ object ShareLinkParser {
         """(?:share\.|www\.)?feijipan\.com/s/([A-Za-z0-9_-]+)|(?:www\.)?feijix\.com/s/([A-Za-z0-9_-]+)""",
         RegexOption.IGNORE_CASE
     )
+    // PikPak 分享：https://mypikpak.com/s/<shareCode>（域名唯一），提取码在 query 或文案
+    private val pikpakShareIdRegex =
+        Regex("""mypikpak\.com/s/([A-Za-z0-9_-]+)""", RegexOption.IGNORE_CASE)
+    // 通用提取码参数（PikPak 兼容 pwd / passcode / password 三种）
+    private val pwdInPikPakUrlRegex =
+        Regex("""[?&](?:pwd|passcode|password)=([A-Za-z0-9]+)""", RegexOption.IGNORE_CASE)
     // 蓝奏云优享版分享链接（参考实现 wenxi：ilanzou hosts=[ilanzou.com]，share 路径 /s/<id>）。
     // 单独识别为 ILANZOU，避免与蓝奏云混淆；该平台无分享解析接口，解析入口会给出明确提示。
     private val ilanzouShareIdRegex =
@@ -195,6 +202,13 @@ object ShareLinkParser {
             val pwd = pwdInLanzouUrlRegex.find(url)?.groupValues?.getOrNull(1)
                 ?: pwdInTextRegex.find(text)?.groupValues?.getOrNull(1)
             return ParsedShare(shareId = sid, pwd = pwd, platform = SharePlatform.ILANZOU)
+        }
+        // PikPak 分享链接：https://mypikpak.com/s/<shareCode>（先于蓝奏云，域名不同无需排序）
+        pikpakShareIdRegex.find(url)?.groupValues?.getOrNull(1)?.let { sid ->
+            val pwd = pwdInPikPakUrlRegex.find(url)?.groupValues?.getOrNull(1)
+                ?: pwdInUrlRegex.find(url)?.groupValues?.getOrNull(1)
+                ?: pwdInTextRegex.find(text)?.groupValues?.getOrNull(1)
+            return ParsedShare(shareId = sid, pwd = pwd, platform = SharePlatform.PIKPAK)
         }
         // 蓝奏云链接：https://{lanzou-host}/{shareId}（提取码参数 pwd/pass/passcode/password，或文案）
         lanzouShareIdRegex.find(url)?.groupValues?.getOrNull(1)?.let { sid ->

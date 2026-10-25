@@ -33,6 +33,8 @@ import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.data.network.model.ShareInfo
 import com.jiexiy.app.data.repository.LanzouAccountRepository
+import com.jiexiy.app.ui.preview.CloudPreview
+import com.jiexiy.app.ui.preview.PreviewTypes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -132,6 +134,30 @@ class LanzouCloudViewModel(
             "Referer" to "$origin/",
             "Cookie" to LanzouConstants.DOWN_IP_COOKIE
         )
+    }
+
+    /** 在线预览：与下载同一份直链与请求头，取到就交预览页，不落盘不入队 */
+    fun previewFile() {
+        val file = actionFile ?: return
+        if (PreviewTypes.kindOf(file.fname) == null) return
+        viewModelScope.launch {
+            isOperating = true
+            try {
+                val cred = creds()
+                val link = api.getPersonalDownloadLink(
+                    cred.cookie, cred.uid, cred.vei, fileNumeric(file.fid), file.fname
+                )
+                CloudPreview.open(
+                    fileName = file.fname.ifBlank { link.filename },
+                    url = link.downloadUrl,
+                    headers = downloadHeaders(link.downloadUrl)
+                )
+            } catch (e: Exception) {
+                cloudMessage = e.message ?: "预览失败"
+            } finally {
+                isOperating = false
+            }
+        }
     }
 
     // ---------- 目录浏览 ----------
