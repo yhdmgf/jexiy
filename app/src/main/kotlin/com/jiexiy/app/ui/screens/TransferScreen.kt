@@ -30,7 +30,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.jiexiy.app.ui.viewmodel.DownloadViewModel
 import kotlinx.coroutines.launch
@@ -55,8 +60,9 @@ fun TransferScreen(
     val scope = rememberCoroutineScope()
     // 监听页变化，实时保存
     LaunchedEffect(pagerState) {
-        pagerState.currentPageChanged {
-            savedPage = it
+        while (true) {
+            pagerState.waitForPageChanged()
+            savedPage = pagerState.currentPage
         }
     }
     val tabs = listOf("下载", "上传")

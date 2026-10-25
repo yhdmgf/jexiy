@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +66,7 @@ import com.jiexiy.app.ui.theme.effectsFast
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlinx.coroutines.launch
 
 /**
  * 液态玻璃底部导航栏：
@@ -84,6 +86,7 @@ fun LiquidGlassBottomBar(
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
     val view = LocalView.current
+    val scope = rememberCoroutineScope()
 
     // 玻璃效果开关
     val glassEnabled = ThemeController.glassBottomBar
@@ -112,7 +115,7 @@ fun LiquidGlassBottomBar(
     val touchOffset = remember { mutableStateOf<Offset?>(null) }
 
     // 高亮强度
-    val glowProgress = remember { mutableFloatStateOf(0f) }
+    val glowProgress = remember { Animatable(0f, label = "glowProgress") }
 
     // 按压状态
     var isPressed by remember { mutableStateOf(false) }
@@ -192,7 +195,7 @@ fun LiquidGlassBottomBar(
                 // 触摸高亮
                 .drawBehind {
                     val touch = touchOffset.value
-                    val glow = glowProgress.floatValue
+                    val glow = glowProgress.value
                     if (touch != null && glow > 0f) {
                         val highlightAlpha = glow * (if (dark) 0.09f else 0.26f)
                         drawCircle(
@@ -347,13 +350,15 @@ fun LiquidGlassBottomBar(
                                         selectedIndex.value = newIndex
                                         haptics.performHapticFeedback(HapticFeedbackType.SelectionClick)
                                         onTabSelected(tabs[newIndex])
-                                        position.animateTo(
-                                            newIndex.toFloat(),
-                                            animationSpec = spring(
-                                                stiffness = 550f,
-                                                dampingRatio = 38f
+                                        scope.launch {
+                                            position.animateTo(
+                                                newIndex.toFloat(),
+                                                animationSpec = spring(
+                                                    stiffness = 550f,
+                                                    dampingRatio = 38f
+                                                )
                                             )
-                                        )
+                                        }
                                     }
                                 }
                         ) {
