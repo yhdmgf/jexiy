@@ -353,7 +353,7 @@ fun LiquidGlassBottomBar(
                                                 stiffness = 550f,
                                                 dampingRatio = 38f
                                             )
-                                        }
+                                        )
                                     }
                                 }
                         ) {

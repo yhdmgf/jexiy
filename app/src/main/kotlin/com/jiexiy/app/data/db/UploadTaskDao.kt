@@ -31,7 +31,7 @@ interface UploadTaskDao {
     @Query("SELECT * FROM upload_task ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<UploadTaskEntity>>
 
-    @Query("SELECT * FROM upload_task ORDER BY createdAt DESC LIMIT 200")
+    @Query("SELECT * FROM upload_task ORDER BY createdAt DESC LIMIT :limit")
     suspend fun listRecent(limit: Int = 200): List<UploadTaskEntity>
 
     @Insert
