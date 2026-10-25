@@ -140,9 +140,7 @@ fun PikPakCloudScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val deviceId = account?.deviceId.orEmpty()
-    val path = remember {
-        mutableStateOf(mutableListOf("ROOT" to "PikPak网盘"))
-    }
+    var path by remember { mutableStateOf(mutableListOf("ROOT" to "PikPak网盘")) }
     var files by remember { mutableStateOf<List<ShareFile>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -592,8 +590,9 @@ fun PikPakCloudScreen(
                         runCatching {
                             val days = shareExpireToDays(expiredType)
                             val (shareUrl, passcode) = api.createShare(
-                                accessToken, deviceId, listOf(f.fid), days,
-                                passcode = if (withPassword) pwd else ""
+                                accessToken, deviceId, listOf(f.fid),
+                                passcode = if (withPassword) pwd else "",
+                                expirationDays = days
                             )
                             shareResult = ShareInfo(
                                 shareUrl = shareUrl,
@@ -682,8 +681,9 @@ fun PikPakCloudScreen(
                         runCatching {
                             val days = shareExpireToDays(expiredType)
                             val (shareUrl, passcode) = api.createShare(
-                                accessToken, deviceId, selected.map { it.fid }, days,
-                                passcode = if (withPassword) pwd else ""
+                                accessToken, deviceId, selected.map { it.fid },
+                                passcode = if (withPassword) pwd else "",
+                                expirationDays = days
                             )
                             shareResult = ShareInfo(
                                 shareUrl = shareUrl,
