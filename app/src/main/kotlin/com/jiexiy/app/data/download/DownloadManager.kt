@@ -83,7 +83,14 @@ data class DownloadStats(
      * 分片合并进度（0~100）：-1 表示不在合并阶段。
      * 合并只活在内存里、不写 DB —— 进程被杀时合并本来就会中断，无需在库里留状态。
      */
-    val mergePercent: Int = -1
+    val mergePercent: Int = -1,
+    /**
+     * 内存高频已下载字节：-1 = 本条统计没在跟踪进度（合并阶段 / 未知大小）。
+     *
+     * DB 的 `downloadedSize` 是 [progressPersistIntervalMs] 节流落盘的，进度条直接读它只会
+     * 一顿一顿地「跑停」；UI 优先用本字段算进度，没有内存值才回退 DB。
+     */
+    val downloaded: Long = -1L
 )
 
 /**
@@ -940,7 +947,8 @@ class DownloadManager(
                                     } else {
                                         -1L
                                     },
-                                    chunkCount = threadProvider(task.platform).coerceAtLeast(1)
+                                    chunkCount = threadProvider(task.platform).coerceAtLeast(1),
+                                    downloaded = status.downloaded
                                 ))
                             }
                             // 前台通知：与内置下载器共用同一条 2 秒节流和速度来源（_stats），所以写在 _stats 之后
@@ -1634,7 +1642,7 @@ class DownloadManager(
                                         // ★ 实时速度注入弹性分配器：块大小随真实吞吐自适应（IDM 式动态分片）
                                         elasticAllocator.recentSpeedBps = speed
                                         val remain = if (speed > 0) (total - new) * 1000 / speed else -1L
-                                        _stats.update { it + (id to DownloadStats(speed, remain, actualWorkers)) }
+                                        _stats.update { it + (id to DownloadStats(speed, remain, actualWorkers, downloaded = new)) }
                                     }
                                     notifyProgress(id, task.fileName, new, total)
                                     persistProgressIfDue(id, new, total, force = false, lastAt = lastPersistAt)
@@ -1707,7 +1715,7 @@ class DownloadManager(
                                         // ★ 实时速度注入弹性分配器：块大小随真实吞吐自适应（IDM 式动态分片）
                                         elasticAllocator.recentSpeedBps = speed
                                         val remain = if (speed > 0) (total - new) * 1000 / speed else -1L
-                                        _stats.update { it + (id to DownloadStats(speed, remain, actualWorkers)) }
+                                        _stats.update { it + (id to DownloadStats(speed, remain, actualWorkers, downloaded = new)) }
                                     }
                                     notifyProgress(id, task.fileName, new, total)
                                     persistProgressIfDue(id, new, total, force = false, lastAt = lastPersistAt)
@@ -2150,7 +2158,7 @@ class DownloadManager(
                                 // 速度采样进 _stats：UI 与通知栏都能显示实时速度（此前恒 0，看着像卡死）
                                 speedRecorder.onBytes(new)?.let { speed ->
                                     val remain = if (speed > 0 && total > 0) (total - new) * 1000 / speed else -1L
-                                    _stats.update { it + (id to DownloadStats(speed, remain, 1)) }
+                                    _stats.update { it + (id to DownloadStats(speed, remain, 1, downloaded = new)) }
                                 }
                                 persistProgressIfDue(id, new, total, force = false, lastAt = lastAt)
                                 notifyProgress(id, fileName, new, total)

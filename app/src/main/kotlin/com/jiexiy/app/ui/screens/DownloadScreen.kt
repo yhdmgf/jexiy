@@ -538,7 +538,8 @@ private fun FolderDownloadGroup(
     val completed = tasks.count { it.status == DownloadTaskEntity.STATUS_COMPLETED }
     val totalSize = tasks.sumOf { it.totalSize }
     // 聚合显示钳制：任何单项竞态残留都不会让"已下载 > 总大小"
-    val downloaded = minOf(tasks.sumOf { it.downloadedSize }, totalSize)
+    // 取内存高频值算进度（DB 是 500ms 节流落盘，直接读会一顿一顿），没有内存值才回退 DB
+    val downloaded = minOf(tasks.sumOf { liveDownloaded(it, stats[it.id]) }, totalSize)
     val fraction = if (totalSize > 0) {
         (downloaded.toFloat() / totalSize).coerceIn(0f, 1f)
     } else 0f
@@ -691,7 +692,7 @@ private fun DownloadSubTaskRow(
     val merging = mergePercent >= 0
     val fraction = when {
         merging -> mergePercent / 100f
-        task.totalSize > 0 -> (task.downloadedSize.toFloat() / task.totalSize).coerceIn(0f, 1f)
+        task.totalSize > 0 -> (liveDownloaded(task, stats).toFloat() / task.totalSize).coerceIn(0f, 1f)
         else -> 0f
     }
     // 显示相对路径（去掉顶级目录前缀，如 "A/B/b.mp4" → "B/b.mp4"）
@@ -891,7 +892,7 @@ private fun DownloadTaskCard(
     val merging = mergePercent >= 0
     val fraction = when {
         merging -> mergePercent / 100f
-        task.totalSize > 0 -> (task.downloadedSize.toFloat() / task.totalSize).coerceIn(0f, 1f)
+        task.totalSize > 0 -> (liveDownloaded(task, stats).toFloat() / task.totalSize).coerceIn(0f, 1f)
         else -> 0f
     }
     // 长按任务卡弹出操作菜单（复制直链 / 重新下载 / 删除）
@@ -1335,3 +1336,12 @@ private fun AddDownloadDialog(
         }
     )
 }
+
+/**
+ * 任务的已下载字节：优先取内存高频值 [DownloadStats.downloaded]。
+ *
+ * DB 的 `downloadedSize` 是 500ms 节流落盘的（高频写库会触发全表 Flow 重发 → 主线程全列表重组洪峰 → ANR），
+ * 进度条直接读它只会一顿一顿地「跑停」。合并阶段 / 未知大小时内存值为 -1，回退 DB 值。
+ */
+private fun liveDownloaded(entity: DownloadTaskEntity, stats: DownloadStats?): Long =
+    stats?.downloaded?.takeIf { it >= 0 } ?: entity.downloadedSize

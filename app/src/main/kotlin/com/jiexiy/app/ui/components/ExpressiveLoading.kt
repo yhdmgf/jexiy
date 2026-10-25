@@ -18,9 +18,13 @@
 
 package com.jiexiy.app.ui.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
@@ -48,6 +52,10 @@ fun jexiyLoading(modifier: Modifier = Modifier) {
  * 波浪进度条（确定进度 0f..1f）：波峰会随进度推进。
  * 颜色必须显式传入——各调用点原本就各自指定了主色/错误色与轨道色。
  *
+ * 进度值会在这里做一次线性插值：下载按分片/心跳**离散上报**（每完成一块才 +一次），
+ * 直接驱动填充会一顿一顿地「跑停」。插值后两次上报之间填充仍在连续推进，上报间隔
+ * 小于动画时长时两段自动衔接，观感从「跳一格停一下」变成连续流动，最终收敛到精确目标值。
+ *
  * @param waving 是否显示波浪：true = 波浪滚动（下载进行中）；false = 平直进度条。
  *   暂停 / 失败 / 已完成时传 false —— 波浪的滚动速度由组件按 amplitude > 0 驱动，
  *   不置 0 的话任务暂停后波浪仍会一直滚动，看起来像"还在下载"。
@@ -62,8 +70,14 @@ fun jexiyWavyProgress(
     trackColor: Color,
     waving: Boolean = true
 ) {
+    val target = progress().coerceIn(0f, 1f)
+    val displayed by animateFloatAsState(
+        targetValue = target,
+        animationSpec = tween(durationMillis = 420, easing = LinearEasing),
+        label = "wavyProgress"
+    )
     LinearWavyProgressIndicator(
-        progress = progress,
+        progress = { displayed },
         modifier = modifier,
         color = color,
         trackColor = trackColor,
