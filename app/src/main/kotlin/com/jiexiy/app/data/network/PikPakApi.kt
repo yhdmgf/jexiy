@@ -52,7 +52,8 @@ data class PikPakAccountInfo(
     val nickname: String,
     val accessToken: String,
     val refreshToken: String,
-    val expiresAtMs: Long
+    val expiresAtMs: Long,
+    val captchaToken: String = ""
 )
 
 /** PikPak 登录凭证丢失（401 unauthenticated / refresh_token 失效）。 */
@@ -179,7 +180,8 @@ class PikPakApi(
             nickname = "",
             accessToken = accessToken,
             refreshToken = refreshToken,
-            expiresAtMs = expiresAtMs
+            expiresAtMs = expiresAtMs,
+            captchaToken = captchaToken
         )
     }
 
@@ -942,7 +944,7 @@ class PikPakApi(
     // ==================== 内部工具 ====================
 
     /** 需要登录的请求头。 */
-    private fun authHeaders(deviceId: String, accessToken: String): okhttp3.Headers {
+    private fun authHeaders(deviceId: String, accessToken: String, captchaToken: String = ""): okhttp3.Headers {
         val builder = okhttp3.Headers.Builder()
             .add("User-Agent", PikPakConstants.USER_AGENT)
             .add("X-Device-Id", deviceId)
@@ -950,6 +952,7 @@ class PikPakApi(
             .add("Authorization", "Bearer $accessToken")
             .add("Accept", "application/json, text/plain, */*")
             .add("Content-Type", "application/json")
+        if (captchaToken.isNotBlank()) builder.add("X-Captcha-Token", captchaToken)
         return builder.build()
     }
 
