@@ -89,6 +89,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jiexiy.app.data.db.AliyunAccountEntity
 import com.jiexiy.app.data.db.BaiduAccountEntity
 import com.jiexiy.app.data.db.C139AccountEntity
 import com.jiexiy.app.data.db.FeijiAccountEntity
@@ -164,6 +165,8 @@ fun DriveScreen(
     pikPakAccountRepository: PikPakAccountRepository,
     pikPakApi: PikPakApi,
     pikPakDownloadManager: DownloadManager,
+    /** 阿里云盘账号（登录后显示卡片） */
+    aliyunAccount: AliyunAccountEntity?,
     /** 夸克云盘浏览 ViewModel（网盘 Tab 内切换展示，非全屏） */
     quarkCloudViewModel: QuarkCloudViewModel,
     /** UC 网盘云盘浏览 ViewModel */
@@ -218,6 +221,8 @@ fun DriveScreen(
     onFeijiCloud: () -> Unit = {},
     /** PikPak 登录（打开 PikPakLoginScreen） */
     onPikPakLogin: () -> Unit = {},
+    /** 阿里云盘登录（打开 AliyunWebLoginScreen） */
+    onAliyunLogin: () -> Unit = {},
     /** 视频平台登录态（platform → 当前账号）：驱动「视频解析」区的状态与右侧按钮 */
     videoLoginState: Map<VideoPlatform, VideoAccountEntity> = emptyMap(),
     /** 全部平台的视频账号：用于「共 N 个账号」统计与账号弹窗列表 */
@@ -735,6 +740,15 @@ fun DriveScreen(
                         }
                     )
                 }
+                item(key = "aliyun") {
+                    AliyunDriveCard(
+                        loggedIn = aliyunAccount != null,
+                        account = aliyunAccount,
+                        onClick = {
+                            if (aliyunAccount == null) onAliyunLogin()
+                        }
+                    )
+                }
                 item(key = github.id) {
                     // GitHub：已配置 Token 点击主体进入「我的主页」；未配置打开 Token 弹窗；更多按钮在登录后显示
                     DriveAccountCard(
@@ -1156,6 +1170,74 @@ private fun PikPakDriveCard(
                         quota?.let { QuotaInlineBar(it) }
                     }
                 }
+            }
+            when {
+                loggedIn && onMoreClick != null -> IconButton(onClick = onMoreClick) {
+                    Icon(
+                        imageVector = Icons.Outlined.MoreVert,
+                        contentDescription = "更多",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                loggedIn -> LoginBadge(isLoggedIn = true)
+                else -> Text(
+                    text = "去登录",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 阿里云盘账号卡片（与 [PikPakDriveCard] 对齐：图标 + 昵称 + 登录态 + 三个点菜单）。
+ */
+@Composable
+private fun AliyunDriveCard(
+    loggedIn: Boolean,
+    account: AliyunAccountEntity?,
+    onClick: () -> Unit,
+    /** 已登录时右侧「三个点」更多按钮；null 则不显示 */
+    onMoreClick: (() -> Unit)? = null
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.logo_aliyun),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .alpha(if (loggedIn) 1f else 0.45f),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (loggedIn && account != null) {
+                        account.nickname.ifBlank { "阿里云盘" }
+                    } else {
+                        "阿里云盘"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = if (loggedIn) "已登录" else "未登录，点击登录",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             when {
                 loggedIn && onMoreClick != null -> IconButton(onClick = onMoreClick) {

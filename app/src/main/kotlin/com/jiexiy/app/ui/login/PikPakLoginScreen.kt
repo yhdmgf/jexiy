@@ -79,7 +79,8 @@ import kotlinx.coroutines.launch
 fun PikPakLoginScreen(
     viewModel: PikPakAccountViewModel,
     onBack: () -> Unit,
-    onSaved: () -> Unit
+    onSaved: () -> Unit,
+    onWebLogin: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     var account by rememberSaveable { mutableStateOf("") }
@@ -201,6 +202,16 @@ fun PikPakLoginScreen(
                 } else {
                     Text("登录")
                 }
+            }
+
+            // 网页登录入口：适合命中风控（滑块/图形验证）时，纯 API 客户端解不了；
+            // 参考 wenxi-main/lib/domain/pikpak_web_login.dart
+            TextButton(
+                onClick = onWebLogin,
+                enabled = !isSaving,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("改用网页登录（扫码 / 短信 / 滑块验证）")
             }
         }
     }

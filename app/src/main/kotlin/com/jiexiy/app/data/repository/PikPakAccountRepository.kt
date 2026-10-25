@@ -24,6 +24,7 @@ import com.jiexiy.app.data.db.PikPakAccountEntity
 import com.jiexiy.app.data.db.resolveAccountSlot
 import com.jiexiy.app.data.download.DownloadPlatform
 import com.jiexiy.app.data.network.PikPakApi
+import com.jiexiy.app.data.network.PikPakWebCredential
 import com.jiexiy.app.data.network.PikPakLoginExpiredException
 import kotlinx.coroutines.flow.Flow
 
@@ -72,6 +73,47 @@ class PikPakAccountRepository(
         dao.upsert(entity)
         AccountSyncTrigger.notifySaved()
         entity
+    }
+
+    /**
+     * 保存网页登录凭据到数据库。从 [PikPakWebCredential] 解析后的 tokens 直接落库。
+     *
+     * 网页登录得到的 access_token / refresh_token 与账号密码登录属于同一套 OAuth 体系
+     * （网页版 client_id `YUMx5nI8ZU8Ap8pm` 与移动端 `YNxT9w7GMdWvEOKa` 的令牌在服务端互认），
+     * 可直接走后续 API 请求。
+     *
+     * expiresAtMs 存 0：网页令牌默认不过期，refresh 机制会自己判定。后续 refresh 失败时
+     * 用户重新登录即可。
+     */
+    suspend fun saveWebCredential(raw: String, newAccount: Boolean = false): Boolean {
+        val tokens = PikPakWebCredential.parse(raw) ?: return false
+        if (tokens.accessToken.isBlank()) return false
+        return try {
+            val existing = dao.getAccount()
+            val deviceId = tokens.deviceId.ifBlank {
+                existing?.deviceId?.takeIf { it.isNotBlank() } ?: api.newDeviceId()
+            }
+            val account = tokens.userId.ifBlank { tokens.nickname }.ifBlank { "pikpak" }
+            val slot = resolveAccountSlot(DownloadPlatform.PIKPAK, existing, newAccount)
+            val entity = PikPakAccountEntity(
+                id = slot.id,
+                accessToken = tokens.accessToken,
+                refreshToken = tokens.refreshToken,
+                deviceId = deviceId,
+                account = account,
+                userId = tokens.userId,
+                nickname = tokens.nickname.ifBlank { account },
+                expiresAtMs = 0L,
+                isPrimary = slot.isPrimary,
+                remark = slot.remark,
+                updatedAt = System.currentTimeMillis()
+            )
+            dao.upsert(entity)
+            AccountSyncTrigger.notifySaved()
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**

@@ -64,6 +64,13 @@ class PikPakAccountViewModel(
         )
     }
 
+    /** 保存网页登录凭据；返回是否成功。 */
+    suspend fun saveWebCredential(raw: String): Boolean {
+        val ok = repository.saveWebCredential(raw, newAccount = addNewAccount)
+        if (ok) addNewAccount = false
+        return ok
+    }
+
     class Factory(
         private val repository: PikPakAccountRepository
     ) : ViewModelProvider.Factory {

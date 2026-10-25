@@ -107,10 +107,12 @@ import com.jiexiy.app.data.account.AccountStore
 import com.jiexiy.app.data.network.ShareLinkParser
 import com.jiexiy.app.data.network.SharePlatform
 import com.jiexiy.app.data.network.PikPakApi
+import com.jiexiy.app.data.network.AliyunApi
 import com.jiexiy.app.data.repository.FeijiResolveRepository
 import com.jiexiy.app.data.repository.PikPakAccountRepository
 import com.jiexiy.app.data.repository.PikPakResolveRepository
 import com.jiexiy.app.data.repository.AliyunResolveRepository
+import com.jiexiy.app.data.repository.AliyunAccountRepository
 import com.jiexiy.app.data.account.AccountSyncManager
 import com.jiexiy.app.data.account.AccountSyncTrigger
 import com.jiexiy.app.data.announcement.AnnouncementReadStore
@@ -162,6 +164,7 @@ import com.jiexiy.app.data.repository.XunleiAccountRepository
 import com.jiexiy.app.data.repository.XunleiResolveRepository
 import com.jiexiy.app.data.repository.VideoAccountRepository
 import com.jiexiy.app.data.repository.VideoParseRepository
+import com.jiexiy.app.ui.login.AliyunWebLoginScreen
 import com.jiexiy.app.ui.login.BaiduLoginScreen
 import com.jiexiy.app.ui.login.C139LoginScreen
 import com.jiexiy.app.ui.login.GuangYaLoginScreen
@@ -202,6 +205,7 @@ import com.jiexiy.app.ui.screens.ResolveScreen
 import com.jiexiy.app.ui.screens.SettingsScreen
 import com.jiexiy.app.ui.screens.ThemeScreen
 import com.jiexiy.app.ui.screens.UpdateSheet
+import com.jiexiy.app.ui.viewmodel.AliyunAccountViewModel
 import com.jiexiy.app.ui.viewmodel.AnnouncementViewModel
 import com.jiexiy.app.ui.viewmodel.BaiduAccountViewModel
 import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel
@@ -335,6 +339,8 @@ fun MainScreen(
     var pikPakLoginAsNewAccount by rememberSaveable { mutableStateOf(false) }
     // PikPak 网页登录页：纯接口遇到服务端下发的人机验证（滑块/图形）时走这条
     var showPikPakWebLogin by rememberSaveable { mutableStateOf(false) }
+    // 阿里云盘网页登录页
+    var showAliyunWebLogin by rememberSaveable { mutableStateOf(false) }
     // 光鸭 / 蓝奏的网页登录页：官网页面手动登录，纯接口绕不过滑块 / 短信 / 扫码时走这条
     var showGuangYaWebLogin by rememberSaveable { mutableStateOf(false) }
     var showLanzouWebLogin by rememberSaveable { mutableStateOf(false) }
@@ -513,6 +519,10 @@ fun MainScreen(
     val pikPakRepository = remember {
         PikPakAccountRepository(db.pikpakAccountDao(), pikPakApi)
     }
+    val aliyunApi = remember { AliyunApi() }
+    val aliyunRepository = remember {
+        AliyunAccountRepository(db.aliyunAccountDao(), aliyunApi)
+    }
     // 网盘认证备份：打包/恢复各平台凭证
     val backupManager = remember {
         AuthBackupManager(
@@ -526,7 +536,8 @@ fun MainScreen(
             db.guangyaAccountDao(),
             db.ilanzouAccountDao(),
             db.lanzouAccountDao(),
-            db.pikpakAccountDao()
+            db.pikpakAccountDao(),
+            db.aliyunAccountDao()
         )
     }
     // 账号同步：启动时对齐一次；之后任何网盘账号保存 / 删除都会触发一次。
@@ -658,6 +669,9 @@ fun MainScreen(
     )
     val pikPakViewModel: PikPakAccountViewModel = viewModel(
         factory = PikPakAccountViewModel.Factory(pikPakRepository)
+    )
+    val aliyunViewModel: AliyunAccountViewModel = viewModel(
+        factory = AliyunAccountViewModel.Factory(aliyunRepository)
     )
     // 多账号：账号列表 / 设主账号 / 改备注 / 退出 的统一入口
     // （这四件事对 10 个平台同构，见 AccountDirectory；平台专属的凭证读写仍在各平台仓库里）
@@ -915,6 +929,7 @@ fun MainScreen(
     val ilanzouAccount by ilanzouViewModel.ilanzouAccount.collectAsState()
     val lanzouAccount by lanzouViewModel.lanzouAccount.collectAsState()
     val pikPakAccount by pikPakViewModel.pikpakAccount.collectAsState()
+    val aliyunAccount by aliyunViewModel.aliyunAccount.collectAsState()
 
     // 解析页发起下载后，自动切换到「下载」Tab
     LaunchedEffect(resolveViewModel.downloadStarted) {
@@ -1232,6 +1247,21 @@ fun MainScreen(
         return
     }
 
+    // 阿里云盘网页登录页：全屏覆盖（WebView 打开官网登录页，提取 localStorage 的 refresh_token）
+    if (showAliyunWebLogin) {
+        AliyunWebLoginScreen(
+            viewModel = aliyunViewModel,
+            onBack = {
+                showAliyunWebLogin = false
+                aliyunViewModel.cancelAddAccount()
+            },
+            onSaved = {
+                showAliyunWebLogin = false
+            }
+        )
+        return
+    }
+
     // 视频平台登录页：全屏覆盖（通用 WebView Cookie 登录页，按 platform 参数化）
     val videoLoginTarget = videoLoginPlatform
     if (videoLoginTarget != null) {
@@ -1485,6 +1515,7 @@ fun MainScreen(
                                     ilanzouAccount = ilanzouAccount,
                                     lanzouAccount = lanzouAccount,
                                     pikPakAccount = pikPakAccount,
+                                    aliyunAccount = aliyunAccount,
                                     pikPakAccountRepository = pikPakRepository,
                                     pikPakApi = pikPakApi,
                                     pikPakDownloadManager = downloadManager,
@@ -1581,6 +1612,9 @@ fun MainScreen(
                                         pikPakLoginAsNewAccount = false
                                         pikPakViewModel.beginAddAccount()
                                         showPikPakLogin = true
+                                    },
+                                    onAliyunLogin = {
+                                        showAliyunWebLogin = true
                                     },
                                     githubHasToken = githubHasTokenState,
                                     onGitHubTokenClick = { showGitHubTokenDialog = true },

@@ -25,6 +25,8 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Base64
+import com.jiexiy.app.data.db.AliyunAccountDao
+import com.jiexiy.app.data.db.AliyunAccountEntity
 import com.jiexiy.app.data.db.BaiduAccountDao
 import com.jiexiy.app.data.db.BaiduAccountEntity
 import com.jiexiy.app.data.db.C139AccountDao
@@ -73,7 +75,8 @@ class AuthBackupManager(
     private val guangyaDao: GuangYaAccountDao,
     private val ilanzouDao: ILanzouAccountDao,
     private val lanzouDao: LanzouAccountDao,
-    private val pikpakDao: PikPakAccountDao
+    private val pikpakDao: PikPakAccountDao,
+    private val aliyunDao: AliyunAccountDao
 ) {
 
     private companion object {
@@ -211,7 +214,7 @@ class AuthBackupManager(
         pikpakDao.getAccount()?.let { a ->
             if (!onlyLoggedIn || a.accessToken.isNotBlank()) accounts.put(
                 JSONObject()
-                    .put("platform", "pikpk")
+                    .put("platform", "pikpak")
                     .put("accessToken", a.accessToken)
                     .put("refreshToken", a.refreshToken)
                     .put("deviceId", a.deviceId)
@@ -219,6 +222,20 @@ class AuthBackupManager(
                     .put("userId", a.userId)
                     .put("nickname", a.nickname)
                     .put("expiresAt", a.expiresAtMs)
+                    .put("updatedAt", a.updatedAt)
+            )
+        }
+        aliyunDao.getAccount()?.let { a ->
+            if (!onlyLoggedIn || a.refreshToken.isNotBlank()) accounts.put(
+                JSONObject()
+                    .put("platform", "aliyun")
+                    .put("accessToken", a.accessToken)
+                    .put("refreshToken", a.refreshToken)
+                    .put("deviceId", a.deviceId)
+                    .put("devicePrivateKey", a.devicePrivateKey)
+                    .put("userId", a.userId)
+                    .put("driveId", a.driveId)
+                    .put("nickname", a.nickname)
                     .put("updatedAt", a.updatedAt)
             )
         }
@@ -394,7 +411,7 @@ class AuthBackupManager(
                         ); count++
                     }
                 }
-                "pikpk" -> {
+                "pikpak" -> {
                     val t = obj.optString("accessToken")
                     if (t.isNotBlank()) {
                         pikpakDao.upsert(
@@ -407,6 +424,24 @@ class AuthBackupManager(
                                 userId = obj.optString("userId"),
                                 nickname = obj.optString("nickname"),
                                 expiresAtMs = obj.optLong("expiresAt", 0L),
+                                updatedAt = obj.optLong("updatedAt", System.currentTimeMillis())
+                            )
+                        ); count++
+                    }
+                }
+                "aliyun" -> {
+                    val t = obj.optString("refreshToken")
+                    if (t.isNotBlank()) {
+                        aliyunDao.upsert(
+                            AliyunAccountEntity(
+                                id = "aliyun",
+                                accessToken = obj.optString("accessToken"),
+                                refreshToken = t,
+                                deviceId = obj.optString("deviceId"),
+                                devicePrivateKey = obj.optString("devicePrivateKey"),
+                                userId = obj.optString("userId"),
+                                driveId = obj.optString("driveId"),
+                                nickname = obj.optString("nickname"),
                                 updatedAt = obj.optLong("updatedAt", System.currentTimeMillis())
                             )
                         ); count++

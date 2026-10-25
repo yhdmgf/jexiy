@@ -372,6 +372,29 @@ fun ResolveScreen(
                                         imageTransformer = GitHubMarkdownImageTransformer
                                     )
                                 }
+                            } else if (showReleaseNotes) {
+                                // Release 详情页但 body 为空：明确告知开发者没写更新说明，
+                                // 避免用户以为“没显示”是 bug
+                                Column(modifier = Modifier.padding(top = 12.dp)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(1.dp)
+                                            .background(MaterialTheme.colorScheme.outlineVariant)
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        text = "更新说明",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = "该版本未填写更新说明",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     } else null,

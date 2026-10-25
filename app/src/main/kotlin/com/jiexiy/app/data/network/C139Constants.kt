@@ -147,7 +147,7 @@ object C139Constants {
     /** PC 桌面 UA（对齐文档 §9 请求头的 chrome/120.0.0.0 windows10；WebView 需桌面版页面才会下发 authorization） */
     const val PC_UA =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/120.0.0.0 Safari/537.36"
+            "Chrome/131.0.0.0 Safari/537.36"
 
     /** 快速登录必须同时存在的关键字段（路径 A，§3.5.3） */
     private val REQUIRED_FAST_KEYS = setOf("Os_SSo_Sid", "RMKEY")

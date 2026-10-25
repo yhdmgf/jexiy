@@ -557,6 +557,17 @@ class PikPakApi(
      * @param parentId 转存目标目录 id（空 = 我的根目录）
      * @return 转存后的新文件 id
      */
+    /**
+     * 分享文件转存到目标目录。
+     *
+     * ★ 新版 PikPak 服务端不再稳定地在 task 响应里返回新文件 id（`results[0].file.id` 经常为空），
+     * 所以这里采用「转存完成后回目录列表匹配 name+size」的策略：
+     * 1. 调 share/restore 拿 task_id；
+     * 2. 轮询 tasks/{task_id} 直到 PHASE_TYPE_COMPLETE；
+     * 3. 优先从 task 的 results[0].file.id 读（兼容旧版服务端）；
+     * 4. 读不到时回 listFiles(parentId) 按 fileName + fileSize 匹配新文件；
+     * 5. 还匹配不到抛异常。
+     */
     suspend fun restoreShareFile(
         accessToken: String,
         deviceId: String,
@@ -564,7 +575,9 @@ class PikPakApi(
         passCodeToken: String,
         fileId: String,
         ancestorIds: List<String>,
-        parentId: String = ""
+        parentId: String = "",
+        fileName: String = "",
+        fileSize: Long = -1L
     ): String = withContext(Dispatchers.IO) {
         val body = JSONObject()
             .put("share_id", shareId)
@@ -585,29 +598,37 @@ class PikPakApi(
             json.optString("task_id")
         )
         if (taskId.isEmpty()) throw IllegalStateException("PikPak 未返回转存任务")
-        // 轮询任务状态
+        // 轮询任务状态，直到 PHASE_TYPE_COMPLETE
+        var taskJson: JSONObject? = null
         repeat(PikPakConstants.UPLOAD_POLL_MAX) {
             delay(1000)
             val taskUrl = PikPakConstants.TASKS.toHttpUrl().newBuilder()
                 .addPathSegment(taskId)
                 .build()
-            val taskJson = execJson(
+            taskJson = execJson(
                 Request.Builder().url(taskUrl.toString())
                     .headers(authHeaders(deviceId, accessToken))
                     .get()
                     .build(),
                 phase = "task status"
             )
-            val phase = taskJson.optString("phase")
-            when (phase) {
+            when (taskJson!!.optString("phase")) {
                 "PHASE_TYPE_COMPLETE" -> {
-                    // 从任务里读新 file id（PikPak 通常返回 results[].file.id）
+                    // 优先从 task 的 results[0].file.id 读（兼容旧版服务端）
                     val file = taskJson.optJSONArray("results")
                         ?.optJSONObject(0)
                         ?.optJSONObject("file")
                     val newId = file?.optString("id").orEmpty()
-                    if (newId.isEmpty()) throw IllegalStateException("PikPak 转存完成但未返回新文件 id")
-                    return@withContext newId
+                    if (newId.isNotEmpty()) return@withContext newId
+
+                    // 新版服务端不返回 results[].file.id：回目录列表按 name+size 匹配
+                    if (fileName.isNotBlank()) {
+                        val dirFiles = listFiles(accessToken, deviceId, parentId)
+                        val matched = dirFiles.firstOrNull { it.fname == fileName &&
+                            (fileSize < 0 || it.fsize == fileSize) }
+                        if (matched != null) return@withContext matched.fid
+                    }
+                    throw IllegalStateException("PikPak 转存完成但未返回新文件 id，且目录中未找到同名文件")
                 }
                 "PHASE_TYPE_ERROR" -> {
                     val message = taskJson.optString("message")

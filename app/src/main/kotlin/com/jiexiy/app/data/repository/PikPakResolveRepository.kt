@@ -100,7 +100,9 @@ class PikPakResolveRepository(
             passCodeToken = session.stoken,
             fileId = file.fid,
             ancestorIds = ancestorIds,
-            parentId = toDirFid
+            parentId = toDirFid,
+            fileName = file.fname,
+            fileSize = file.fsize
         )
     }
 
@@ -120,7 +122,9 @@ class PikPakResolveRepository(
             passCodeToken = session.stoken,
             fileId = file.fid,
             ancestorIds = file.pdirFid.takeIf { it.isNotBlank() }?.let { listOf(it) } ?: emptyList(),
-            parentId = ""
+            parentId = "",
+            fileName = file.fname,
+            fileSize = file.fsize
         )
         api.getDownloadLink(token, acc.deviceId, newFid, file.fname)
     }

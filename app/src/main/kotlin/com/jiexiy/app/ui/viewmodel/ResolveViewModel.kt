@@ -212,7 +212,8 @@ class ResolveViewModel(
     var saveMessage by mutableStateOf<String?>(null)
         private set
 
-    /** 当前分享是否支持转存（夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭 / 小飞机） */
+    /** 当前分享是否支持转存（夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭 / 小飞机）。
+     *  阿里云盘转存 API 已就绪，待 AliyunCloudScreen 目录选择器完成后启用。 */
     val canSave: Boolean
         get() = currentPlatform == SharePlatform.QUARK ||
             currentPlatform == SharePlatform.UC ||
@@ -259,6 +260,10 @@ class ResolveViewModel(
     /** 当前分享是否为小飞机网盘（UI 选择小飞机版转存目录选择器） */
     val isSaveFeiji: Boolean
         get() = currentPlatform == SharePlatform.FEIJI
+
+    /** 当前分享是否为阿里云盘（UI 选择阿里云盘版转存目录选择器） */
+    val isSaveAliyun: Boolean
+        get() = currentPlatform == SharePlatform.ALIYUN
 
     /** 请求转存：记录目标文件并打开目录选择弹窗 */
     fun requestSave(file: ShareFile) {
@@ -412,6 +417,16 @@ class ResolveViewModel(
                                 saveMessage = it.message ?: "转存失败"
                             }
                     }
+                    SharePlatform.ALIYUN -> {
+                        aliyunResolveRepository.transferFile(s, file, toDirFid, "")
+                            .onSuccess {
+                                saveMessage = "已保存到阿里云盘"
+                                saveTarget = null
+                            }
+                            .onFailure {
+                                saveMessage = it.message ?: "转存失败"
+                            }
+                    }
                     else -> {
                         val credential = currentCredential()
                         if (credential.isNullOrBlank()) {
@@ -545,6 +560,10 @@ class ResolveViewModel(
                             SharePlatform.FEIJI -> {
                                 // 小飞机批量转存到根目录（folderId "0"）
                                 feijiResolveRepository.transferFile(s, file, "0", credential)
+                            }
+                            SharePlatform.ALIYUN -> {
+                                // 阿里云盘批量转存到根目录
+                                aliyunResolveRepository.transferFile(s, file, "root", "")
                             }
                             SharePlatform.ILANZOU -> {
                                 // 蓝奏优享批量转存到根目录（folderId "0"）
