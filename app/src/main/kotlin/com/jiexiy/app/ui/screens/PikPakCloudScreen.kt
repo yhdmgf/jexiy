@@ -140,7 +140,7 @@ fun PikPakCloudScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val deviceId = account?.deviceId.orEmpty()
-    var path by remember { mutableStateOf(mutableListOf("ROOT" to "PikPak网盘")) }
+    var path by remember { mutableStateOf(listOf("ROOT" to "PikPak网盘")) }
     var files by remember { mutableStateOf<List<ShareFile>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -166,7 +166,7 @@ fun PikPakCloudScreen(
         if (q.isEmpty()) files else files.filter { it.fname.contains(q, ignoreCase = true) }
     }
 
-    fun currentFolderId(): String = path.lastOrNull()?.first.ifEmpty { "" }
+    fun currentFolderId(): String = path.lastOrNull()?.first.orEmpty()
 
     val uploadPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()

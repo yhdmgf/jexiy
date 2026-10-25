@@ -102,8 +102,10 @@ import com.jiexiy.app.data.db.QuarkAccountEntity
 import com.jiexiy.app.data.db.UCAccountEntity
 import com.jiexiy.app.data.db.XunleiAccountEntity
 import com.jiexiy.app.data.db.VideoAccountEntity
+import com.jiexiy.app.data.download.DownloadManager
 import com.jiexiy.app.data.download.DownloadPlatform
 import com.jiexiy.app.data.network.PikPakApi
+import com.jiexiy.app.data.repository.PikPakAccountRepository
 import com.jiexiy.app.data.network.model.QuotaInfo
 import com.jiexiy.app.data.network.video.VideoPlatform
 import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel

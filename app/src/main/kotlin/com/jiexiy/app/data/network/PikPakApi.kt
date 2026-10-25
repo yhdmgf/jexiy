@@ -35,6 +35,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.InputStream
 import java.net.URLEncoder
+import java.nio.charset.Charsets
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -601,7 +602,7 @@ class PikPakApi(
             when (phase) {
                 "PHASE_TYPE_COMPLETE" -> {
                     // 从任务里读新 file id（PikPak 通常返回 results[].file.id）
-                    val file = taskJson.optJSONObject("results")
+                    val file = taskJson.optJSONArray("results")
                         ?.optJSONObject(0)
                         ?.optJSONObject("file")
                     val newId = file?.optString("id").orEmpty()
@@ -853,7 +854,7 @@ class PikPakApi(
         }
 
         // Initiate
-        val initiated = signedRequest("POST", linkedMapOf("uploads" to ""), "application/xml")
+        val initiated = signedRequest("POST", listOf("uploads" to ""), "application/xml")
         if (!initiated.isSuccessful) {
             throw IllegalStateException("OSS 创建分片任务失败（HTTP ${initiated.code}｜${initiated.body.take(200)}）")
         }
@@ -890,7 +891,7 @@ class PikPakApi(
         }
         val done = signedRequest(
             "POST",
-            linkedMapOf("uploadId" to uploadId),
+            listOf("uploadId" to uploadId),
             "application/xml",
             body = xml.toByteArray().toRequestBody(xmlMediaType)
         )

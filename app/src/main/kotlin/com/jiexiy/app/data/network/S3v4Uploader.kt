@@ -202,7 +202,7 @@ object S3v4Uploader {
             }
         } else {
             // 会话还在：问服务端已经有哪些分片，以服务端为准
-            val listed = listParts(request, uploadId, partCount, sizeOfPart)
+            val listed = listParts(::request, uploadId, partCount, sizeOfPart)
             if (listed != null) {
                 done.clear()
                 listed.forEach { (no, e) -> done[no] = e }
@@ -262,7 +262,7 @@ object S3v4Uploader {
                     PartResult(partNo, resp.etag, stop - start)
                 })
             }
-            var firstError: Exception? = null
+            var firstError: Throwable? = null
             for (f in futures) {
                 if (firstError != null) {
                     f.cancel(true)
@@ -321,7 +321,7 @@ object S3v4Uploader {
             val params = linkedMapOf("uploadId" to uploadId, "maxParts" to MAX_PARTS_PER_LIST.toString())
             if (marker.isNotBlank()) params["partNumberMarker"] = marker
             val resp = try {
-                request("GET", params)
+                request("GET", params, null, null, null, null)
             } catch (e: Exception) {
                 return null
             }

@@ -735,7 +735,7 @@ suspend fun listShare(surl: String, sekey: String, dir: String, cookie: String, 
     ): JSONObject {
         val start = index * BaiduConstants.UPLOAD_CHUNK_SIZE
         val end = minOf(size, start + BaiduConstants.UPLOAD_CHUNK_SIZE)
-        val body = UploadIo.chunkBody(open, start, end) { sent -> onProgress(sent) }
+        val body = UploadIo.chunkBody(open, start, end, onProgress = { sent -> onProgress(sent) })
         val request = Request.Builder()
             .url("$node${BaiduConstants.SUPERFILE_PATH}$baseQuery&method=upload&type=tmpfile"
                 + "&path=${urlEncode(path)}&uploadid=${urlEncode(uploadId)}&partseq=$index")

@@ -214,7 +214,7 @@ object AccountApi {
                 return@withContext Result.Failure("响应解析失败")
             }
             val check = checkSuccess(json, SYNC_URL)
-            if (check.isFailure) return@withContext Result.Failure(check.data)
+            if (check is Result.Failure) return@withContext Result.Failure(check.message)
             val arr = json.optJSONArray("data") ?: JSONArray()
             val out = ArrayList<CloudRecord>(arr.length())
             for (i in 0 until arr.length()) {
@@ -356,7 +356,7 @@ object AccountApi {
         fromData: (JSONObject?, Any) -> T,
     ): Result<T> {
         val check = checkSuccess(json, url)
-        if (check.isFailure) return Result.Failure(check.data)
+        if (check is Result.Failure) return Result.Failure(check.message)
         return try {
             Result.Success(fromData(json?.optJSONObject("data"), Unit))
         } catch (e: Exception) {
