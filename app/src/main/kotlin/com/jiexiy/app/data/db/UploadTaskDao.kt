@@ -20,6 +20,7 @@ package com.jiexiy.app.data.db
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -34,7 +35,7 @@ interface UploadTaskDao {
     @Query("SELECT * FROM upload_task ORDER BY createdAt DESC LIMIT :limit")
     suspend fun listRecent(limit: Int = 200): List<UploadTaskEntity>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(task: UploadTaskEntity): Long
 
     @Update
