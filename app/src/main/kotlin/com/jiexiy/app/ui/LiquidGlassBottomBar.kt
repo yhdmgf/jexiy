@@ -270,7 +270,6 @@ fun LiquidGlassBottomBar(
                         modifier = Modifier
                             .weight(1f)
                             .height(barHeight - innerPadding * 2)
-                            .clip(CircleShape)
                             .hoverable(interactionSource)
                             .pointerInput(tab) {
                                 // 触摸跟踪
@@ -320,8 +319,8 @@ fun LiquidGlassBottomBar(
                                             position.animateTo(
                                                 targetIndex.toFloat(),
                                                 animationSpec = spring(
-                                                    stiffness = 550f,
-                                                    dampingRatio = 38f
+                                                    stiffness = 800f,
+                                                    dampingRatio = 40f
                                                 )
                                             )
                                         }
@@ -333,8 +332,8 @@ fun LiquidGlassBottomBar(
                                             position.animateTo(
                                                 selectedIndex.value.toFloat(),
                                                 animationSpec = spring(
-                                                    stiffness = 550f,
-                                                    dampingRatio = 38f
+                                                    stiffness = 800f,
+                                                    dampingRatio = 40f
                                                 )
                                             )
                                         }
@@ -365,8 +364,8 @@ fun LiquidGlassBottomBar(
                                             position.animateTo(
                                                 newIndex.toFloat(),
                                                 animationSpec = spring(
-                                                    stiffness = 550f,
-                                                    dampingRatio = 38f
+                                                    stiffness = 800f,
+                                                    dampingRatio = 40f
                                                 )
                                             )
                                         }
