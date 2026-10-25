@@ -35,7 +35,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.InputStream
 import java.net.URLEncoder
-import java.nio.charset.Charsets
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -902,8 +902,8 @@ class PikPakApi(
 
     private fun hmacSha1(secret: String, message: String): ByteArray {
         val mac = Mac.getInstance("HmacSHA1")
-        mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), "HmacSHA1"))
-        return mac.doFinal(message.toByteArray(Charsets.UTF_8))
+        mac.init(SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), "HmacSHA1"))
+        return mac.doFinal(message.toByteArray(StandardCharsets.UTF_8))
     }
 
     private fun rfc1123(): String =
