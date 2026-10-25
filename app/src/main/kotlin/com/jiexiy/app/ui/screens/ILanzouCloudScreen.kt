@@ -20,6 +20,8 @@ package com.jiexiy.app.ui.screens
 
 import com.jiexiy.app.ui.SnackbarController
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -78,10 +80,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.upload.CloudUploadManager
 import com.jiexiy.app.ui.items.MultiSelectAction
 import com.jiexiy.app.ui.items.MultiSelectBar
 import com.jiexiy.app.ui.components.ScrollToTopButton
@@ -110,6 +115,7 @@ fun ILanzouCloudScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     onExit: () -> Unit,
     onDownloadStarted: () -> Unit = {},
+    onUploadStarted: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -137,6 +143,31 @@ fun ILanzouCloudScreen(
     var batchInitial by remember { mutableStateOf(BatchStep.MENU) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showCreateFolder by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val uploadPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        var added = 0
+        uris.forEach { uri ->
+            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
+            CloudUploadManager.enqueue(
+                context = context,
+                platform = DownloadPlatform.ILANZOU,
+                uri = uri,
+                fileName = info.name,
+                size = info.size,
+                mimeType = info.mimeType,
+                folderId = (viewModel.uiState.value as? ILanzouCloudUiState.Loaded)?.dirId ?: "0"
+            )
+            added++
+        }
+        if (added > 0) {
+            SnackbarController.show("已加入 $added 个上传任务")
+            onUploadStarted()
+        }
+    }
 
     LaunchedEffect(viewModel.cloudMessage) {
         viewModel.cloudMessage?.let {
@@ -264,7 +295,8 @@ fun ILanzouCloudScreen(
                                                     else MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
-                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true })
+                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true },
+                                                onUploadFile = { uploadPicker.launch(arrayOf("*/*")) })
                                         }
                                     }
                                     if (!viewModel.multiSelectMode) {

@@ -183,6 +183,8 @@ fun DriveScreen(
     onAddAccount: (String) -> Unit,
     /** 夸克云盘下载入队后切换到「下载」Tab */
     onDownloadStarted: () -> Unit = {},
+    /** 云盘内上传入队后退出当前云盘浏览、切到「传输」Tab */
+    onUploadStarted: () -> Unit = {},
     onUCLogin: () -> Unit,
     onXunleiLogin: () -> Unit,
     onBaiduLogin: () -> Unit,
@@ -276,6 +278,22 @@ fun DriveScreen(
     var showILanzouCloud by rememberSaveable { mutableStateOf(false) }
     // 蓝奏云浏览：网盘 Tab 内切换（非全屏）
     var showLanzouCloud by rememberSaveable { mutableStateOf(false) }
+
+    // 上传入队后：先退出当前云盘浏览，再交给 MainScreen 切到「传输」Tab
+    // （否则用户停留在云盘页，看不到上传进度，得手动切过去）
+    val onCloudUploadStarted: () -> Unit = {
+        showCloud = false
+        showUCCloud = false
+        showXunleiCloud = false
+        showBaiduCloud = false
+        showC139Cloud = false
+        showPan123Cloud = false
+        showPan115Cloud = false
+        showGuangYaCloud = false
+        showILanzouCloud = false
+        showLanzouCloud = false
+        onUploadStarted()
+    }
 
     // 夸克：登录态由数据库驱动；已登录则副标题显示昵称
     val quark = DriveAccount(
@@ -393,61 +411,71 @@ fun DriveScreen(
                 viewModel = quarkCloudViewModel,
                 scrollBehavior = scrollBehavior,
                 onExit = { showCloud = false },
-                onDownloadStarted = onDownloadStarted
+                onDownloadStarted = onDownloadStarted,
+                onUploadStarted = onCloudUploadStarted
             )
             2 -> UCCoudScreen(
             viewModel = ucCloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showUCCloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         3 -> XunleiCloudScreen(
             viewModel = xunleiCloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showXunleiCloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         4 -> BaiduCloudScreen(
             viewModel = baiduCloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showBaiduCloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         5 -> C139CloudScreen(
             viewModel = c139CloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showC139Cloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         6 -> Pan123CloudScreen(
             viewModel = pan123CloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showPan123Cloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         7 -> Pan115CloudScreen(
             viewModel = pan115CloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showPan115Cloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         8 -> GuangYaCloudScreen(
             viewModel = guangyaCloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showGuangYaCloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         9 -> ILanzouCloudScreen(
             viewModel = ilanzouCloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showILanzouCloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
         10 -> LanzouCloudScreen(
             viewModel = lanzouCloudViewModel,
             scrollBehavior = scrollBehavior,
             onExit = { showLanzouCloud = false },
-            onDownloadStarted = onDownloadStarted
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
         )
             else -> PullToRefreshBox(
                 isRefreshing = isRefreshing,

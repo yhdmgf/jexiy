@@ -635,7 +635,14 @@ class Pan123Api(
                         false,
                         onProgress
                     ).use { resp ->
-                        if (!resp.isSuccessful) throw IllegalStateException("123 分段上传失败（HTTP ${resp.code}）")
+                        if (!resp.isSuccessful) {
+                            val detail = resp.body?.string().orEmpty()
+                                .replace(Regex("\\s+"), " ").trim().take(200)
+                            throw IllegalStateException(
+                                "123 分段直传失败（HTTP ${resp.code}）" +
+                                    (if (detail.isNotBlank()) "：$detail" else "")
+                            )
+                        }
                     }
                 }
                 post(

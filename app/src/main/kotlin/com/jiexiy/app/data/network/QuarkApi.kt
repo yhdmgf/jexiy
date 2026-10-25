@@ -418,13 +418,16 @@ class QuarkApi(
         if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
         if (size <= 0) throw IllegalStateException("夸克不支持上传空文件")
         val parent = pdirFid.ifBlank { QuarkConstants.DEFAULT_PDIR_FID }
-        val exists = listCloudFiles(parent, cookie)
+        // CCP 会话（__puus/__pus/_puk）会过期，过期后 upload/pre 会回「验证码无效」；
+        // 上传前先刷一次会话，刷不到就沿用原 cookie
+        val fresh = refreshSession(cookie) ?: cookie
+        val exists = listCloudFiles(parent, fresh)
             ?.any { !it.isdir && it.fname == fileName }
             ?: false
         if (exists) throw IllegalStateException("目录中已有同名文件，请重命名后上传")
         CcpUploader.upload(
             config = ccpConfig,
-            post = { url, body -> parseData(postJson(url, cookie, body), { it }) },
+            post = { url, body -> parseData(postJson(url, fresh, body), { it }) },
             fileName = fileName,
             size = size,
             parentFid = parent,

@@ -20,6 +20,8 @@ package com.jiexiy.app.ui.screens
 
 import com.jiexiy.app.ui.SnackbarController
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -92,7 +94,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jiexiy.app.data.network.Pan115Constants
 import com.jiexiy.app.data.network.model.ShareExpire
+import com.jiexiy.app.data.download.DownloadPlatform
 import com.jiexiy.app.data.network.model.ShareFile
+import com.jiexiy.app.data.upload.CloudUploadManager
 import com.jiexiy.app.ui.items.MultiSelectAction
 import com.jiexiy.app.ui.items.MultiSelectBar
 import com.jiexiy.app.ui.components.ScrollToTopButton
@@ -126,6 +130,7 @@ fun Pan115CloudScreen(
     scrollBehavior: TopAppBarScrollBehavior,
     onExit: () -> Unit,
     onDownloadStarted: () -> Unit = {},
+    onUploadStarted: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -162,6 +167,30 @@ fun Pan115CloudScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     // 「+」菜单的「创建文件夹」弹窗（「上传文件」项目前是占位，见 CloudAddMenu）
     var showCreateFolder by remember { mutableStateOf(false) }
+
+    val uploadPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        var added = 0
+        uris.forEach { uri ->
+            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
+            CloudUploadManager.enqueue(
+                context = context,
+                platform = DownloadPlatform.PAN115,
+                uri = uri,
+                fileName = info.name,
+                size = info.size,
+                mimeType = info.mimeType,
+                folderId = (viewModel.uiState.value as? Pan115CloudUiState.Loaded)?.dirId ?: "0"
+            )
+            added++
+        }
+        if (added > 0) {
+            SnackbarController.show("已加入 $added 个上传任务")
+            onUploadStarted()
+        }
+    }
 
     LaunchedEffect(viewModel.cloudMessage) {
         viewModel.cloudMessage?.let {
@@ -300,7 +329,8 @@ fun Pan115CloudScreen(
                                                 )
                                             }
                                             // 「+」新建菜单（创建文件夹 / 上传文件，Agent.md §3.26）
-                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true })
+                                            CloudAddMenu(onCreateFolder = { showCreateFolder = true },
+                                                onUploadFile = { uploadPicker.launch(arrayOf("*/*")) })
                                         }
                                     }
                                     if (!viewModel.multiSelectMode) {

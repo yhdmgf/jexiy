@@ -46,6 +46,8 @@ class XunleiUploader(private val context: Context) : CloudUploader {
         val token = entity.accessToken
         if (token.isBlank()) throw IOException("请先登录迅雷云盘")
         if (entity.deviceId.isBlank()) throw IOException("迅雷云盘登录信息不完整，请重新登录")
+        // 先缓存 JWT sub：captcha/init 的 meta 需要真实 user_id，空值会得到降级 token（POST 接口拒绝 → 「验证码无效」）
+        api.cacheUserId(token)
         val id = api.uploadFile(
             parentId = folderId,
             fileName = source.name,

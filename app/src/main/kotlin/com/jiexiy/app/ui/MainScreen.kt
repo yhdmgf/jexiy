@@ -1496,6 +1496,7 @@ fun MainScreen(
                                     },
                                     multiAccountViewModel = multiAccountViewModel,
                                     onDownloadStarted = { currentTab = MainTab.Download },
+                                    onUploadStarted = { currentTab = MainTab.Download },
                                     onUCLogin = { showUCLogin = true },
                                     onXunleiLogin = { showXunleiLogin = true },
                                     onBaiduLogin = { showBaiduLogin = true },

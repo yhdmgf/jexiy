@@ -93,8 +93,12 @@ object S3v4Uploader {
             } else {
                 sha256Hex(content.toByteArray(StandardCharsets.UTF_8))
             }
+            // Content-Type 必须参与签名：S3 v4 只豁免 host / Authorization / Expect，
+            // 发了却没签会直接 SignatureDoesNotMatch（HTTP 403）
+            val bodyType = if (start != null) contentType else "application/xml"
             val headers = LinkedHashMap<String, String>()
             headers["host"] = authority
+            headers["content-type"] = bodyType
             headers["x-amz-content-sha256"] = contentHash
             headers["x-amz-date"] = stamp
             if (token.isNotBlank()) headers["x-amz-security-token"] = token
@@ -118,7 +122,8 @@ object S3v4Uploader {
             val query = if (canonicalQuery.isEmpty()) "" else "?$canonicalQuery"
             val url = "https://$authority$basePath$query"
             val requestBody = when {
-                start != null -> UploadIo.chunkBody(open, start, end ?: size) { onProgress(it) }
+                start != null -> UploadIo.chunkBody(open, start, end ?: size,
+                    onProgress = { onProgress(it) }, mediaType = bodyType.toMediaType())
                 body != null -> content.toByteArray(StandardCharsets.UTF_8)
                     .toRequestBody("application/xml".toMediaType())
                 else -> EMPTY_BODY
@@ -134,12 +139,12 @@ object S3v4Uploader {
         val chunkSize = maxOf(MIN_PART_SIZE, (size + TARGET_PARTS - 1) / TARGET_PARTS)
         if (size <= 0 || size <= chunkSize) {
             val resp = request("PUT", emptyMap(), 0L, size)
-            if (!resp.isSuccessful) throw IllegalStateException("网盘上传服务返回错误（HTTP ${resp.code}）")
+            if (!resp.isSuccessful) throw IllegalStateException(errDetail(resp))
             return
         }
 
         val init = request("POST", linkedMapOf("uploads" to ""))
-        if (!init.isSuccessful) throw IllegalStateException("网盘上传服务返回错误（HTTP ${init.code}）")
+        if (!init.isSuccessful) throw IllegalStateException(errDetail(init))
         val uploadId = xmlValue(init.body, "UploadId")
         if (uploadId.isBlank()) throw IllegalStateException("网盘未创建分段上传任务")
 
@@ -150,14 +155,14 @@ object S3v4Uploader {
             while (offset < size) {
                 val stop = minOf(size, offset + chunkSize)
                 val resp = request("PUT", linkedMapOf("uploadId" to uploadId, "partNumber" to (etags.size + 1).toString()), offset, stop)
-                if (!resp.isSuccessful) throw IllegalStateException("网盘上传服务返回错误（HTTP ${resp.code}）")
+                if (!resp.isSuccessful) throw IllegalStateException(errDetail(resp))
                 if (resp.etag.isBlank()) throw IllegalStateException("网盘未确认上传分段")
                 etags.add(resp.etag)
                 offset = stop
             }
             val resp = request("POST", linkedMapOf("uploadId" to uploadId),
                 body = completeXml(etags))
-            if (!resp.isSuccessful) throw IllegalStateException("网盘上传服务返回错误（HTTP ${resp.code}）")
+            if (!resp.isSuccessful) throw IllegalStateException(errDetail(resp))
             completed = true
         } finally {
             if (!completed) {
@@ -214,6 +219,13 @@ object S3v4Uploader {
     private fun sha256Hex(bytes: ByteArray): String = buildString {
         java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
             .forEach { append("%02x".format(it)) }
+    }
+
+    /** 上传失败信息：HTTP 码 + 响应体片段。S3 会回 SignatureDoesNotMatch 之类的 XML，只给码看不出原因。 */
+    private fun errDetail(resp: ResponseWrapper): String = buildString {
+        append("网盘上传服务返回错误（HTTP ").append(resp.code).append("）")
+        val detail = resp.body.replace(Regex("\\s+"), " ").trim().take(200)
+        if (detail.isNotBlank()) append("：").append(detail)
     }
 
     /** 极简 URL 拆分（只需 host + path）。 */

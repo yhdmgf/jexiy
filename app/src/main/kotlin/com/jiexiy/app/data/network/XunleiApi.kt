@@ -962,7 +962,7 @@ class XunleiApi(
                         .put("package_name", XunleiConstants.APP_PACKAGE_NAME)
                         .put("timestamp", ts)
                         .put("captcha_sign", sign)
-                        .put("user_id", currentUserId) // 真实 user_id，空会得到降级 token（POST 类接口拒绝）
+                        .put("user_id", currentUserId.ifBlank { jwtSub(currentAccessToken) }) // 真实 user_id，空会得到降级 token（POST 类接口拒绝）
                 )
                 .put("captcha_token", oldToken)
                 .toString()

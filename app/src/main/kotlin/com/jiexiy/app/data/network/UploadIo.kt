@@ -127,13 +127,15 @@ object UploadIo {
     fun execute(request: Request, followRedirects: Boolean = true): Response =
         (if (followRedirects) client else noRedirectClient).newCall(request).execute()
 
-    /** [start, end) 区间流式请求体（不带 Content-Type，用于百度 superfile2 这类纯二进制接口）。 */    fun chunkBody(
+    /** [start, end) 区间流式请求体。[mediaType] 为 null 时不带 Content-Type（百度 superfile2 这类纯二进制接口）。 */
+    fun chunkBody(
         open: (Long, Long) -> InputStream,
         start: Long,
         end: Long,
-        onProgress: (Long) -> Unit = {}
+        onProgress: (Long) -> Unit = {},
+        mediaType: MediaType? = null
     ): RequestBody = object : RequestBody() {
-        override fun contentType(): MediaType? = null
+        override fun contentType(): MediaType? = mediaType
         override fun contentLength() = end - start
 
         override fun writeTo(sink: BufferedSink) {
