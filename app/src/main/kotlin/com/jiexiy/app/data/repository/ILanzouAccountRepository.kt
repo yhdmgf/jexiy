@@ -58,7 +58,7 @@ class ILanzouAccountRepository(
             id = slot.id,
             appToken = token,
             uuid = uuid,
-            account = account.trim(),
+            account = info?.account.orEmpty().ifBlank { account.trim() },
             password = password,
             userId = info?.userId.orEmpty(),
             nickname = info?.nickname.orEmpty().ifBlank { account.trim() },
