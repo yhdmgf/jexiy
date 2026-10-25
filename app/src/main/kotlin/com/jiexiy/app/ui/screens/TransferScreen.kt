@@ -39,6 +39,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.jiexiy.app.ui.viewmodel.DownloadViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
 
 /**
  * 传输页：顶部「下载 / 上传」两个页签，左右滑动即可切换。
@@ -60,10 +62,9 @@ fun TransferScreen(
     val scope = rememberCoroutineScope()
     // 监听页变化，实时保存
     LaunchedEffect(pagerState) {
-        while (true) {
-            pagerState.waitForPageChanged()
-            savedPage = pagerState.currentPage
-        }
+        kotlinx.coroutines.flow.snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .launchIn(scope) { savedPage = it }
     }
     val tabs = listOf("下载", "上传")
 

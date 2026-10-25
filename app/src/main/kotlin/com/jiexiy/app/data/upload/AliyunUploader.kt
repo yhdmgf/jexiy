@@ -27,8 +27,10 @@ class AliyunUploader(private val context: Context) : CloudUploader {
             throw IOException("请先登录阿里云盘")
         }
         onProgress(0L, UploadPhase.PREPARING)
-        val file = repository.upload(
-            accountId = entity.id,
+        val credential = repository.buildCredential()
+            ?: throw IOException("请先登录阿里云盘")
+        val file = api.upload(
+            credential = credential,
             parentFileId = folderId,
             name = source.name,
             size = source.size,

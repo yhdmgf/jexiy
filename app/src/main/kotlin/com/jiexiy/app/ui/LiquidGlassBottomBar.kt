@@ -5,6 +5,7 @@ import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -39,11 +41,12 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.IntOffset
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.OutlinePathEffect
+import androidx.compose.ui.graphics.ColorUtils
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -66,6 +69,7 @@ import com.jiexiy.app.ui.theme.effectsFast
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 /**
@@ -108,19 +112,19 @@ fun LiquidGlassBottomBar(
 
     // 位置动画（支持拖拽）
     val position = remember {
-        Animatable(selectedIndex.value.toFloat(), label = "navPosition")
+        Animatable(selectedIndex.value.toFloat())
     }
 
     // 触摸位置
     val touchOffset = remember { mutableStateOf<Offset?>(null) }
 
     // 高亮强度
-    val glowProgress = remember { Animatable(0f, label = "glowProgress") }
+    val glowProgress = remember { Animatable(0f) }
 
     // 按压状态
     var isPressed by remember { mutableStateOf(false) }
     val pressScale = remember {
-        Animatable(1f, label = "pressScale")
+        Animatable(1f)
     }
 
     // 拖拽状态
@@ -133,7 +137,7 @@ fun LiquidGlassBottomBar(
     val inactiveColor = colors.onSurfaceVariant
     val glassColor = if (dark) Color(0xFF1C1D21) else Color.White
     val borderAlpha = if (dark) 0.48f else 0.65f
-    val shadowColor = Color.lerp(
+    val shadowColor = ColorUtils.lerp(
         if (dark) Color.Black else colors.onSurface,
         colors.primary,
         if (dark) 0.08f else 0.16f
@@ -151,7 +155,6 @@ fun LiquidGlassBottomBar(
     ) {
         Box(
             modifier = Modifier
-                .width(IntrinsicSize.Max)
                 .widthIn(max = 560.dp)
                 .height(barHeight)
                 .onSizeChanged { barSize.value = it }
@@ -229,7 +232,7 @@ fun LiquidGlassBottomBar(
                 modifier = Modifier
                     .offset { IntOffset(lensOffset, innerPadding.toPx().roundToInt()) }
                     .size(
-                        width = with(density) { tabWidth.roundToDp() },
+                        width = with(density) { tabWidth.roundToInt().toDp() },
                         height = barHeight - innerPadding * 2
                     )
                     .graphicsLayer {
@@ -306,27 +309,31 @@ fun LiquidGlassBottomBar(
                                         val targetTab = tabs[targetIndex]
                                         if (targetTab != tabs[selectedIndex.value]) {
                                             selectedIndex.value = targetIndex
-                                            haptics.performHapticFeedback(HapticFeedbackType.SelectionClick)
+                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                             onTabSelected(targetTab)
                                         }
-                                        position.animateTo(
-                                            targetIndex.toFloat(),
-                                            animationSpec = spring(
-                                                stiffness = 550f,
-                                                dampingRatio = 38f
+                                        scope.launch {
+                                            position.animateTo(
+                                                targetIndex.toFloat(),
+                                                animationSpec = spring(
+                                                    stiffness = 550f,
+                                                    dampingRatio = 38f
+                                                )
                                             )
-                                        )
+                                        }
                                     },
                                     onDragCancel = {
                                         isPressed = false
                                         touchOffset.value = null
-                                        position.animateTo(
-                                            selectedIndex.value.toFloat(),
-                                            animationSpec = spring(
-                                                stiffness = 550f,
-                                                dampingRatio = 38f
+                                        scope.launch {
+                                            position.animateTo(
+                                                selectedIndex.value.toFloat(),
+                                                animationSpec = spring(
+                                                    stiffness = 550f,
+                                                    dampingRatio = 38f
+                                                )
                                             )
-                                        )
+                                        }
                                     }
                                 )
                             }
@@ -348,7 +355,7 @@ fun LiquidGlassBottomBar(
                                     val newIndex = index
                                     if (newIndex != selectedIndex.value) {
                                         selectedIndex.value = newIndex
-                                        haptics.performHapticFeedback(HapticFeedbackType.SelectionClick)
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                         onTabSelected(tabs[newIndex])
                                         scope.launch {
                                             position.animateTo(

@@ -347,8 +347,8 @@ internal object SecureAccountDaos {
         } ?: emptyList()
         override suspend fun setPrimary(id: String) = raw.setPrimary(id)
         override suspend fun updateRemark(id: String, remark: String) = raw.updateRemark(id, remark)
-        override suspend fun updateAccessToken(id: String, accessToken: String, updatedAt: Long) =
-            raw.updateAccessToken(id, accessToken, updatedAt)
+        override suspend fun updateAccessToken(id: String, accessToken: String, expiresAtMs: Long, updatedAt: Long) =
+            raw.updateAccessToken(id, accessToken, expiresAtMs, updatedAt)
         override suspend fun deleteById(id: String) = raw.deleteById(id)
         override suspend fun clear() = raw.clear()
     }
