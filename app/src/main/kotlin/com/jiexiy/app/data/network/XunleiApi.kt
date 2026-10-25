@@ -97,6 +97,7 @@ class XunleiApi(
     suspend fun initCaptcha(
         deviceId: String,
         username: String,
+        userId: String = "",
         action: String = "POST:/auth/signin/token"
     ): String? = withContext(Dispatchers.IO) {
         val ts = System.currentTimeMillis().toString()
@@ -112,7 +113,7 @@ class XunleiApi(
                 .put("package_name", XunleiConstants.APP_PACKAGE_NAME)
                 .put("timestamp", ts)
                 .put("captcha_sign", sign)
-                .put("user_id", currentUserId)) // 真实 user_id，空会得到降级 token
+                .put("user_id", userId.ifBlank { currentUserId })) // 真实 user_id，空会得到降级 token
             .put("redirect_uri", "xlaccsdk01://xunlei.com/callback?state=harbor")
             .toString()
         val request = Request.Builder()

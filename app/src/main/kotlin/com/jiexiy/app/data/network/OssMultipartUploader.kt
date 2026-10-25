@@ -95,7 +95,7 @@ object OssMultipartUploader {
                 append(method).append('\n')
                 appendLine("")
                 appendLine(type)
-                append(date)
+                appendLine(date)  // Date 后必须有 \n
                 if (securityToken.isNotBlank()) appendLine("x-oss-security-token:$securityToken")
                 append(resource)
             }

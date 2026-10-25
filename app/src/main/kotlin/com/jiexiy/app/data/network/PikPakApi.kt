@@ -367,7 +367,7 @@ class PikPakApi(
         val body = JSONObject()
             .put("kind", "drive#folder")
             .put("name", name)
-            .apply { if (parentId.isNotEmpty()) put("parent_id", parentId) }
+            .put("parent_id", parentId)
         val json = execJson(
             Request.Builder().url(PikPakConstants.FILES)
                 .headers(authHeaders(deviceId, accessToken))
@@ -785,10 +785,10 @@ class PikPakApi(
     private fun pickPartSize(size: Long): Long = when {
         size in 1 until 0x8000000L -> PikPakConstants.PART_SIZE_256K      // 0~128M
         size in 0x8000000L until 0x10000000L -> PikPakConstants.PART_SIZE_512K  // 128M~256M
-        size in 0x10000000L until 0x20000000L -> PikPakConstants.PART_SIZE_2M   // <=256M 或 >512M
-        size in 0x20000000L until 0x40000000L -> PikPakConstants.PART_SIZE_2M   // <=256M 或 >512M
-        size >= 0x40000000L -> PikPakConstants.PART_SIZE_2M                    // >512M
-        else -> PikPakConstants.PART_SIZE_1M                                   // 256M~512M
+        size == 0x10000000L -> PikPakConstants.PART_SIZE_2M                // 恰好 256M
+        size in 0x10000001L until 0x20000000L -> PikPakConstants.PART_SIZE_1M   // 256M~512M
+        size >= 0x20000000L -> PikPakConstants.PART_SIZE_2M                // >512M
+        else -> PikPakConstants.PART_SIZE_256K
     }
 
     /**

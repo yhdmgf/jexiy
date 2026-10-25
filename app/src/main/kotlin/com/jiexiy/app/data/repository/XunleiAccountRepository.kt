@@ -93,7 +93,7 @@ class XunleiAccountRepository(
         val step = api.smsLogin(mobile, smsCode, creditKey, smsToken, deviceId)
         if (step.sessionId.isBlank()) return false
         // 换 token 前先 initCaptcha 拿 captcha_token（官方时序：smslogin → captcha/init → signin/token）
-        val captchaToken = api.initCaptcha(deviceId, mobile) ?: ""
+        val captchaToken = api.initCaptcha(deviceId, mobile, userId = step.userID) ?: ""
         val tokens = api.exchangeToken(step.sessionId, deviceId, captchaToken) ?: return false
         val slot = resolveAccountSlot(DownloadPlatform.XUNLEI, dao.getAccount(), newAccount)
         dao.upsert(
@@ -123,7 +123,7 @@ class XunleiAccountRepository(
     ): Boolean {
         if (step.sessionId.isBlank()) return false
         val deviceId = XunleiApi.newDeviceId()
-        val captchaToken = api.initCaptcha(deviceId, username) ?: ""
+        val captchaToken = api.initCaptcha(deviceId, username, userId = step.userID) ?: ""
         val tokens = api.exchangeToken(step.sessionId, deviceId, captchaToken) ?: return false
         val slot = resolveAccountSlot(DownloadPlatform.XUNLEI, dao.getAccount(), newAccount)
         dao.upsert(
