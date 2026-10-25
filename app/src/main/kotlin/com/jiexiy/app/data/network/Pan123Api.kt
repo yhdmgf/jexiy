@@ -548,6 +548,7 @@ class Pan123Api(
         size: Long,
         token: String,
         open: (Long, Long) -> InputStream,
+        mimeType: String = "application/octet-stream",
         onProgress: (Long) -> Unit = {}
     ): String = withContext(Dispatchers.IO) {
         if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
@@ -587,7 +588,7 @@ class Pan123Api(
                     token = pre.optString("SessionToken").orEmpty(),
                     pathStyle = true,
                     size = size,
-                    contentType = "application/octet-stream",
+                    contentType = mimeType,
                     open = { start, end -> open(start, end) },
                     onProgress = onProgress,
                     // 断点续传用的稳定任务标识：对象 key 是网盘每次下发的、每次都不同，
@@ -633,7 +634,7 @@ class Pan123Api(
                         i.toLong() * chunkSize,
                         minOf(size, (i.toLong() + 1) * chunkSize),
                         open,
-                        "application/octet-stream",
+                        mimeType,
                         emptyMap(),
                         false,
                         onProgress

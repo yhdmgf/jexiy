@@ -905,7 +905,7 @@ class XunleiApi(
         parse: (JSONObject) -> T
     ): T {
         var token = if (anonymous) captchaToken else (refreshedCaptcha ?: captchaToken)
-        repeat(2) { attempt ->
+        repeat(3) { attempt ->
             val response = client.newCall(build(token)).execute()
             val body = response.use { it.body?.string() ?: throw QuarkApiException("请求失败：响应为空") }
             val json = runCatching { JSONObject(body) }.getOrElse {
@@ -914,7 +914,7 @@ class XunleiApi(
             if (!response.isSuccessful || json.has("error")) {
                 val err = json.optString("error")
                 // access_token 过期（401/unauthenticated）：refresh_token 换新 → 重新 init captcha → 重试（对齐官方抓包）
-                if (!anonymous && (response.code == 401 || err == "unauthenticated") && attempt == 0) {
+                if (!anonymous && (response.code == 401 || err == "unauthenticated") && attempt < 2) {
                     val refreshed = refreshTokenProvider(deviceId)
                     if (refreshed != null) {
                         currentAccessToken = refreshed.first
@@ -926,7 +926,7 @@ class XunleiApi(
                         return@repeat
                     }
                 }
-                if (!anonymous && err == "captcha_invalid" && attempt == 0) {
+                if (!anonymous && (err == "captcha_invalid" || err == "captcha_required") && attempt < 2 && refreshedCaptcha == null) {
                     // 用正确 action + captcha_sign 重新 init（携带旧 token），拿 723 长度有效 token 后重试
                     val newToken = initPanCaptcha(deviceId, action, token)
                     if (!newToken.isNullOrBlank()) {
@@ -937,11 +937,12 @@ class XunleiApi(
                 }
                 val msg = json.optString("error_description").ifBlank { json.optString("message") }
                     .ifBlank { err }.ifBlank { "请求失败" }
+                if (err == "captcha_invalid") throw QuarkApiException("$msg；请重新登录迅雷账号")
                 throw QuarkApiException(msg)
             }
             return parse(json.optJSONObject("data") ?: json)
         }
-        throw QuarkApiException("验证码刷新后仍失败")
+        throw QuarkApiException("迅雷登录已过期，请重新登录")
     }
 
     /** 用请求对应 action + 正确 captcha_sign 初始化 captcha（pan 专用，alist 算法已验证）。

@@ -50,6 +50,7 @@ class Pan123Uploader(private val context: Context) : CloudUploader {
             size = source.size,
             token = token,
             open = { start, end -> source.open(start, end) },
+            mimeType = source.mimeType.ifBlank { "application/octet-stream" },
             onProgress = { sent -> onProgress(sent, UploadPhase.UPLOADING) }
         )
         return CloudUploadResult(id, source.name, source.size)

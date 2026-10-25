@@ -109,7 +109,11 @@ object CcpUploader {
                 val date = rfc1123()
                 val partNumber = index + 1L
                 val key = authorize(config, post, json.authInfo, json.taskId, "PUT", "", mimeType, date,
-                    "/${json.bucket}/${json.objectKey}?partNumber=$partNumber&uploadId=${json.uploadId}")
+                    "/${json.bucket}/${json.objectKey}?partNumber=$partNumber&uploadId=${json.uploadId}",
+                    linkedMapOf(
+                        "x-oss-date" to date,
+                        "x-oss-user-agent" to config.ossUserAgent
+                    ))
                 UploadIo.rangePut(
                     url = "$address?partNumber=$partNumber&uploadId=${json.uploadId}",
                     start = index * partSize,
@@ -142,7 +146,11 @@ object CcpUploader {
             val date = rfc1123()
             val key = authorize(config, post, json.authInfo, json.taskId, "POST", hash, "application/xml", date,
                 "/${json.bucket}/${json.objectKey}?uploadId=${json.uploadId}",
-                mapOf("x-oss-callback" to callback))
+                linkedMapOf(
+                    "x-oss-callback" to callback,
+                    "x-oss-date" to date,
+                    "x-oss-user-agent" to config.ossUserAgent
+                ))
             postXml(
                 "$address?uploadId=${json.uploadId}",
                 xml,

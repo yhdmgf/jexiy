@@ -61,6 +61,7 @@ class ILanzouUploader(private val context: Context) : CloudUploader {
             fileName = source.name,
             size = source.size,
             open = { start, end -> source.open(start, end) },
+            mimeType = source.mimeType.ifBlank { "application/octet-stream" },
             onProgress = { sent -> onProgress(sent, UploadPhase.UPLOADING) }
         )
         return CloudUploadResult(ILanzouConstants.FILE_PREFIX + id, source.name, source.size)

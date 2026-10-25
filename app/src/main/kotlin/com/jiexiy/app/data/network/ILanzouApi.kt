@@ -195,6 +195,7 @@ class ILanzouApi(
         fileName: String,
         size: Long,
         open: (Long, Long) -> InputStream,
+        mimeType: String = "application/octet-stream",
         onProgress: (Long) -> Unit = {}
     ): String = withContext(Dispatchers.IO) {
         if (fileName.isBlank()) throw IllegalStateException("文件名为空，无法上传")
@@ -235,19 +236,22 @@ class ILanzouApi(
                 fields = linkedMapOf("token" to upToken, "key" to key, "fname" to fileName),
                 fieldName = "file",
                 fileName = fileName,
-                contentType = "application/octet-stream",
+                contentType = mimeType,
                 open = open,
                 size = size,
                 followRedirects = false,
                 onProgress = { sent, _ -> onProgress(sent) }
             ).use { resp ->
                 checkResponse(resp, "蓝奏优享上传失败")
-                parseJson(resp).optString("token")
+                val json = parseJson(resp)
+                val t = json.optString("token")
+                if (t.isBlank()) throw IllegalStateException(qiniuFailure(resp, json, "蓝奏优享上传失败"))
+                t
             }
         } else {
             val objectKey = Base64.encodeToString(
                 key.toByteArray(Charsets.UTF_8),
-                Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP
+                Base64.URL_SAFE or Base64.NO_WRAP
             )
             val base = "${ILanzouConstants.QINIU_UPLOAD_HOST}/buckets/${ILanzouConstants.QINIU_BUCKET}/objects/$objectKey/uploads"
             val uploadId = client.newCall(
@@ -270,13 +274,16 @@ class ILanzouApi(
                     start = start,
                     end = end,
                     open = open,
-                    contentType = "application/octet-stream",
+                    contentType = mimeType,
                     headers = auth,
                     followRedirects = false,
                     onProgress = onProgress
                 ).use { resp ->
                     checkResponse(resp, "蓝奏优享分段上传失败")
-                    parseJson(resp).optString("etag")
+                    val json = parseJson(resp)
+                    val e = json.optString("etag")
+                    if (e.isBlank()) throw IllegalStateException(qiniuFailure(resp, json, "蓝奏优享分段上传失败"))
+                    e
                 }
                 if (etag.isBlank()) throw IllegalStateException("蓝奏优享未确认上传分段")
                 parts.put(JSONObject().put("partNumber", number).put("etag", etag))
@@ -290,7 +297,10 @@ class ILanzouApi(
                     .build()
             ).execute().use { resp ->
                 checkResponse(resp, "蓝奏优享无法合并上传分段")
-                parseJson(resp).optString("token")
+                val json = parseJson(resp)
+                val t = json.optString("token")
+                if (t.isBlank()) throw IllegalStateException(qiniuFailure(resp, json, "蓝奏优享无法合并上传分段"))
+                t
             }
             commit
         }
@@ -501,6 +511,15 @@ class ILanzouApi(
     /** 七牛不返回 JSON 错误体，失败时只能给 HTTP 状态。 */
     private fun checkResponse(response: Response, fallback: String) {
         if (!response.isSuccessful) throw IllegalStateException("$fallback（HTTP ${response.code}）")
+    }
+
+    /** Qiniu 在业务失败时仍返回 HTTP 200，只是 body 里没有 token/etag；把 code/error/key 透传出来便于诊断。 */
+    private fun qiniuFailure(resp: Response, json: JSONObject, fallback: String): String {
+        val reason = json.optString("error")
+            .ifBlank { json.optString("code") }
+            .ifBlank { json.optString("key") }
+            .ifBlank { json.toString().take(200) }
+        return "$fallback（HTTP ${resp.code}，Qiniu 未返回 token）：$reason"
     }
 
     private fun parseJson(response: Response): JSONObject = runCatching {
