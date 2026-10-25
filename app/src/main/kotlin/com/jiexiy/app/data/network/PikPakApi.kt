@@ -785,10 +785,8 @@ class PikPakApi(
     private fun pickPartSize(size: Long): Long = when {
         size in 1 until 0x8000000L -> PikPakConstants.PART_SIZE_256K      // 0~128M
         size in 0x8000000L until 0x10000000L -> PikPakConstants.PART_SIZE_512K  // 128M~256M
-        size == 0x10000000L -> PikPakConstants.PART_SIZE_2M                // 恰好 256M
-        size in 0x10000001L until 0x20000000L -> PikPakConstants.PART_SIZE_1M   // 256M~512M
-        size >= 0x20000000L -> PikPakConstants.PART_SIZE_2M                // >512M
-        else -> PikPakConstants.PART_SIZE_256K
+        size == 0x10000000L || size > 0x20000000L -> PikPakConstants.PART_SIZE_2M   // 恰好 256M 或 >512M
+        else -> PikPakConstants.PART_SIZE_1M                                   // 256M~512M(含512M)
     }
 
     /**
