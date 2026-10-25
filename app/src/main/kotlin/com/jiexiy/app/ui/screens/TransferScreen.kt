@@ -39,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.jiexiy.app.ui.viewmodel.DownloadViewModel
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 
 /**
@@ -63,7 +62,7 @@ fun TransferScreen(
     // 监听页变化，实时保存
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }
-            .launchIn(scope) { page ->
+            .collect { page ->
                 savedPage = page
             }
     }
