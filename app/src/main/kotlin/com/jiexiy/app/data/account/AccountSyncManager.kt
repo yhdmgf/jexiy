@@ -105,8 +105,8 @@ class AccountSyncManager(private val backupManager: AuthBackupManager) {
                 val platform = acct.optString("platform")
                 if (platform.isBlank()) continue
                 val payload = extractPayload(acct)
-                when (AccountApi.syncSave(context, platform, payload, acct.optLong("expiresAt", 0L))) {
-                    is AccountApi.Result.Failure -> return@withContext it
+                when (val saved = AccountApi.syncSave(context, platform, payload, acct.optLong("expiresAt", 0L))) {
+                    is AccountApi.Result.Failure -> return@withContext saved
                     is AccountApi.Result.Success -> {
                         if (cloudByPlatform.containsKey(platform)) kept++ else uploaded++
                     }
@@ -118,7 +118,7 @@ class AccountSyncManager(private val backupManager: AuthBackupManager) {
             var downloaded = 0
             for (record in cloud) {
                 if (record.platform in localPlatforms) continue
-                val acct = JSONObject(record.payload)
+                val acct = JSONObject(record.payload.toString())
                 acct.put("platform", record.platform)
                 acct.put("expiresAt", record.expiresAt)
                 toImport.put(acct)
@@ -126,7 +126,7 @@ class AccountSyncManager(private val backupManager: AuthBackupManager) {
             }
 
             var applied = 0
-            if (!toImport.isEmpty()) {
+            if (toImport.length() > 0) {
                 val importRoot = JSONObject()
                     .put("app", APP_TAG)
                     .put("version", 1)

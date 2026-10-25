@@ -200,9 +200,8 @@ object AccountApi {
      */
     suspend fun pull(context: Context): Result<List<CloudRecord>> = withContext(Dispatchers.IO) {
         try {
-            val client = ensureClient(context)
-            AccountCookieJar.get(context)
-            val resp = client.newCall(
+            val httpClient = client(context)
+            val resp = httpClient.newCall(
                 Request.Builder().url("$SYNC_URL?action=pull").get().build()
             ).execute()
             val respText = resp.body?.string().orEmpty()
@@ -214,17 +213,17 @@ object AccountApi {
             val json = try { JSONObject(respText) } catch (e: Exception) {
                 return@withContext Result.Failure("响应解析失败")
             }
-            checkSuccess(json, SYNC_URL).mapCatching {
-                val arr = json.optJSONArray("data") ?: JSONArray()
-                val out = ArrayList<CloudRecord>(arr.length())
-                for (i in 0 until arr.length()) {
-                    val r = arr.optJSONObject(i) ?: continue
-                    val platform = r.optString("platform")
-                    if (platform.isBlank()) continue
-                    out.add(CloudRecord(platform, r.optJSONObject("payload") ?: JSONObject(), r.optLong("expires_at", 0L)))
-                }
-                out
+            val check = checkSuccess(json, SYNC_URL)
+            if (check.isFailure) return@withContext Result.Failure(check.data)
+            val arr = json.optJSONArray("data") ?: JSONArray()
+            val out = ArrayList<CloudRecord>(arr.length())
+            for (i in 0 until arr.length()) {
+                val r = arr.optJSONObject(i) ?: continue
+                val platform = r.optString("platform")
+                if (platform.isBlank()) continue
+                out.add(CloudRecord(platform, r.optJSONObject("payload") ?: JSONObject(), r.optLong("expires_at", 0L)))
             }
+            Result.Success(out)
         } catch (e: Exception) {
             Log.e(TAG, "拉取同步异常：${e.javaClass.simpleName}: ${e.message}", e)
             Result.Failure("网络请求异常")
@@ -356,7 +355,8 @@ object AccountApi {
         url: String,
         fromData: (JSONObject?, Any) -> T,
     ): Result<T> {
-        checkSuccess(json, url).onFailure { return Result.Failure(it) }
+        val check = checkSuccess(json, url)
+        if (check.isFailure) return Result.Failure(check.data)
         return try {
             Result.Success(fromData(json?.optJSONObject("data"), Unit))
         } catch (e: Exception) {
