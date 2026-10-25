@@ -620,7 +620,7 @@ class GuangYaApi(
                 accessToken
             ).build()
         )
-        checkBusiness(json, "申请光鸭上传令牌失败")
+        checkBusiness(json, "申请光鸭上传令牌失败", acceptedCodes = setOf("156"))
         val data = dataOf(json) ?: throw IllegalStateException("光鸭未返回上传任务")
         val taskId = firstNonBlank(data.optString("taskId"), json.optString("taskId"))
         if (taskId.isBlank()) throw IllegalStateException("光鸭未创建上传任务")
@@ -830,9 +830,10 @@ class GuangYaApi(
         )
     }
 
-    private fun checkBusiness(json: JSONObject, fallback: String) {
+    private fun checkBusiness(json: JSONObject, fallback: String, acceptedCodes: Set<String> = emptySet()) {
         if (isSuccess(json)) return
         val code = json.optString("code")
+        if (code in acceptedCodes) return
         val serverMsg = firstNonBlank(
             json.optString("msg"), json.optString("message"), json.optString("error_description")
         )

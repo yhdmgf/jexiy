@@ -96,8 +96,8 @@ object OssMultipartUploader {
                 appendLine("")
                 appendLine(type)
                 append(date)
-                if (securityToken.isNotBlank()) append("\nx-oss-security-token:$securityToken")
-                appendLine(resource)
+                if (securityToken.isNotBlank()) appendLine("x-oss-security-token:$securityToken")
+                append(resource)
             }
             val signature = Base64Encode(hmacSha1(secretKey, signed))
             val headers = LinkedHashMap<String, String>()
@@ -106,7 +106,7 @@ object OssMultipartUploader {
             headers["Content-Type"] = type
             if (securityToken.isNotBlank()) headers["x-oss-security-token"] = securityToken
             if (referer.isNotBlank()) headers["Referer"] = referer
-            headers["x-oss-user-agent"] = OSS_USER_AGENT
+            // 不发送 x-oss-user-agent，避免未签名 header 导致 SignatureDoesNotMatch
 
             val address = if (parameters.isEmpty()) uri else "$uri?${parameters.entries.joinToString("&") { (k, v) -> "$k=$v" }}"
             if (start != null && end != null) {

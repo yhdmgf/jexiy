@@ -122,7 +122,7 @@ object S3v4Uploader {
             val date = stamp.substring(0, 8)
             val content = body.orEmpty()
             val contentHash = if (start != null) {
-                UploadIo.digest(open, end ?: size, "SHA-256", { }, start = start)
+                UploadIo.digest(open, (end ?: size) - start, "SHA-256", { }, start = start)
             } else {
                 sha256Hex(content.toByteArray(StandardCharsets.UTF_8))
             }
