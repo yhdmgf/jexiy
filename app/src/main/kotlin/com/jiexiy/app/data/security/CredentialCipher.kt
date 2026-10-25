@@ -464,6 +464,8 @@ internal class AndroidKeystoreCredentialCipher : CredentialCipher {
                     message.contains("invalid key blob") ||
                     message.contains("blob")
             }
+            // IllegalBlockSizeException 可能是操作被系统清理（Pruned）导致，需要重试
+            if (error is javax.crypto.IllegalBlockSizeException) return true
             return false
         }
 
