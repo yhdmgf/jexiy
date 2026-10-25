@@ -142,7 +142,7 @@ object S3v4Uploader {
                 .joinToString("&") { "$it=${s3Escape(parameters[it].orEmpty())}" }
             val canonicalHeaders = headers.keys.toList().sorted()
                 .joinToString("") { "$it:${headers[it]}\n" }
-            val canonical = "$method\n$basePath\n$canonicalQuery\n$canonicalHeaders$signedHeaders\n$contentHash"
+            val canonical = "$method\n$basePath\n$canonicalQuery\n$canonicalHeaders\n$signedHeaders\n$contentHash"
             val scope = "$date/$region/s3/aws4_request"
             val signingKey = hmacSha256(
                 hmacSha256(hmacSha256(hmacSha256("AWS4$secretKey".toByteArray(StandardCharsets.UTF_8), date), region), "s3"),
