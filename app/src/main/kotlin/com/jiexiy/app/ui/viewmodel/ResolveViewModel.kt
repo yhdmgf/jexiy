@@ -1395,7 +1395,7 @@ class ResolveViewModel(
                     currentGitHubRepo = repo
                     // subPath 支持直达仓库根 / 代码 / Releases 列表 / 具体 Release 资产；
                     // 不支持的代码目录子路径回退到仓库根（避免直接报“未找到文件”无入口）。
-                    val subPath = linkType.subPath?.trim('/').trim().orEmpty()
+                    val subPath = (linkType.subPath ?: "").trim().trim('/')
                     when {
                         subPath.isEmpty() || subPath == "code" -> {
                             currentDirFid = "github:root"

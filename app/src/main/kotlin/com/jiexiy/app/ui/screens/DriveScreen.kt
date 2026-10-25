@@ -506,6 +506,9 @@ fun DriveScreen(
         )
         11 -> PikPakCloudScreen(
             account = pikPakAccount,
+            repository = pikPakAccountRepository,
+            api = pikPakApi,
+            downloadManager = pikPakDownloadManager,
             scrollBehavior = scrollBehavior,
             onExit = { showPikPakCloud = false },
             onDownloadStarted = onDownloadStarted,
