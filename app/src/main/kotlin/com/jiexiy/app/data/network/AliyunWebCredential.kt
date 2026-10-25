@@ -47,21 +47,69 @@ object AliyunWebCredential {
 
     /** 解析网页返回的 JSON 文本；refreshToken 为空视为失败。 */
     fun parse(raw: String): AliyunWebTokens? {
-        val text = raw.trim().ifBlank { return null }
+        var text = raw.trim().ifBlank { return null }
         val decoded = runCatching { java.net.URLDecoder.decode(text, "UTF-8") }.getOrElse { text }
-        val data = runCatching { JSONObject(decoded) }.getOrNull()
-            ?: runCatching { JSONObject(decoded.removeSurrounding("\"").replace("\\\"", "\"")) }.getOrNull()
-            ?: return null
+        text = decoded
 
-        val access = pick(data, "access_token", "accessToken")
-        val refresh = pick(data, "refresh_token", "refreshToken")
-        if (refresh.isBlank()) return null
+        // 如果外层是 JSON 字符串（引号包裹），先解开
+        if (text.startsWith("\"") && text.endsWith("\"")) {
+            val inner = runCatching { JSONObject("\"$text\"").optString("\"") }.getOrNull()
+                ?: runCatching { text.removeSurrounding("\"").replace("\\\"", "\"") }.getOrNull()
+            if (inner != null && inner.isNotEmpty()) text = inner
+        }
+
+        val data = runCatching { JSONObject(text) }.getOrNull() ?: return null
+
+        // 嵌套展开：credentials / token / data 最多两层
+        val unwrapped = unwrapNested(data)
+
+        // 控制字符拒绝
+        val access = pick(unwrapped, "access_token", "accessToken")
+        val refresh = pick(unwrapped, "refresh_token", "refreshToken")
+        if (refresh.isBlank() || !validToken(refresh)) return null
+        if (access.isNotEmpty() && !validToken(access)) return null
+
+        // Bearer 前缀剥离 + 裸 token 兼容
+        if (refresh.isEmpty() && access.isEmpty()) {
+            val bare = text.replaceFirst(Regex("(?i)^Bearer\\s+"), "").trim()
+            if (validToken(bare)) {
+                return AliyunWebTokens(accessToken = "", refreshToken = bare)
+            }
+        }
+
+        val userId = pick(unwrapped, "user_id", "userId", "sub")
+        val nickname = pick(unwrapped, "nick_name", "nickName", "nickname", "name", "user_name")
         return AliyunWebTokens(
             accessToken = access,
             refreshToken = refresh,
-            userId = pick(data, "user_id", "userId", "sub"),
-            nickname = pick(data, "nick_name", "nickName", "nickname", "name")
+            userId = userId,
+            nickname = nickname
         )
+    }
+
+    private fun unwrapNested(data: JSONObject): JSONObject {
+        var result = data
+        repeat(2) {
+            if (result.has("access_token") || result.has("accessToken") ||
+                result.has("refresh_token") || result.has("refreshToken")) {
+                return result
+            }
+            val nested = result.opt("credentials") ?: result.opt("token") ?: result.opt("data")
+            if (nested is JSONObject) {
+                result = nested
+            } else {
+                return result
+            }
+        }
+        return result
+    }
+
+    /** Token 校验：长度 16-16384，只含 URL-safe 字符，拒绝 null/undefined。 */
+    private fun validToken(value: String): Boolean {
+        if (value.length < 16 || value.length > 16384) return false
+        if (value == "null" || value == "undefined") return false
+        if (value.any { it.code < 0x20 || it.code == 0x7f }) return false
+        return Regex("^[A-Za-z0-9._~+/=-]+").matches(value)
     }
 
     private fun pick(data: JSONObject, vararg keys: String): String {

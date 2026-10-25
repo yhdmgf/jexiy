@@ -1,194 +1,152 @@
+/*
+ * jexiy (jexiy) - A network drive share-link parser and high-speed downloader for Android.
+ * Copyright (C) 2026 jexiy
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.jiexiy.app.data.repository
 
 import com.jiexiy.app.data.account.AccountSyncTrigger
 import com.jiexiy.app.data.db.AliyunAccountDao
 import com.jiexiy.app.data.db.AliyunAccountEntity
-import com.jiexiy.app.data.db.MultiAccountEntity
-import com.jiexiy.app.data.db.newAccountId
 import com.jiexiy.app.data.db.resolveAccountSlot
 import com.jiexiy.app.data.download.DownloadPlatform
 import com.jiexiy.app.data.network.AliyunApi
 import com.jiexiy.app.data.network.AliyunConstants
 import com.jiexiy.app.data.network.AliyunCredential
+import com.jiexiy.app.data.network.AliyunSignature
 import com.jiexiy.app.data.network.AliyunWebTokens
-import com.jiexiy.app.data.network.model.DownloadLink
-import com.jiexiy.app.data.network.model.QuotaInfo
-import com.jiexiy.app.data.network.model.ShareFile
 import kotlinx.coroutines.flow.Flow
 
-/** 阿里云盘账号仓库。令牌由网页登录从 localStorage 提取，refresh_token 为准。 */
-interface IAliyunAccountRepository {
-    fun observeAccount(): Flow<AliyunAccountEntity?>
-    fun observeAccounts(): Flow<List<AliyunAccountEntity>>
-    suspend fun getAccount(): AliyunAccountEntity?
-    suspend fun getAccounts(): List<AliyunAccountEntity>
-    suspend fun allCredentials(): List<AliyunCredential>
-    suspend fun login(tokens: AliyunWebTokens, newAccount: Boolean = false): AliyunAccountEntity
-    suspend fun saveWebToken(tokens: AliyunWebTokens, newAccount: Boolean = false): Boolean
-    suspend fun validate(accountId: String): Boolean
-    suspend fun deleteById(id: String)
-    suspend fun clear()
-    suspend fun setPrimary(id: String)
-    suspend fun updateRemark(id: String, remark: String)
-    suspend fun list(parentFileId: String, accountId: String? = null): List<ShareFile>
-    suspend fun listShare(session: com.jiexiy.app.data.network.AliyunShareSession, parentFileId: String): List<ShareFile>
-    suspend fun downloadLink(file: ShareFile, accountId: String? = null): DownloadLink
-    suspend fun quota(accountId: String? = null): QuotaInfo
-    suspend fun mkdir(parentFileId: String, name: String, accountId: String? = null): ShareFile
-    suspend fun rename(fileId: String, newName: String, accountId: String? = null)
-    suspend fun move(fileIds: List<String>, toParentFileId: String, accountId: String? = null)
-    suspend fun delete(fileIds: List<String>, accountId: String? = null)
-    suspend fun shareInfo(shareId: String): String
-    suspend fun shareSession(shareId: String, passcode: String): com.jiexiy.app.data.network.AliyunShareSession
-    suspend fun upload(
-        accountId: String?,
-        parentFileId: String,
-        name: String,
-        size: Long,
-        input: () -> java.io.InputStream
-    ): ShareFile
-}
-
+/**
+ * 阿里云盘账号仓库：网页登录拿 access_token / refresh_token 落库（加密）；
+ * access_token 约 15 分钟过期，用 refresh_token 自动续期；refresh 失效时抛出登录失效。
+ *
+ * 阿里云盘只认 refresh_token 换 access_token，access_token 自身短寿命，
+ * 因此持久化必须以 refresh_token 为准。设备会话（X-Signature）25 分钟过期，
+ * 由 [AliyunApi.ensureDeviceSession] 自动重建。
+ *
+ * 对照 wenxi `lib/data/providers/aliyun.dart` 的 `_session` / `_renew` / `_device`。
+ */
 class AliyunAccountRepository(
     private val dao: AliyunAccountDao,
-    private val api: AliyunApi = AliyunApi()
-) : IAliyunAccountRepository {
+    private val api: AliyunApi
+) {
 
-    override fun observeAccount(): Flow<AliyunAccountEntity?> = dao.observeAccount()
+    fun observeAccount(): Flow<AliyunAccountEntity?> = dao.observeAccount()
 
-    override fun observeAccounts(): Flow<List<AliyunAccountEntity>> = dao.observeAccounts()
+    suspend fun getAccount(): AliyunAccountEntity? = dao.getAccount()
 
-    override suspend fun getAccount(): AliyunAccountEntity? = dao.getAccount()
-
-    override suspend fun getAccounts(): List<AliyunAccountEntity> = dao.getAccounts()
-
-    override suspend fun allCredentials(): List<AliyunCredential> =
-        dao.getAccounts().mapNotNull { it.toCredential() }
-
-    override suspend fun login(tokens: AliyunWebTokens, newAccount: Boolean): AliyunAccountEntity =
-        run {
-            val refreshToken = tokens.refreshToken.trim()
-            if (refreshToken.isBlank()) throw IllegalStateException("阿里云盘登录凭据缺失，请重试")
+    /**
+     * 保存网页登录凭据到数据库。
+     *
+     * @param newAccount true = 「添加账号」模式，落成新的一行；false = 覆盖当前主账号那一行
+     */
+    suspend fun saveWebCredential(tokens: AliyunWebTokens, newAccount: Boolean = false): Result<AliyunAccountEntity> =
+        runCatching {
             val existing = dao.getAccount()
-            val credential = AliyunCredential(
-                accessToken = tokens.accessToken.trim(),
-                refreshToken = refreshToken,
-                deviceId = existing?.deviceId.orEmpty().ifBlank { AliyunConstants.newDeviceId() },
-                devicePrivateKey = existing?.devicePrivateKey.orEmpty().ifBlank { com.jiexiy.app.data.network.AliyunSignature.privateKey() },
-                nickname = tokens.nickname
-            )
-            val access = api.refreshToken(credential.refreshToken, credential.deviceId)
-            val info = api.userInfo(access, credential.deviceId)
-            if (info.userId.isBlank()) throw IllegalStateException("阿里云盘账号信息缺失")
+            val deviceId = existing?.deviceId?.takeIf { it.isNotBlank() } ?: AliyunConstants.newDeviceId()
+            val devicePrivateKey = existing?.devicePrivateKey?.takeIf { it.isNotBlank() }
+                ?: AliyunSignature.privateKey()
             val slot = resolveAccountSlot(DownloadPlatform.ALIYUN, existing, newAccount)
+
+            // 用 refreshToken 换一个全新的 access_token 校验凭据有效性
+            val refreshResult = api.refreshToken(tokens.refreshToken, deviceId)
+
+            // 拿用户信息（userId、driveId、昵称）
+            val info = api.userInfo(refreshResult.accessToken, deviceId)
+
             val entity = AliyunAccountEntity(
                 id = slot.id,
-                accessToken = access,
-                refreshToken = refreshToken,
-                deviceId = credential.deviceId,
-                devicePrivateKey = credential.devicePrivateKey,
-                userId = info.userId,
+                accessToken = refreshResult.accessToken,
+                refreshToken = tokens.refreshToken,
+                deviceId = deviceId,
+                devicePrivateKey = devicePrivateKey,
+                userId = info.userId.ifBlank { tokens.userId },
                 driveId = info.driveId,
-                nickname = info.nickname.ifBlank { tokens.nickname.ifBlank { "阿里云盘用户" } },
+                expiresAtMs = System.currentTimeMillis() + refreshResult.expiresIn * 1000L,
+                nickname = info.nickname.ifBlank { tokens.nickname }.ifBlank { "阿里云盘用户" },
                 isPrimary = slot.isPrimary,
-                remark = slot.remark
+                remark = slot.remark,
+                updatedAt = System.currentTimeMillis()
             )
             dao.upsert(entity)
             AccountSyncTrigger.notifySaved()
             entity
         }
 
-    override suspend fun saveWebToken(tokens: AliyunWebTokens, newAccount: Boolean): Boolean =
-        runCatching { login(tokens, newAccount) }.isSuccess
-
-    /** 校验令牌是否仍有效：刷新一次即为有效；失效则删除该账号（其他账号保留）。 */
-    override suspend fun validate(accountId: String): Boolean = run {
-        val acc = dao.getAccounts().firstOrNull { it.id == accountId } ?: return false
-        val c = acc.toCredential() ?: return false
-        val ok = runCatching { api.refreshToken(c.refreshToken, c.deviceId) }.isSuccess
-        if (!ok) dao.deleteById(acc.id)
-        ok
+    /** 取有效 access_token：临近过期（<60 秒）自动用 refresh_token 换新。失败时返回 null。 */
+    suspend fun ensureAccessToken(): String? {
+        val acc = dao.getAccount() ?: return null
+        if (acc.refreshToken.isBlank() || acc.deviceId.isBlank()) return null
+        // 未到刷新窗口就复用现有 token
+        if (acc.expiresAtMs > 0 && System.currentTimeMillis() < acc.expiresAtMs - 60_000L) {
+            return acc.accessToken.ifBlank { null }
+        }
+        return try {
+            val result = api.refreshToken(acc.refreshToken, acc.deviceId)
+            val expiresAt = System.currentTimeMillis() + result.expiresIn * 1000L
+            dao.updateAccessToken(acc.id, result.accessToken, expiresAt, System.currentTimeMillis())
+            result.accessToken
+        } catch (_: Exception) {
+            null
+        }
     }
 
-    override suspend fun deleteById(id: String) {
-        dao.deleteById(id)
-        AccountSyncTrigger.notifySaved()
-    }
-
-    override suspend fun clear() = dao.clear()
-
-    override suspend fun setPrimary(id: String) = dao.setPrimary(id)
-
-    override suspend fun updateRemark(id: String, remark: String) = dao.updateRemark(id, remark)
-
-    private suspend fun credentialOf(accountId: String?): AliyunCredential = run {
-        val acc = if (accountId.isNullOrBlank()) dao.getAccount()
-        else dao.getAccounts().firstOrNull { it.id == accountId }
-        acc?.toCredential() ?: throw IllegalStateException("阿里云盘未登录，请先登录")
-    }
-
-    /** 令牌可能过期，统一在此刷新后再执行业务操作。 */
-    private suspend fun refreshed(c: AliyunCredential): AliyunCredential {
-        val access = api.refreshToken(c.refreshToken, c.deviceId)
-        dao.updateAccessToken(c.id, access, System.currentTimeMillis())
-        return c.copy(accessToken = access)
-    }
-
-    override suspend fun list(parentFileId: String, accountId: String?): List<ShareFile> =
-        api.listPersonal(refreshed(credentialOf(accountId)), parentFileId)
-
-    override suspend fun listShare(
-        session: com.jiexiy.app.data.network.AliyunShareSession,
-        parentFileId: String
-    ): List<ShareFile> = api.listByShare(session, parentFileId)
-
-    override suspend fun downloadLink(file: ShareFile, accountId: String?): DownloadLink =
-        api.getDownloadUrl(refreshed(credentialOf(accountId)), file.fid, file.fname, file.fsize)
-
-    override suspend fun quota(accountId: String?): QuotaInfo =
-        api.quota(refreshed(credentialOf(accountId)))
-
-    override suspend fun mkdir(parentFileId: String, name: String, accountId: String?): ShareFile =
-        api.mkdir(refreshed(credentialOf(accountId)), parentFileId, name)
-
-    override suspend fun rename(fileId: String, newName: String, accountId: String?) {
-        api.rename(refreshed(credentialOf(accountId)), fileId, newName)
-    }
-
-    override suspend fun move(fileIds: List<String>, toParentFileId: String, accountId: String?) {
-        api.move(refreshed(credentialOf(accountId)), fileIds, toParentFileId)
-    }
-
-    override suspend fun delete(fileIds: List<String>, accountId: String?) {
-        api.delete(refreshed(credentialOf(accountId)), fileIds)
-    }
-
-    override suspend fun shareInfo(shareId: String): String = api.shareInfo(shareId)
-
-    override suspend fun shareSession(
-        shareId: String,
-        passcode: String
-    ): com.jiexiy.app.data.network.AliyunShareSession = api.shareToken(shareId, passcode)
-
-    override suspend fun upload(
-        accountId: String?,
-        parentFileId: String,
-        name: String,
-        size: Long,
-        input: () -> java.io.InputStream
-    ): ShareFile = api.upload(refreshed(credentialOf(accountId)), parentFileId, name, size, input)
-
-    private fun AliyunAccountEntity.toCredential(): AliyunCredential? {
-        if (refreshToken.isBlank() || deviceId.isBlank()) return null
+    /** 构建 API 凭证对象（从数据库实体 + 按需续期的 access_token）。 */
+    suspend fun buildCredential(): AliyunCredential? {
+        val acc = dao.getAccount() ?: return null
+        if (acc.refreshToken.isBlank() || acc.deviceId.isBlank()) return null
+        val accessToken = try {
+            if (acc.expiresAtMs > 0 && System.currentTimeMillis() < acc.expiresAtMs - 60_000L) {
+                acc.accessToken
+            } else {
+                val result = api.refreshToken(acc.refreshToken, acc.deviceId)
+                val expiresAt = System.currentTimeMillis() + result.expiresIn * 1000L
+                dao.updateAccessToken(acc.id, result.accessToken, expiresAt, System.currentTimeMillis())
+                result.accessToken
+            }
+        } catch (_: Exception) {
+            acc.accessToken
+        }
         return AliyunCredential(
-            id = id,
+            id = acc.id,
             accessToken = accessToken,
-            refreshToken = refreshToken,
-            deviceId = deviceId,
-            devicePrivateKey = devicePrivateKey.ifBlank { com.jiexiy.app.data.network.AliyunSignature.privateKey() },
-            userId = userId,
-            driveId = driveId,
-            nickname = nickname
+            refreshToken = acc.refreshToken,
+            deviceId = acc.deviceId,
+            devicePrivateKey = acc.devicePrivateKey,
+            userId = acc.userId,
+            driveId = acc.driveId,
+            nickname = acc.nickname
         )
+    }
+
+    /** 删除账号 */
+    suspend fun delete(id: String) = dao.deleteById(id)
+
+    /** 清空所有账号 */
+    suspend fun clear() = dao.clear()
+
+    /** 设置主账号 */
+    suspend fun setPrimary(id: String) = dao.setPrimary(id)
+
+    /** 更新备注 */
+    suspend fun updateRemark(id: String, remark: String) = dao.updateRemark(id, remark)
+
+    companion object {
+        /** 提前刷新窗口（60 秒） */
+        private const val REFRESH_AHEAD_MS = 60_000L
     }
 }

@@ -66,6 +66,7 @@ object AliyunConstants {
 
     const val PATH_SHARE_INFO = "/adrive/v3/share_link/get_share_by_anonymous"
     const val PATH_SHARE_TOKEN = "/v2/share_link/get_share_token"
+    const val PATH_SHARE_CREATE = "/adrive/v2/share_link/create"
     const val PATH_LIST_BY_SHARE = "/adrive/v2/file/list_by_share"
     const val PATH_SHARE_DOWNLOAD_URL = "/adrive/v2/file/get_share_download_url"
 
@@ -77,6 +78,8 @@ object AliyunConstants {
     const val PATH_MOVE = "/file/move"
     const val PATH_COPY = "/file/copy"
     const val PATH_BATCH = "/adrive/v4/batch"
+    const val PATH_ASYNC_TASK_GET = "/v2/async_task/get"
+    const val PATH_FILE_TRASH = "/v2/recyclebin/trash"
     const val PATH_VIDEO_PREVIEW = "/v2/file/get_video_preview_play_info" // 相对 [WEBAPI]
 
     // ---------- 业务约定 ----------
@@ -104,4 +107,11 @@ object AliyunConstants {
     /** 设备名 / 机型（wenxi 用 `AsterLink` / `Windows网页版`）。 */
     const val DEVICE_NAME = "AsterLink"
     const val DEVICE_MODEL = "Windows网页版"
+
+    /** 临时转存目录前缀（每次转存生成唯一子目录，避免同名冲突）。 */
+    const val TEMP_DIR_PREFIX = "AsterLink临时转存_"
+
+    /** 异步任务轮询：最大次数与单次间隔。 */
+    const val TASK_POLL_MAX = 80
+    const val TASK_POLL_DELAY_MS = 750L
 }

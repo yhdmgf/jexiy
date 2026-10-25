@@ -94,7 +94,17 @@ class AliyunApi(
      * 用刷新令牌换取新的 access_token。
      * 对应 `POST https://auth.aliyundrive.com/v2/account/token`。
      */
-    suspend fun refreshToken(refreshToken: String, deviceId: String): String = withContext(Dispatchers.IO) {
+    /** 令牌刷新结果。 */
+    data class RefreshResult(
+        val accessToken: String,
+        val refreshToken: String,
+        val expiresIn: Long, // 秒
+        val userId: String = "",
+        val nickname: String = "",
+        val driveId: String = ""
+    )
+
+    suspend fun refreshToken(refreshToken: String, deviceId: String): RefreshResult = withContext(Dispatchers.IO) {
         val body = JSONObject()
             .put("refresh_token", refreshToken)
             .put("grant_type", "refresh_token")
@@ -109,7 +119,14 @@ class AliyunApi(
         }
         val access = data.optString("access_token")
         if (access.isBlank()) throw IllegalStateException("阿里云盘未返回访问令牌")
-        access
+        RefreshResult(
+            accessToken = access,
+            refreshToken = data.optString("refresh_token", refreshToken),
+            expiresIn = data.optLong("expire_in", 3600L),
+            userId = data.optString("user_id"),
+            nickname = data.optString("nick_name"),
+            driveId = data.optString("default_drive_id")
+        )
     }
 
     /**
@@ -165,7 +182,7 @@ class AliyunApi(
     suspend fun ensureDeviceSession(credential: AliyunCredential): AliyunCredential = withContext(Dispatchers.IO) {
         var c = credential
         if (c.userId.isBlank()) {
-            c = c.copy(accessToken = refreshToken(c.refreshToken, c.deviceId))
+            c = c.copy(accessToken = refreshToken(c.refreshToken, c.deviceId).accessToken)
             val info = userInfo(c.accessToken, c.deviceId)
             c = c.copy(
                 userId = info.userId,
@@ -311,6 +328,110 @@ class AliyunApi(
             throw IllegalStateException("阿里云盘删除失败")
         }
         Unit
+    }
+
+    /** 异步任务轮询。对应 `POST /v2/async_task/get`。wenxi `_waitTask`。 */
+    private fun waitAsyncTask(c: AliyunCredential, asyncTaskId: String): Unit {
+        var attempts = 0
+        while (attempts < AliyunConstants.TASK_POLL_MAX) {
+            val data = postSigned(
+                AliyunConstants.PATH_ASYNC_TASK_GET,
+                JSONObject().put("async_task_id", asyncTaskId),
+                c
+            )
+            val state = data.optString("state")
+            when {
+                state == "succeed" || state == "success" -> return
+                state == "failed" || state == "fail" || state == "cancelled" ->
+                    throw IllegalStateException("阿里云盘异步任务失败：${data.optString("reason", state)}")
+                else -> {
+                    Thread.sleep(AliyunConstants.TASK_POLL_DELAY_MS)
+                    attempts++
+                }
+            }
+        }
+        throw IllegalStateException("阿里云盘异步任务超时")
+    }
+
+    /** 分享文件转存到自己网盘。对应 wenxi `_save` + `_batch('/file/copy')`。 */
+    suspend fun saveShareFile(
+        credential: AliyunCredential,
+        shareId: String,
+        shareToken: String,
+        fileId: String,
+        toDriveId: String,
+        toParentFileId: String
+    ): String = withContext(Dispatchers.IO) {
+        val c = ensureDeviceSession(credential)
+        val actionRequest = JSONObject()
+            .put("share_id", shareId)
+            .put("file_id", fileId)
+            .put("to_drive_id", toDriveId)
+            .put("to_parent_file_id", toParentFileId)
+            .put("auto_rename", true)
+        val data = postSignedBatch(c, UUID.randomUUID().toString(), "file/copy", actionRequest, shareToken)
+        checkBusiness(data, "阿里云盘转存失败")
+        val body = data.optJSONObject("response") ?: data
+        val resultBody = body.optJSONObject("body") ?: body
+        val resultFileId = resultBody.optString("file_id")
+        val asyncTaskId = resultBody.optString("async_task_id")
+        if (asyncTaskId.isNotBlank()) {
+            waitAsyncTask(c, asyncTaskId)
+        }
+        if (resultFileId.isBlank()) {
+            throw IllegalStateException("阿里云盘转存未返回文件 ID")
+        }
+        resultFileId
+    }
+
+    /** 删除到回收站。对应 wenxi `delete` + `_trash`。 */
+    suspend fun deleteTrash(credential: AliyunCredential, fileId: String): Unit = withContext(Dispatchers.IO) {
+        val c = ensureDeviceSession(credential)
+        val driveId = c.driveId.ifBlank { throw IllegalStateException("阿里云盘空间标识缺失") }
+        val data = postSigned(
+            AliyunConstants.PATH_FILE_TRASH,
+            JSONObject().put("drive_id", driveId).put("file_id", fileId),
+            c
+        )
+        val asyncTaskId = data.optString("async_task_id")
+        if (asyncTaskId.isNotBlank()) {
+            waitAsyncTask(c, asyncTaskId)
+        }
+        Unit
+    }
+
+    /** 创建分享链接。对应 wenxi `createShare`。 */
+    suspend fun createShare(
+        credential: AliyunCredential,
+        fileIdList: List<String>,
+        title: String,
+        passcode: String = "",
+        expiryDays: Int = 0
+    ): Pair<String, String> = withContext(Dispatchers.IO) {
+        val c = ensureDeviceSession(credential)
+        val driveId = c.driveId.ifBlank { throw IllegalStateException("阿里云盘空间标识缺失") }
+        val expiration = if (expiryDays > 0) {
+            val expireMs = System.currentTimeMillis() / 1000 + expiryDays * 86400L
+            // ISO 8601 格式：2026-10-25T00:00:00Z
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US)
+            sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            sdf.format(java.util.Date(expireMs * 1000))
+        } else ""
+        val data = postSigned(
+            AliyunConstants.PATH_SHARE_CREATE,
+            JSONObject()
+                .put("drive_id", driveId)
+                .put("file_id_list", JSONArray(fileIdList))
+                .put("share_name", title)
+                .put("share_pwd", passcode)
+                .put("expiration", expiration),
+            c
+        )
+        checkBusiness(data, "阿里云盘创建分享失败")
+        val shareUrl = data.optString("share_url")
+        val sharePwd = data.optString("share_pwd", passcode)
+        if (shareUrl.isBlank()) throw IllegalStateException("阿里云盘未返回分享链接")
+        Pair(shareUrl, sharePwd)
     }
 
     // ---------- 分享 ----------
@@ -516,7 +637,7 @@ class AliyunApi(
     }
 
     /** 带设备签名的个人盘请求。 */
-    private fun postSigned(path: String, body: JSONObject, c: AliyunCredential): JSONObject {
+    private fun postSigned(path: String, body: JSONObject, c: AliyunCredential, shareToken: String = ""): JSONObject {
         val builder = Request.Builder()
             .url(AliyunConstants.API + path)
             .post(body.toString().toRequestBody(jsonMediaType))
@@ -528,6 +649,7 @@ class AliyunApi(
             .header("Authorization", "Bearer ${c.accessToken}")
             .header("X-Device-Id", c.deviceId)
             .header("X-Signature", c.signature)
+        if (shareToken.isNotBlank()) builder.header("X-Share-Token", shareToken)
         return doPost(builder, path)
     }
 
@@ -564,19 +686,20 @@ class AliyunApi(
         return doPost(builder, path)
     }
 
-    /** 批量动作请求（上传族）。 */
+    /** 批量动作请求（上传族 / 转存族）。 */
     private fun postSignedBatch(
         c: AliyunCredential,
         requestId: String,
         actionName: String,
-        actionRequest: JSONObject
+        actionRequest: JSONObject,
+        shareToken: String = ""
     ): JSONObject {
         val body = JSONObject()
             .put("request_id", requestId)
             .put("resource_type", "file")
             .put("batch_id", UUID.randomUUID().toString())
             .put("action", JSONObject().put("name", actionName).put("request", actionRequest))
-        return postSigned(AliyunConstants.PATH_BATCH, body, c)
+        return postSigned(AliyunConstants.PATH_BATCH, body, c, shareToken)
     }
 
     private fun doPost(builder: Request.Builder, path: String): JSONObject {

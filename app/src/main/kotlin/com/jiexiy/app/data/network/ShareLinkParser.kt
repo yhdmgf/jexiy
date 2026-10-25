@@ -80,9 +80,9 @@ object ShareLinkParser {
     private val pwdIn115UrlRegex = Regex("""[?&]password=([A-Za-z0-9]+)""")
     // 光鸭云盘分享链接（文档 §1.1）：https://www.guangyapan.com/s/{shareId}；shareId 字符集 [A-Za-z0-9_-]+
     private val guangyaShareIdRegex = Regex("""guangyapan\.com/s/([A-Za-z0-9_-]+)""", RegexOption.IGNORE_CASE)
-    // 阿里云盘分享链接：https://www.alipan.com/s/{shareId}，兼容 ali yundrive 主域
+    // 阿里云盘分享链接：https://www.alipan.com/s/{shareId} 或 /t/{shareId}（快传），兼容 aliyundrive 主域
     private val aliyunShareIdRegex =
-        Regex("""(?:www\.)?(?:alipan|aliyundrive)\.com/s/([A-Za-z0-9_-]+)""", RegexOption.IGNORE_CASE)
+        Regex("""(?:www\.)?(?:alipan|aliyundrive)\.com/(s|t)/([A-Za-z0-9_-]+)""", RegexOption.IGNORE_CASE)
     // 小飞机网盘分享：https://share.feijipan.com/s/<code>，兼容 feijipan.com / feijix.com
     private val feijiShareIdRegex = Regex(
         """(?:share\.|www\.)?feijipan\.com/s/([A-Za-z0-9_-]+)|(?:www\.)?feijix\.com/s/([A-Za-z0-9_-]+)""",
@@ -191,11 +191,14 @@ object ShareLinkParser {
                 ?: pwdInTextRegex.find(text)?.groupValues?.getOrNull(1)
             return ParsedShare(shareId = sid, pwd = pwd, platform = SharePlatform.GUANGYA)
         }
-        // 阿里云盘链接：https://www.alipan.com/s/{shareId}（提取码可由 ?pwd= 或文案指定）
-        aliyunShareIdRegex.find(url)?.groupValues?.getOrNull(1)?.let { sid ->
-            val pwd = pwdInUrlRegex.find(url)?.groupValues?.getOrNull(1)
-                ?: pwdInTextRegex.find(text)?.groupValues?.getOrNull(1)
-            return ParsedShare(shareId = sid, pwd = pwd, platform = SharePlatform.ALIYUN)
+        // 阿里云盘链接：https://www.alipan.com/s/{shareId} 或 /t/{shareId}（提取码可由 ?pwd= 或文案指定）
+        aliyunShareIdRegex.find(url)?.let { match ->
+            val sid = match.groupValues.getOrNull(2)
+            if (sid != null) {
+                val pwd = pwdInUrlRegex.find(url)?.groupValues?.getOrNull(1)
+                    ?: pwdInTextRegex.find(text)?.groupValues?.getOrNull(1)
+                return ParsedShare(shareId = sid, pwd = pwd, platform = SharePlatform.ALIYUN)
+            }
         }
         // 蓝奏云优享版链接：https://{ilanzou-host}/s/{shareId}（先于蓝奏云判断，避免混淆）
         ilanzouShareIdRegex.find(url)?.groupValues?.getOrNull(1)?.let { sid ->

@@ -29,8 +29,8 @@ interface AliyunAccountDao {
     @Query("UPDATE aliyun_account SET remark = :remark WHERE id = :id")
     suspend fun updateRemark(id: String, remark: String)
 
-    @Query("UPDATE aliyun_account SET accessToken = :accessToken, updatedAt = :updatedAt WHERE id = :id")
-    suspend fun updateAccessToken(id: String, accessToken: String, updatedAt: Long)
+    @Query("UPDATE aliyun_account SET accessToken = :accessToken, expiresAtMs = :expiresAtMs, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateAccessToken(id: String, accessToken: String, expiresAtMs: Long, updatedAt: Long)
 
     @Query("DELETE FROM aliyun_account WHERE id = :id")
     suspend fun deleteById(id: String)

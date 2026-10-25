@@ -19,12 +19,16 @@
 package com.jiexiy.app.data.repository
 
 import com.jiexiy.app.data.network.AliyunApi
+import com.jiexiy.app.data.network.AliyunConstants
+import com.jiexiy.app.data.network.AliyunCredential
 import com.jiexiy.app.data.network.AliyunShareSession
 import com.jiexiy.app.data.network.ShareLinkParser
 import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.ShareFile
 import com.jiexiy.app.data.network.model.ShareSession
 import java.io.IOException
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 阿里云盘分享仓库：分享令牌匿名鉴权，列目录 / 取直链都不需要登录账号。
@@ -32,15 +36,24 @@ import java.io.IOException
  * - createSession：`get_share_by_anonymous`（标题）+ `get_share_token`（令牌）
  * - listFiles：`list_by_share`（根目录 `parent_file_id = "root"`）
  * - getShareDownloadLink：`get_share_download_url`（匿名，靠 `X-Share-Token`）
- *
- * 转存（保存到自己网盘）暂未接入：`transferFile` 直接返回失败。
+ * - transferFile：`file/copy`（batch）转存到自己网盘
  */
 class AliyunResolveRepository(
-    private val api: AliyunApi = AliyunApi()
+    private val api: AliyunApi = AliyunApi(),
+    private val accountRepo: AliyunAccountRepository? = null
 ) : ShareResolveRepository {
+
+    private val fileCache = ConcurrentHashMap<String, ShareFile>()
 
     private fun shareSession(s: ShareSession) =
         AliyunShareSession(s.shareId, s.stoken, s.title)
+
+    private suspend fun credential(): AliyunCredential {
+        val repo = accountRepo
+            ?: throw IOException("阿里云盘账号仓库未初始化，无法转存")
+        return repo.buildCredential()
+            ?: throw IOException("请先登录阿里云盘")
+    }
 
     override suspend fun createSession(
         link: String,
@@ -81,19 +94,43 @@ class AliyunResolveRepository(
         file: ShareFile
     ): Result<DownloadLink> = getShareDownloadLink(session, file, "")
 
-    override suspend fun ensureTempDir(cookie: String): Result<String> =
-        Result.failure(IOException("阿里云盘转存暂未开放"))
+    override suspend fun ensureTempDir(cookie: String): Result<String> = runCatching {
+        val c = credential()
+        val name = AliyunConstants.TEMP_DIR_PREFIX + UUID.randomUUID().toString().take(8)
+        val dir = api.mkdir(c, "root", name)
+        dir.fid
+    }
 
     override suspend fun transferFile(
         session: ShareSession,
         file: ShareFile,
         toDirFid: String,
         cookie: String
-    ): Result<String> =
-        Result.failure(IOException("阿里云盘转存暂未开放"))
+    ): Result<String> = runCatching {
+        val c = credential()
+        val driveId = c.driveId.ifBlank { throw IOException("阿里云盘空间标识缺失") }
+        // 转存前刷新分享 token（短期有效）
+        val fresh = api.shareToken(session.shareId, "")
+        val newFid = api.saveShareFile(
+            c, session.shareId, fresh.stoken, file.fid, driveId, toDirFid
+        )
+        // 缓存新 fid 对应的文件信息，供 getDownloadLink 使用
+        fileCache[newFid] = file.copy(fid = newFid)
+        newFid
+    }
 
-    override suspend fun getDownloadLink(fid: String, cookie: String): Result<DownloadLink> =
-        Result.failure(IOException("请从分享链接下载"))
+    override suspend fun getDownloadLink(fid: String, cookie: String): Result<DownloadLink> = runCatching {
+        val c = credential()
+        val cached = fileCache[fid]
+        api.getDownloadUrl(c, fid, cached?.fname ?: "", cached?.fsize ?: 0L)
+    }
 
-    override suspend fun cleanupTempDir(dirFid: String, cookie: String) {}
+    override suspend fun cleanupTempDir(dirFid: String, cookie: String) {
+        runCatching {
+            val c = credential()
+            api.deleteTrash(c, dirFid)
+        }
+        // 清理缓存中属于该目录的文件
+        fileCache.entries.removeIf { it.key == dirFid }
+    }
 }
