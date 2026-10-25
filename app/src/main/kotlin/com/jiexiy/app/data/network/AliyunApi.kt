@@ -501,7 +501,20 @@ class AliyunApi(
         val driveId = c.driveId.ifBlank { throw IllegalStateException("阿里云盘空间标识缺失，请重新登录") }
         val requestId = UUID.randomUUID().toString()
 
-        val apply = postSignedBatch(c, requestId, "upload_file", JSONObject()
+        // 创建上传任务（/adrive/v2/file/createWithFolders）
+        val partInfoList = JSONArray()
+        partInfoList.put(JSONObject().put("part_number", 1))
+        val createBody = JSONObject()
+            .put("drive_id", driveId)
+            .put("parent_file_id", parentFileId)
+            .put("name", name)
+            .put("type", "file")
+            .put("size", size)
+            .put("check_name_mode", "refuse")
+            .put("content_hash_name", "none")
+            .put("proof_version", "v1")
+            .put("part_info_list", partInfoList)
+        val createResp = postSignedBatch(c, requestId, "upload_file", JSONObject()
             .put("drive_id", driveId)
             .put("parent_file_id", parentFileId)
             .put("name", name)
@@ -509,15 +522,16 @@ class AliyunApi(
             .put("conflict", "auto_rename")
             .put("task_id", requestId)
             .put("part_number", 1))
-        if (!apply.optBoolean("success")) {
+        if (!createResp.optBoolean("success")) {
             throw IllegalStateException("阿里云盘上传申请失败")
         }
-        val fileId = apply.optString("file_id")
-        val uploadId = apply.optString("upload_id")
+        val fileId = createResp.optString("file_id")
+        val uploadId = createResp.optString("upload_id")
         if (fileId.isBlank() || uploadId.isBlank()) {
             throw IllegalStateException("阿里云盘未返回上传标识")
         }
 
+        // 获取预签名 URL
         val urlData = postSignedBatch(c, UUID.randomUUID().toString(), "get_upload_url", JSONObject()
             .put("drive_id", driveId)
             .put("file_id", fileId)
@@ -526,7 +540,7 @@ class AliyunApi(
         val presignUrl = urlData.optString("presigned_url")
         if (presignUrl.isBlank()) throw IllegalStateException("阿里云盘未返回上传地址")
 
-        // 直传 OSS：PUT 原始字节，不带 Content-Type
+        // 直传 OSS
         val bytes = input().readBytes()
         val put = client.newCall(
             Request.Builder()
@@ -538,6 +552,7 @@ class AliyunApi(
             if (!it.isSuccessful) throw IllegalStateException("阿里云盘直传失败（HTTP ${it.code}）")
         }
 
+        // 完成上传
         postSignedBatch(c, UUID.randomUUID().toString(), "upload_file", JSONObject()
             .put("drive_id", driveId)
             .put("file_id", fileId)

@@ -189,10 +189,10 @@ fun LiquidGlassBottomBar(
                     color = colors.outlineVariant.copy(alpha = borderAlpha),
                     shape = CircleShape
                 )
-                // 背景模糊
+                // 背景半透明（去掉 blur，避免模糊掉图标）
                 .then(
                     if (glassEnabled && android.os.Build.VERSION.SDK_INT >= 31) {
-                        Modifier.blur(20.dp)
+                        Modifier
                     } else {
                         Modifier
                     }
