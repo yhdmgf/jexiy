@@ -131,7 +131,8 @@ object S3v4Uploader {
             val bodyType = if (start != null) contentType else "application/xml"
             val headers = LinkedHashMap<String, String>()
             headers["host"] = authority
-            headers["content-type"] = bodyType
+            // 不签 content-type，避免 OkHttp 覆盖导致签名不一致
+            // headers["content-type"] = bodyType
             headers["x-amz-content-sha256"] = contentHash
             headers["x-amz-date"] = stamp
             if (token.isNotBlank()) headers["x-amz-security-token"] = token

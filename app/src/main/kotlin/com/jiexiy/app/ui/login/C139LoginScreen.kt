@@ -117,7 +117,7 @@ fun C139LoginScreen(
             settings.builtInZoomControls = true
             settings.displayZoomControls = false
             settings.useWideViewPort = true
-            settings.loadWithOverviewMode = true
+            settings.loadWithOverviewMode = false
             settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
             setInitialScale(0)
             // 必须用 PC UA：139 只对桌面版页面下发 authorization cookie，WebView 用移动版 UA

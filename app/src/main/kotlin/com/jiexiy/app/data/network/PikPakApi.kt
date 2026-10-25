@@ -683,7 +683,7 @@ class PikPakApi(
             .put("size", size.toString())
             .put("hash", hash)
             .put("upload_type", "UPLOAD_TYPE_RESUMABLE")
-            .apply { if (parentId.isNotEmpty()) put("parent_id", parentId) }
+            .put("parent_id", parentId)
             .put("body", JSONObject().put("duration", "").put("width", "").put("height", ""))
             .put("objProvider", JSONObject().put("provider", "UPLOAD_TYPE_UNKNOWN"))
         val createResp = execJson(
@@ -783,10 +783,12 @@ class PikPakApi(
 
     /** 按文件大小选单片档位（照抄 Android 客户端策略）。 */
     private fun pickPartSize(size: Long): Long = when {
-        size < 0x8000000L -> PikPakConstants.PART_SIZE_256K
-        size < 0x10000000L -> PikPakConstants.PART_SIZE_512K
-        size < 0x20000000L -> PikPakConstants.PART_SIZE_1M
-        else -> PikPakConstants.PART_SIZE_2M
+        size in 1 until 0x8000000L -> PikPakConstants.PART_SIZE_256K      // 0~128M
+        size in 0x8000000L until 0x10000000L -> PikPakConstants.PART_SIZE_512K  // 128M~256M
+        size in 0x10000000L until 0x20000000L -> PikPakConstants.PART_SIZE_2M   // <=256M 或 >512M
+        size in 0x20000000L until 0x40000000L -> PikPakConstants.PART_SIZE_2M   // <=256M 或 >512M
+        size >= 0x40000000L -> PikPakConstants.PART_SIZE_2M                    // >512M
+        else -> PikPakConstants.PART_SIZE_1M                                   // 256M~512M
     }
 
     /**
