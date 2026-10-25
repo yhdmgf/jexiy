@@ -137,7 +137,7 @@ fun LiquidGlassBottomBar(
     val colors = MaterialTheme.colorScheme
     val activeColor = colors.primary
     val inactiveColor = colors.onSurfaceVariant
-    val glassColor = if (dark) Color(0xFF1C1D21) else Color.White
+    val glassColor = if (dark) Color(0xE61C1D21) else Color(0xE6FFFFFF)
     val borderAlpha = if (dark) 0.48f else 0.65f
     val shadowColor = lerp(
         if (dark) Color.Black else colors.onSurface,
@@ -319,8 +319,8 @@ fun LiquidGlassBottomBar(
                                             position.animateTo(
                                                 targetIndex.toFloat(),
                                                 animationSpec = spring(
-                                                    stiffness = 800f,
-                                                    dampingRatio = 40f
+                                                    stiffness = 550f,
+                                                    dampingRatio = 0.81f
                                                 )
                                             )
                                         }
@@ -332,8 +332,8 @@ fun LiquidGlassBottomBar(
                                             position.animateTo(
                                                 selectedIndex.value.toFloat(),
                                                 animationSpec = spring(
-                                                    stiffness = 800f,
-                                                    dampingRatio = 40f
+                                                    stiffness = 550f,
+                                                    dampingRatio = 0.81f
                                                 )
                                             )
                                         }
@@ -354,7 +354,10 @@ fun LiquidGlassBottomBar(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .clickable {
+                                .clickable(
+    interactionSource = interactionSource,
+    indication = null
+) {
                                     val newIndex = index
                                     if (newIndex != selectedIndex.value) {
                                         selectedIndex.value = newIndex
@@ -364,8 +367,8 @@ fun LiquidGlassBottomBar(
                                             position.animateTo(
                                                 newIndex.toFloat(),
                                                 animationSpec = spring(
-                                                    stiffness = 800f,
-                                                    dampingRatio = 40f
+                                                    stiffness = 550f,
+                                                    dampingRatio = 0.81f
                                                 )
                                             )
                                         }
