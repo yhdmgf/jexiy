@@ -241,6 +241,7 @@ import com.jiexiy.app.data.network.HttpClients
 import com.jiexiy.app.ui.theme.ThemeController
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
+import com.jiexiy.app.ui.LiquidGlassBottomBar
 
 /**
  * 容器变换的共享 key：源（设置页那一行）与目标（叠加页）必须用同一个 key，形变才会发生。
@@ -1703,10 +1704,17 @@ fun MainScreen(
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = { topBarContent() },
                         bottomBar = {
-                            MainBottomBar(
-                                currentTab = currentTab,
-                                onTabSelected = { currentTab = it }
-                            )
+                            if (ThemeController.glassBottomBar) {
+                                LiquidGlassBottomBar(
+                                    currentTab = currentTab,
+                                    onTabSelected = { currentTab = it }
+                                )
+                            } else {
+                                MainBottomBar(
+                                    currentTab = currentTab,
+                                    onTabSelected = { currentTab = it }
+                                )
+                            }
                         }
                     ) { innerPadding ->
                         Box(
