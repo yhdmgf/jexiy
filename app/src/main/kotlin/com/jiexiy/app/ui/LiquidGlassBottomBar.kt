@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,10 +67,12 @@ import com.jiexiy.app.ui.navigation.MainTab
 import com.jiexiy.app.ui.theme.ThemeController
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
 
 /**
  * 液态玻璃底部导航栏：
@@ -229,13 +232,13 @@ fun LiquidGlassBottomBar(
 
             Box(
                 modifier = Modifier
-                    .offset { Offset(lensOffset.toFloat(), with(density) { innerPadding.toPx() }.roundToInt().toFloat()) }
+                    .offset { IntOffset(lensOffset, with(density) { innerPadding.toPx() }.roundToInt()) }
                     .size(
                         width = with(density) { tabWidth.roundToInt().toDp() },
                         height = barHeight - innerPadding * 2
                     )
                     .graphicsLayer {
-                        val stretch = position.velocity.absoluteValue * 0.003f
+                        val stretch = abs(position.velocity) * 0.003f
                         scaleX = 1f + pressScale.value * 0.035f + stretch
                         scaleY = 1f + pressScale.value * 0.035f - stretch * 0.4f
                     }
@@ -299,7 +302,9 @@ fun LiquidGlassBottomBar(
                                         val totalOffset = change.position
                                         touchOffset.value = totalOffset
                                         val newPosition = (position.value + dragAmount / tabWidth)
-                                        position.snapTo(newPosition)
+                                        scope.launch {
+                                            position.snapTo(newPosition)
+                                        }
                                     },
                                     onDragEnd = {
                                         isPressed = false
