@@ -262,6 +262,7 @@ fun DriveScreen(
     var showQuarkSheet by remember { mutableStateOf(false) }
     var showUCSheet by remember { mutableStateOf(false) }
     var showXunleiSheet by remember { mutableStateOf(false) }
+    var showAliyunSheet by remember { mutableStateOf(false) }
     var showBaiduSheet by remember { mutableStateOf(false) }
     var showC139Sheet by remember { mutableStateOf(false) }
     var showPan123Sheet by remember { mutableStateOf(false) }
@@ -746,7 +747,8 @@ fun DriveScreen(
                         account = aliyunAccount,
                         onClick = {
                             if (aliyunAccount == null) onAliyunLogin()
-                        }
+                        },
+                        onMoreClick = if (aliyunAccount != null) { { showAliyunSheet = true } } else null
                     )
                 }
                 item(key = github.id) {
@@ -816,6 +818,20 @@ fun DriveScreen(
             onRemove = { multiAccountViewModel.remove(DownloadPlatform.XUNLEI, it) },
             onAddAccount = { onAddAccount(DownloadPlatform.XUNLEI) },
             onDismiss = { showXunleiSheet = false }
+        )
+    }
+
+    // 已登录阿里云盘：点击卡片弹出账号信息底部弹窗（含多账号管理）
+    val aliyunAccounts by multiAccountViewModel.accountsOf(DownloadPlatform.ALIYUN).collectAsState()
+    if (showAliyunSheet && aliyunAccount != null) {
+        AliyunAccountSheet(
+            account = aliyunAccount,
+            accounts = aliyunAccounts,
+            onSetPrimary = { multiAccountViewModel.setPrimary(DownloadPlatform.ALIYUN, it) },
+            onRename = { id, remark -> multiAccountViewModel.rename(DownloadPlatform.ALIYUN, id, remark) },
+            onRemove = { multiAccountViewModel.remove(DownloadPlatform.ALIYUN, it) },
+            onAddAccount = { onAddAccount(DownloadPlatform.ALIYUN) },
+            onDismiss = { showAliyunSheet = false }
         )
     }
 
