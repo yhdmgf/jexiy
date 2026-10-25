@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,14 +42,13 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.IntOffset
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorUtils
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,7 +66,6 @@ import com.jiexiy.app.ui.navigation.MainTab
 import com.jiexiy.app.ui.theme.ThemeController
 import com.jiexiy.app.ui.theme.effectsDefault
 import com.jiexiy.app.ui.theme.effectsFast
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -131,13 +130,13 @@ fun LiquidGlassBottomBar(
     var dragOffset by remember { mutableStateOf<Float?>(null) }
 
     // 颜色
-    val dark = MaterialTheme.colorScheme.isDark
+    val dark = isSystemInDarkTheme()
     val colors = MaterialTheme.colorScheme
     val activeColor = colors.primary
     val inactiveColor = colors.onSurfaceVariant
     val glassColor = if (dark) Color(0xFF1C1D21) else Color.White
     val borderAlpha = if (dark) 0.48f else 0.65f
-    val shadowColor = ColorUtils.lerp(
+    val shadowColor = lerp(
         if (dark) Color.Black else colors.onSurface,
         colors.primary,
         if (dark) 0.08f else 0.16f
@@ -166,7 +165,6 @@ fun LiquidGlassBottomBar(
                 .shadow(
                     elevation = 12.dp,
                     shape = CircleShape,
-                    color = shadowColor.copy(alpha = if (dark) 0.14f else 0.055f),
                     spotColor = shadowColor.copy(alpha = if (dark) 0.14f else 0.055f),
                     ambientColor = shadowColor.copy(alpha = if (dark) 0.14f else 0.055f)
                 )
@@ -174,9 +172,10 @@ fun LiquidGlassBottomBar(
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color.alphaBlend(
+                            lerp(
                                 Color.White.copy(alpha = if (dark) 0.025f else 0.16f),
-                                glassColor
+                                glassColor,
+                                0.5f
                             ),
                             glassColor
                         )
@@ -189,7 +188,7 @@ fun LiquidGlassBottomBar(
                 )
                 // 背景模糊
                 .then(
-                    if (glassEnabled && !android.os.Build.VERSION.SDK_INT < 31) {
+                    if (glassEnabled && android.os.Build.VERSION.SDK_INT >= 31) {
                         Modifier.blur(20.dp)
                     } else {
                         Modifier
@@ -219,7 +218,7 @@ fun LiquidGlassBottomBar(
             // 选中标签（Lens）
             val positionValue = position.value.coerceIn(-0.035f, tabs.size - 1 + 0.035f)
             val tabWidth = if (barSize.value.width > 0) {
-                (barSize.value.width - (innerPadding * 2).toPx()) / tabs.size
+                (barSize.value.width - with(density) { (innerPadding * 2).toPx() }) / tabs.size
             } else {
                 0f
             }
@@ -230,13 +229,13 @@ fun LiquidGlassBottomBar(
 
             Box(
                 modifier = Modifier
-                    .offset { IntOffset(lensOffset, innerPadding.toPx().roundToInt()) }
+                    .offset { Offset(lensOffset.toFloat(), with(density) { innerPadding.toPx() }.roundToInt().toFloat()) }
                     .size(
                         width = with(density) { tabWidth.roundToInt().toDp() },
                         height = barHeight - innerPadding * 2
                     )
                     .graphicsLayer {
-                        val stretch = position.velocity.abs() * 0.003f
+                        val stretch = position.velocity.absoluteValue * 0.003f
                         scaleX = 1f + pressScale.value * 0.035f + stretch
                         scaleY = 1f + pressScale.value * 0.035f - stretch * 0.4f
                     }
