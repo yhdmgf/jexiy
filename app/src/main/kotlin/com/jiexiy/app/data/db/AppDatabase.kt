@@ -30,8 +30,8 @@ import com.jiexiy.app.data.security.CredentialStore
 import com.jiexiy.app.util.DiagnosticLog
 
 @Database(
-    entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, Pan115AccountEntity::class, GuangYaAccountEntity::class, ILanzouAccountEntity::class, LanzouAccountEntity::class, FeijiAccountEntity::class, AliyunAccountEntity::class, BookmarkEntity::class, VideoAccountEntity::class, PikPakAccountEntity::class],
-    version = 25,
+    entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, Pan115AccountEntity::class, GuangYaAccountEntity::class, ILanzouAccountEntity::class, LanzouAccountEntity::class, FeijiAccountEntity::class, AliyunAccountEntity::class, BookmarkEntity::class, VideoAccountEntity::class, PikPakAccountEntity::class, UploadTaskEntity::class],
+    version = 26,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -39,6 +39,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun rawQuarkAccountDao(): QuarkAccountDao
 
     abstract fun downloadTaskDao(): DownloadTaskDao
+
+    abstract fun uploadTaskDao(): UploadTaskDao
 
     abstract fun rawUcAccountDao(): UCAccountDao
 
@@ -113,7 +115,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_21_22,
                         MIGRATION_22_23,
                         MIGRATION_23_24,
-                        MIGRATION_24_25
+                        MIGRATION_24_25,
+                        MIGRATION_25_26
                     )
                     // 早期开发版（1-8）无可靠 schema；从 v9 起必须保留凭证和下载任务
                     .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7, 8)
@@ -416,6 +419,27 @@ abstract class AppDatabase : RoomDatabase() {
                         "`isPrimary` INTEGER NOT NULL, " +
                         "`remark` TEXT NOT NULL, " +
                         "PRIMARY KEY(`id`))"
+                )
+            }
+        }
+
+        private val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `upload_task` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "`platform` TEXT NOT NULL, " +
+                        "`platformLabel` TEXT NOT NULL, " +
+                        "`uri` TEXT NOT NULL, " +
+                        "`fileName` TEXT NOT NULL, " +
+                        "`size` INTEGER NOT NULL, " +
+                        "`mimeType` TEXT NOT NULL, " +
+                        "`folderId` TEXT NOT NULL, " +
+                        "`status` INTEGER NOT NULL, " +
+                        "`progress` INTEGER NOT NULL, " +
+                        "`error` TEXT NOT NULL, " +
+                        "`phase` INTEGER NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL)"
                 )
             }
         }

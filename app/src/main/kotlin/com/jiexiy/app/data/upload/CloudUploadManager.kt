@@ -20,6 +20,9 @@ package com.jiexiy.app.data.upload
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import com.jiexiy.app.data.db.AppDatabase
+import com.jiexiy.app.data.db.UploadTaskDao
+import com.jiexiy.app.data.db.UploadTaskEntity
 import com.jiexiy.app.data.download.DownloadPlatform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +52,7 @@ data class SelectedFile(
 object CloudUploadManager {
 
     private var appContext: Context? = null
+    private var uploadDao: UploadTaskDao? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = mutableMapOf<Long, Job>()
     private val nextId = AtomicLong(1)
@@ -58,11 +62,18 @@ object CloudUploadManager {
 
     private val factories = LinkedHashMap<String, () -> CloudUploader?>()
 
-    /** 惰性装配：首次入队时把应用上下文与各平台上传实现装好。 */
+    /** 惰性装配：首次入队时把应用上下文与各平台上传实现装好，并从 DB 加载历史任务。 */
     fun init(context: Context) {
         if (appContext != null) return
         val app = context.applicationContext
         appContext = app
+        val db = AppDatabase.get(app)
+        uploadDao = db.uploadTaskDao()
+        // 从 DB 加载历史任务（已完成/失败/等待中的都保留，仅跳过已取消）
+        scope.launch {
+            val history = runCatching { db.uploadTaskDao().listRecent() }.getOrDefault(emptyList())
+            _tasks.value = history.map { it.toUploadTask() }
+        }
         register(DownloadPlatform.FEIJI) { FeijiUploader(app) }
         register(DownloadPlatform.ALIYUN) { AliyunUploader(app) }
         register(DownloadPlatform.QUARK) { QuarkUploader(app) }
@@ -121,17 +132,21 @@ object CloudUploadManager {
     ): Long {
         init(context)
         val id = nextId.getAndIncrement()
-        _tasks.update {
-            it + UploadTask(
-                id = id,
-                platform = platform,
-                platformLabel = labelOf(platform).orEmpty(),
-                uri = uri.toString(),
-                fileName = fileName,
-                size = size,
-                mimeType = mimeType,
-                folderId = folderId
-            )
+        val task = UploadTask(
+            id = id,
+            platform = platform,
+            platformLabel = labelOf(platform).orEmpty(),
+            uri = uri.toString(),
+            fileName = fileName,
+            size = size,
+            mimeType = mimeType,
+            folderId = folderId
+        )
+        _tasks.update { it + task }
+        // 持久化到 DB，重启后仍可回看
+        val dao = uploadDao
+        if (dao != null) {
+            scope.launch { dao.insert(task.toEntity()) }
         }
         start(id)
         return id
@@ -154,10 +169,20 @@ object CloudUploadManager {
     fun remove(id: Long) {
         jobs.remove(id)?.cancel()
         _tasks.update { list -> list.filterNot { it.id == id } }
+        // 同步删除 DB 记录
+        val dao = uploadDao
+        if (dao != null) {
+            scope.launch { dao.deleteById(id) }
+        }
     }
 
     fun clearCompleted() {
         _tasks.update { list -> list.filter { it.status != UploadStatus.COMPLETED } }
+        // 同步删除 DB 里已完成/失败的任务
+        val dao = uploadDao
+        if (dao != null) {
+            scope.launch { dao.clearFinished() }
+        }
     }
 
     private fun start(id: Long) {
@@ -213,6 +238,64 @@ object CloudUploadManager {
     }
 
     private fun update(id: Long, transform: (UploadTask) -> UploadTask) {
-        _tasks.update { list -> list.map { if (it.id == id) transform(it) else it } }
+        _tasks.update { list ->
+            val updated = list.map { if (it.id == id) transform(it) else it }
+            // 仅在状态变更时写 DB（进度更新不写，避免频繁 I/O）
+            val old = _tasks.value.firstOrNull { it.id == id }
+            val new = updated.firstOrNull { it.id == id }
+            if (old != null && new != null && old.status != new.status) {
+                val dao = uploadDao
+                if (dao != null) {
+                    scope.launch { dao.update(new.toEntity()) }
+                }
+            }
+            updated
+        }
     }
+
+    /** 内存任务 → DB Entity。 */
+    private fun UploadTask.toEntity() = UploadTaskEntity(
+        id = id,
+        platform = platform,
+        platformLabel = platformLabel,
+        uri = uri,
+        fileName = fileName,
+        size = size,
+        mimeType = mimeType,
+        folderId = folderId,
+        status = when (status) {
+            UploadStatus.PENDING -> UploadTaskEntity.STATUS_PENDING
+            UploadStatus.RUNNING -> UploadTaskEntity.STATUS_UPLOADING
+            UploadStatus.COMPLETED -> UploadTaskEntity.STATUS_COMPLETED
+            UploadStatus.FAILED -> UploadTaskEntity.STATUS_FAILED
+            UploadStatus.CANCELLED -> UploadTaskEntity.STATUS_FAILED
+        },
+        progress = progress,
+        error = error,
+        phase = phase.ordinal,
+        createdAt = createdAt
+    )
+
+    /** DB Entity → 内存任务。 */
+    private fun UploadTaskEntity.toUploadTask() = UploadTask(
+        id = id,
+        platform = platform,
+        platformLabel = platformLabel,
+        uri = uri,
+        fileName = fileName,
+        size = size,
+        mimeType = mimeType,
+        folderId = folderId,
+        status = when (status) {
+            UploadTaskEntity.STATUS_PENDING -> UploadStatus.PENDING
+            UploadTaskEntity.STATUS_UPLOADING -> UploadStatus.RUNNING
+            UploadTaskEntity.STATUS_COMPLETED -> UploadStatus.COMPLETED
+            UploadTaskEntity.STATUS_FAILED -> UploadStatus.FAILED
+            else -> UploadStatus.PENDING
+        },
+        phase = if (phase in UploadPhase.entries.indices) UploadPhase.entries[phase] else UploadPhase.PREPARING,
+        progress = progress,
+        error = error,
+        createdAt = createdAt
+    )
 }

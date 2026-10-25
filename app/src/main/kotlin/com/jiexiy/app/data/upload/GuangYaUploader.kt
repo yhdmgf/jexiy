@@ -52,6 +52,7 @@ class GuangYaUploader(private val context: Context) : CloudUploader {
             parentId = folderId.ifBlank { GuangYaConstants.ROOT_PARENT_ID },
             fileName = source.name,
             size = source.size,
+            mimeType = source.mimeType.ifBlank { "application/octet-stream" },
             open = { start, end -> source.open(start, end) },
             onProgress = { sent -> onProgress(sent, UploadPhase.UPLOADING) }
         )

@@ -49,8 +49,16 @@ fun TransferScreen(
     uploadFolderId: String = "0",
     modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    // 记住用户上次停留的页（0=下载 1=上传），配置变更后（如横竖屏切换）仍能恢复到原页
+    var savedPage by rememberSaveable { mutableStateOf(0) }
+    val pagerState = rememberPagerState(initialPage = savedPage.coerceIn(0, 1), pageCount = { 2 })
     val scope = rememberCoroutineScope()
+    // 监听页变化，实时保存
+    LaunchedEffect(pagerState) {
+        pagerState.currentPageChanged {
+            savedPage = it
+        }
+    }
     val tabs = listOf("下载", "上传")
 
     Column(modifier = modifier.fillMaxSize()) {

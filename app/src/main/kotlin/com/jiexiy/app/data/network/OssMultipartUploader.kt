@@ -70,7 +70,11 @@ object OssMultipartUploader {
         var host = parsed.host
         if (host.isNotBlank() && !host.startsWith("$bucket.")) host = "$bucket.$host"
         if (host.isBlank()) throw IllegalStateException("网盘返回的上传服务器无效")
-        val uri = "https://$host/${parsed.path}"
+        // ★ 用 objectKey 替换 endpoint 的 path（对齐 wenxi upload_io.dart 的
+        //   `base.replace(pathSegments: object.split('/'))`）。光鸭返回的 endpoint 可能带前缀
+        //   路径（如 /upload/），如果保留会让请求 URI 与 resource 不一致，签名直接失败。
+        val objectPath = objectKey.removePrefix("/")
+        val uri = "https://$host/$objectPath"
 
         fun request(
             method: String,

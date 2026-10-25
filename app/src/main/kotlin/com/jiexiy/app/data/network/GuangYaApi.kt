@@ -600,6 +600,7 @@ class GuangYaApi(
         parentId: String,
         fileName: String,
         size: Long,
+        mimeType: String = "application/octet-stream",
         open: (Long, Long) -> InputStream,
         onProgress: (Long) -> Unit = {}
     ): String = withContext(Dispatchers.IO) {
@@ -636,7 +637,7 @@ class GuangYaApi(
                 secretKey = firstNonBlank(data.optString("secretAccessKey"), creds.optString("secretAccessKey")),
                 securityToken = firstNonBlank(data.optString("sessionToken"), creds.optString("sessionToken")),
                 size = size,
-                contentType = "application/octet-stream",
+                contentType = mimeType,
                 open = { start, end -> open(start, end) },
                 onProgress = onProgress
             )

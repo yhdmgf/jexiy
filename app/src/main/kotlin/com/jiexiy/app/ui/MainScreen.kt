@@ -170,6 +170,7 @@ import com.jiexiy.app.ui.login.ILanzouLoginScreen
 import com.jiexiy.app.ui.login.LanzouLoginScreen
 import com.jiexiy.app.ui.login.LanzouWebLoginScreen
 import com.jiexiy.app.ui.login.PikPakLoginScreen
+import com.jiexiy.app.ui.login.PikPakWebLoginScreen
 import com.jiexiy.app.ui.login.Pan115LoginScreen
 import com.jiexiy.app.ui.login.Pan123LoginScreen
 import com.jiexiy.app.ui.login.FeijiLoginScreen
@@ -331,6 +332,8 @@ fun MainScreen(
     var showLanzouLogin by rememberSaveable { mutableStateOf(false) }
     var showPikPakLogin by rememberSaveable { mutableStateOf(false) }
     var pikPakLoginAsNewAccount by rememberSaveable { mutableStateOf(false) }
+    // PikPak 网页登录页：纯接口遇到服务端下发的人机验证（滑块/图形）时走这条
+    var showPikPakWebLogin by rememberSaveable { mutableStateOf(false) }
     // 光鸭 / 蓝奏的网页登录页：官网页面手动登录，纯接口绕不过滑块 / 短信 / 扫码时走这条
     var showGuangYaWebLogin by rememberSaveable { mutableStateOf(false) }
     var showLanzouWebLogin by rememberSaveable { mutableStateOf(false) }
@@ -1201,6 +1204,27 @@ fun MainScreen(
             },
             onSaved = {
                 showPikPakLogin = false
+                pikPakLoginAsNewAccount = false
+            },
+            onWebLogin = {
+                // 网页登录：纯接口遇到服务端下发的人机验证（滑块/图形）只能放弃
+                showPikPakLogin = false
+                showPikPakWebLogin = true
+            }
+        )
+        return
+    }
+
+    // PikPak 网页登录页：全屏覆盖（WebView 打开官网登录页，提取 localStorage 的网页令牌）
+    if (showPikPakWebLogin) {
+        PikPakWebLoginScreen(
+            viewModel = pikPakViewModel,
+            onBack = {
+                showPikPakWebLogin = false
+                pikPakViewModel.cancelAddAccount()
+            },
+            onSaved = {
+                showPikPakWebLogin = false
                 pikPakLoginAsNewAccount = false
             }
         )
