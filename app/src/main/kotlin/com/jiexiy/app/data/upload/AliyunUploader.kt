@@ -34,7 +34,7 @@ class AliyunUploader(private val context: Context) : CloudUploader {
             parentFileId = folderId,
             name = source.name,
             size = source.size,
-            input = { source.open(0, source.size - 1) }
+            input = { source.open(0, source.size) }
         )
         onProgress(file.fsize, UploadPhase.FINISHING)
         return CloudUploadResult(file.fid, file.fname, file.fsize)

@@ -66,6 +66,7 @@ class PikPakAccountRepository(
             userId = info.first,
             nickname = info.second.ifBlank { account.trim() },
             expiresAtMs = tokens.expiresAtMs,
+            captchaToken = tokens.captchaToken,
             isPrimary = slot.isPrimary,
             remark = slot.remark,
             updatedAt = System.currentTimeMillis()
@@ -104,6 +105,7 @@ class PikPakAccountRepository(
                 userId = tokens.userId,
                 nickname = tokens.nickname.ifBlank { account },
                 expiresAtMs = 0L,
+                captchaToken = tokens.captchaToken,
                 isPrimary = slot.isPrimary,
                 remark = slot.remark,
                 updatedAt = System.currentTimeMillis()
