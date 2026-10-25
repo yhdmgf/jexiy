@@ -251,7 +251,7 @@ class ILanzouApi(
         } else {
             val objectKey = Base64.encodeToString(
                 key.toByteArray(Charsets.UTF_8),
-                Base64.URL_SAFE or Base64.NO_WRAP
+                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
             )
             val base = "${ILanzouConstants.QINIU_UPLOAD_HOST}/buckets/${ILanzouConstants.QINIU_BUCKET}/objects/$objectKey/uploads"
             val uploadId = client.newCall(

@@ -449,10 +449,10 @@ class PikPakApi(
         val body = JSONObject()
             .put("file_ids", JSONArray(fileIds))
             .put("expiration_days", expirationDays)
-            .put("share_to", "publiclink")
+            .put("share_to", if (passcode.isNotBlank()) "encryptedlink" else "publiclink")
             .apply {
                 if (passcode.isNotBlank()) {
-                    put("pass_code", passcode)
+                    put("custom_pass_code", passcode)
                     put("pass_code_option", "REQUIRED")
                 } else {
                     put("pass_code_option", "NOT_REQUIRED")

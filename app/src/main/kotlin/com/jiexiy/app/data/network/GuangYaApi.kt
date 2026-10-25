@@ -352,7 +352,7 @@ class GuangYaApi(
         cursor: String?
     ): Pair<List<ShareFile>, String?> = withContext(Dispatchers.IO) {
         val body = JSONObject()
-            .put("parentId", parentId)
+            .put("parentId", normalizeParent(parentId))
             .put("pageSize", GuangYaConstants.PAGE_SIZE)
             .put("orderBy", 0)
             .put("sortType", 0)
@@ -409,7 +409,7 @@ class GuangYaApi(
         val body = JSONObject()
             .put("accessToken", shareToken)
             .put("fileIds", ids)
-            .put("parentId", parentId)
+            .put("parentId", normalizeParent(parentId))
         val json = executeJson(
             businessRequest(GuangYaConstants.RESTORE_SHARE, body.toString(), null, accountToken).build()
         )
@@ -460,7 +460,7 @@ class GuangYaApi(
         var page = 0
         while (page < 1000) {
             val body = JSONObject()
-                .put("parentId", parentId)
+                .put("parentId", normalizeParent(parentId))
                 .put("pageSize", GuangYaConstants.PAGE_SIZE)
                 .put("orderBy", 0)
                 .put("sortType", 0)
@@ -485,7 +485,7 @@ class GuangYaApi(
     /** 新建目录（文档 §5.2）。 */
     suspend fun createDir(accessToken: String, parentId: String, name: String): String = withContext(Dispatchers.IO) {
         val body = JSONObject()
-            .put("parentId", parentId)
+            .put("parentId", normalizeParent(parentId))
             .put("dirName", name)
             .put("failIfNameExist", true)
         val json = executeJson(businessRequest(GuangYaConstants.CREATE_DIR, body.toString(), null, accessToken).build())
@@ -517,7 +517,7 @@ class GuangYaApi(
         val json = executeJson(
             businessRequest(
                 GuangYaConstants.MOVE_FILE,
-                JSONObject().put("fileIds", ids).put("parentId", parentId).toString(),
+                JSONObject().put("fileIds", ids).put("parentId", normalizeParent(parentId)).toString(),
                 null, accessToken
             ).build()
         )
@@ -613,7 +613,7 @@ class GuangYaApi(
                 JSONObject()
                     .put("capacity", 2)
                     .put("name", fileName)
-                    .put("parentId", parentId)
+                    .put("parentId", normalizeParent(parentId))
                     .put("res", JSONObject().put("fileSize", size).put("md5", md5))
                     .toString(),
                 null,
@@ -925,3 +925,10 @@ class GuangYaApi(
     private fun firstNonBlank(vararg values: String): String =
         values.firstOrNull { !it.isNullOrBlank() }?.trim().orEmpty()
 }
+
+    /** 光鸭根目录 id 归一化：'root'/'0'/'/'/'guangya_root' 统一转为空串。 */
+    private fun normalizeParent(p: String): String =
+        when (p) {
+            "", "root", "/", "0", "guangya_root" -> ""
+            else -> p
+        }
