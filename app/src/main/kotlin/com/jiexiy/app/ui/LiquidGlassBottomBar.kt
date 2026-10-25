@@ -312,7 +312,6 @@ fun LiquidGlassBottomBar(
                                         val targetTab = tabs[targetIndex]
                                         if (targetTab != tabs[selectedIndex.value]) {
                                             selectedIndex.value = targetIndex
-                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                             onTabSelected(targetTab)
                                         }
                                         scope.launch {
@@ -361,7 +360,6 @@ fun LiquidGlassBottomBar(
                                     val newIndex = index
                                     if (newIndex != selectedIndex.value) {
                                         selectedIndex.value = newIndex
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                         onTabSelected(tabs[newIndex])
                                         scope.launch {
                                             position.animateTo(
