@@ -902,8 +902,8 @@ class PikPakApi(
 
     private fun hmacSha1(secret: String, message: String): ByteArray {
         val mac = Mac.getInstance("HmacSHA1")
-        mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF-8), "HmacSHA1"))
-        return mac.doFinal(message.toByteArray(Charsets.UTF-8))
+        mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), "HmacSHA1"))
+        return mac.doFinal(message.toByteArray(Charsets.UTF_8))
     }
 
     private fun rfc1123(): String =
