@@ -112,6 +112,7 @@ import com.jiexiy.app.data.network.model.QuotaInfo
 import com.jiexiy.app.data.network.video.VideoPlatform
 import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel
 import com.jiexiy.app.ui.viewmodel.C139CloudViewModel
+import com.jiexiy.app.ui.viewmodel.AliyunCloudViewModel
 import com.jiexiy.app.ui.viewmodel.DriveQuotaViewModel
 import com.jiexiy.app.ui.viewmodel.GuangYaCloudViewModel
 import com.jiexiy.app.ui.viewmodel.ILanzouCloudViewModel
@@ -188,6 +189,8 @@ fun DriveScreen(
     ilanzouCloudViewModel: ILanzouCloudViewModel,
     /** 蓝奏云浏览 ViewModel */
     lanzouCloudViewModel: LanzouCloudViewModel,
+    /** 阿里云盘云盘浏览 ViewModel */
+    aliyunCloudViewModel: AliyunCloudViewModel,
     /** 网盘空间详情 ViewModel（顶部空间总览） */
     driveQuotaViewModel: DriveQuotaViewModel,
     /** 多账号（列表 / 设主账号 / 改备注 / 退出）：10 个平台的账号弹窗共用 */
@@ -299,6 +302,8 @@ fun DriveScreen(
     var showLanzouCloud by rememberSaveable { mutableStateOf(false) }
     // PikPak 云盘浏览：网盘 Tab 内切换（非全屏）
     var showPikPakCloud by rememberSaveable { mutableStateOf(false) }
+    // 阿里云盘云盘浏览：网盘 Tab 内切换（非全屏）
+    var showAliyunCloud by rememberSaveable { mutableStateOf(false) }
     // PikPak 卡片「三个点」账号弹窗
     var showPikPakSheet by remember { mutableStateOf(false) }
     // PikPak 账号配额（登录后拉取一次）
@@ -434,6 +439,7 @@ fun DriveScreen(
             showILanzouCloud -> 9
             showLanzouCloud -> 10
             showPikPakCloud -> 11
+            showAliyunCloud -> 12
             else -> 0
         },
         transitionSpec = {
@@ -520,6 +526,13 @@ fun DriveScreen(
             downloadManager = pikPakDownloadManager,
             scrollBehavior = scrollBehavior,
             onExit = { showPikPakCloud = false },
+            onDownloadStarted = onDownloadStarted,
+            onUploadStarted = onCloudUploadStarted
+        )
+        12 -> AliyunCloudScreen(
+            viewModel = aliyunCloudViewModel,
+            scrollBehavior = scrollBehavior,
+            onExit = { showAliyunCloud = false },
             onDownloadStarted = onDownloadStarted,
             onUploadStarted = onCloudUploadStarted
         )
@@ -748,8 +761,7 @@ fun DriveScreen(
                         account = aliyunAccount,
                         onClick = {
                             if (aliyunAccount == null) onAliyunLogin()
-                            // TODO: AliyunCloudScreen 完成后改为 { showAliyunCloud = true }
-                            else SnackbarController.show("云盘浏览即将上线")
+                            else showAliyunCloud = true
                         },
                         onMoreClick = if (aliyunAccount != null) { { showAliyunSheet = true } } else null
                     )

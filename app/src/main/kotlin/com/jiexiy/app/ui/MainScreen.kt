@@ -206,6 +206,7 @@ import com.jiexiy.app.ui.screens.SettingsScreen
 import com.jiexiy.app.ui.screens.ThemeScreen
 import com.jiexiy.app.ui.screens.UpdateSheet
 import com.jiexiy.app.ui.viewmodel.AliyunAccountViewModel
+import com.jiexiy.app.ui.viewmodel.AliyunCloudViewModel
 import com.jiexiy.app.ui.viewmodel.AnnouncementViewModel
 import com.jiexiy.app.ui.viewmodel.BaiduAccountViewModel
 import com.jiexiy.app.ui.viewmodel.BaiduCloudViewModel
@@ -795,6 +796,15 @@ fun MainScreen(
             lanzouRepository,
             downloadManager,
             loginState = lanzouLoginState
+        )
+    )
+    // 阿里云盘云盘浏览：点击已登录的阿里云盘卡片打开（access token 从数据库读取）
+    val aliyunCloudViewModel: AliyunCloudViewModel = viewModel(
+        factory = AliyunCloudViewModel.Factory(
+            aliyunApi,
+            aliyunRepository,
+            downloadManager,
+            loginState = aliyunViewModel.aliyunAccount.map { it != null }
         )
     )
     // 网盘空间详情：网盘页顶部「空间总览」展示各平台容量使用
@@ -1529,6 +1539,7 @@ fun MainScreen(
                                     guangyaCloudViewModel = guangyaCloudViewModel,
                                     ilanzouCloudViewModel = ilanzouCloudViewModel,
                                     lanzouCloudViewModel = lanzouCloudViewModel,
+                                    aliyunCloudViewModel = aliyunCloudViewModel,
                                     driveQuotaViewModel = driveQuotaViewModel,
                                     onQuarkLogin = { showQuarkLogin = true },
                                     onFeijiLogin = {
