@@ -91,7 +91,7 @@ class PikPakApi(
 
     private val EMPTY_BODY: RequestBody = ByteArray(0).toRequestBody()
 
-    private var captchaToken: String = ""
+    private var cachedCaptchaToken: String = ""
 
     // ==================== 认证 ====================
 
@@ -134,7 +134,7 @@ class PikPakApi(
             captchaResp.optString("captchaToken"),
             captchaResp.optJSONObject("data")?.optString("captcha_token").orEmpty()
         )
-        this.captchaToken = localCaptchaToken
+        cachedCaptchaToken = localCaptchaToken
 
         // Step 2: signin
         val signinBody = JSONObject()
@@ -184,7 +184,7 @@ class PikPakApi(
             accessToken = accessToken,
             refreshToken = refreshToken,
             expiresAtMs = expiresAtMs,
-            captchaToken = captchaToken
+            captchaToken = cachedCaptchaToken
         )
     }
 
@@ -240,7 +240,7 @@ class PikPakApi(
                 expiresAt = resp.optString("expires_at"),
                 expiresIn = resp.optString("expires_in")
             ),
-            captchaToken = captchaToken
+            captchaToken = cachedCaptchaToken
         )
     }
 
@@ -249,7 +249,7 @@ class PikPakApi(
         withContext(Dispatchers.IO) {
             val json = execJson(
                 Request.Builder().url(PikPakConstants.USER_ME)
-                    .headers(authHeaders(deviceId, accessToken, captchaToken))
+                    .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                     .get()
                     .build(),
                 phase = "user/me"
@@ -264,7 +264,7 @@ class PikPakApi(
         withContext(Dispatchers.IO) {
             val json = execJson(
                 Request.Builder().url(PikPakConstants.ABOUT)
-                    .headers(authHeaders(deviceId, accessToken, captchaToken))
+                    .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                     .get()
                     .build(),
                 phase = "about"
@@ -301,7 +301,7 @@ class PikPakApi(
                 .build()
             val json = execJson(
                 Request.Builder().url(url.toString())
-                    .headers(authHeaders(deviceId, accessToken, captchaToken))
+                    .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                     .get()
                     .build(),
                 phase = "list"
@@ -330,7 +330,7 @@ class PikPakApi(
             .build()
         execJson(
             Request.Builder().url(url.toString())
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .get()
                 .build(),
             phase = "file detail"
@@ -376,7 +376,7 @@ class PikPakApi(
             .put("parent_id", parentId)
         val json = execJson(
             Request.Builder().url(PikPakConstants.FILES)
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .post(body.toString().toRequestBody(jsonMediaType))
                 .build(),
             phase = "create folder"
@@ -400,7 +400,7 @@ class PikPakApi(
         val body = JSONObject().put("name", newName)
         execJson(
             Request.Builder().url(url.toString())
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .method("PATCH", body.toString().toRequestBody(jsonMediaType))
                 .build(),
             phase = "rename"
@@ -420,7 +420,7 @@ class PikPakApi(
             .put("to", JSONObject().put("parent_id", targetParentId.ifEmpty { "root" }))
         execJson(
             Request.Builder().url(PikPakConstants.FILES_BATCH_MOVE)
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .post(body.toString().toRequestBody(jsonMediaType))
                 .build(),
             phase = "batch move"
@@ -437,7 +437,7 @@ class PikPakApi(
         val body = JSONObject().put("ids", JSONArray(ids.take(100)))
         execJson(
             Request.Builder().url(PikPakConstants.FILES_BATCH_TRASH)
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .post(body.toString().toRequestBody(jsonMediaType))
                 .build(),
             phase = "batch trash"
@@ -466,7 +466,7 @@ class PikPakApi(
             }
         val json = execJson(
             Request.Builder().url(PikPakConstants.SHARE)
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .post(body.toString().toRequestBody(jsonMediaType))
                 .build(),
             phase = "create share"
@@ -609,7 +609,7 @@ class PikPakApi(
             .put("specify_parent_id", true)
         val json = execJson(
             Request.Builder().url(PikPakConstants.SHARE_RESTORE)
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .post(body.toString().toRequestBody(jsonMediaType))
                 .build(),
             phase = "share restore"
@@ -628,7 +628,7 @@ class PikPakApi(
                 .build()
             taskJson = execJson(
                 Request.Builder().url(taskUrl.toString())
-                    .headers(authHeaders(deviceId, accessToken, captchaToken))
+                    .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                     .get()
                     .build(),
                 phase = "task status"
@@ -709,7 +709,7 @@ class PikPakApi(
             .put("objProvider", JSONObject().put("provider", "UPLOAD_TYPE_UNKNOWN"))
         val createResp = execJson(
             Request.Builder().url(PikPakConstants.FILES)
-                .headers(authHeaders(deviceId, accessToken, captchaToken))
+                .headers(authHeaders(deviceId, accessToken, cachedCaptchaToken))
                 .post(createBody.toString().toRequestBody(jsonMediaType))
                 .build(),
             phase = "upload create"
@@ -982,7 +982,7 @@ class PikPakApi(
             .add("Authorization", "Bearer $accessToken")
             .add("Accept", "application/json, text/plain, */*")
             .add("Content-Type", "application/json")
-        if (captchaToken.isNotBlank()) builder.add("X-Captcha-Token", captchaToken)
+        if (cachedCaptchaToken.isNotBlank()) builder.add("X-Captcha-Token", cachedCaptchaToken)
         return builder.build()
     }
 
