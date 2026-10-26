@@ -350,34 +350,87 @@ class QuarkApi(
         parseData(request) { data -> data.optString("task_id").takeIf { it.isNotBlank() } }
     }
 
+    /** 批量转存分享文件到个人网盘目录，返回异步任务 id（可能为空） */
+    suspend fun saveShareFiles(
+        shareId: String,
+        stoken: String,
+        pdirFid: String,
+        fids: List<String>,
+        fidTokens: List<String>,
+        toPdirFid: String,
+        cookie: String
+    ): String? = withContext(Dispatchers.IO) {
+        if (fids.isEmpty() || fids.size != fidTokens.size) return@withContext null
+        val body = JSONObject()
+            .put("pwd_id", shareId)
+            .put("stoken", stoken)
+            .put("pdir_fid", pdirFid)
+            .put("to_pdir_fid", toPdirFid)
+            .put("fid_list", JSONArray().apply { fids.forEach { put(it) } })
+            .put("fid_token_list", JSONArray().apply { fidTokens.forEach { put(it) } })
+            .put("scene", "link")
+            .toString()
+        val request = postJson(QuarkConstants.SAVE_URL, cookie, body)
+        parseData(request) { data -> data.optString("task_id").takeIf { it.isNotBlank() } }
+    }
+
     /** 轮询异步转存任务，直到完成或超时（最多 10 次 × 1s）
      *  官方轮询响应：data.status == 2（完成）且带 finished_at；
      *  转存后的新 fid 在 data.save_as.save_as_top_fids[0]（download 必须用它）。
-     *  @return 转存后的新 fid；null 表示超时/失败。
+     *  失败状态：data.status in {3, 4}（失败/取消），抛出异常。
+     *  @return 转存后的新 fid；null 表示超时。
      */
     suspend fun pollTask(taskId: String, cookie: String): String? = withContext(Dispatchers.IO) {
         val url = "${QuarkConstants.TASK_URL}&task_id=${URLEncoder.encode(taskId, "UTF-8")}&retry_index=0"
         for (i in 0 until 10) {
-            val savedFid = runCatching {
+            val result = runCatching {
                 client.newCall(get(url, cookie)).execute().use { response ->
                     val json = JSONObject(response.body?.string() ?: "{}")
-                    if (json.optInt("status") != 200) return@use null
-                    val data = json.optJSONObject("data") ?: return@use null
+                    if (json.optInt("status") != 200) return@use PollResult.InProgress
+                    val data = json.optJSONObject("data") ?: return@use PollResult.InProgress
+                    val taskStatus = data.optInt("status")
+                    // 失败：status 3 或 4
+                    if (taskStatus == 3 || taskStatus == 4) {
+                        val msg = data.optString("message")
+                        return@use PollResult.Failure(msg.ifBlank { "转存任务失败 (status=$taskStatus)" })
+                    }
                     // 完成：finished_at > 0 或 status/task_status == 2
                     val finished = data.optLong("finished_at") > 0 ||
-                        data.optInt("status") == 2 ||
+                        taskStatus == 2 ||
                         data.optInt("task_status") == 2
-                    if (!finished) return@use null
+                    if (!finished) return@use PollResult.InProgress
                     data.optJSONObject("save_as")
                         ?.optJSONArray("save_as_top_fids")
-                        ?.optString(0)
+                        ?.let { arr ->
+                            // 过滤空 fid，取第一个非空值
+                            for (j in 0 until arr.length()) {
+                                val fid = arr.optString(j, "")
+                                if (fid.isNotBlank()) return@let fid
+                            }
+                            ""
+                        }
                         ?.takeIf { it.isNotBlank() }
+                        ?.let { return@use PollResult.Success(it) }
+                    PollResult.InProgress
                 }
-            }.getOrNull()
-            if (savedFid != null) return@withContext savedFid
+            }.getOrNull() ?: PollResult.InProgress
+            when (result) {
+                is PollResult.Success -> return@withContext result.fid
+                is PollResult.Failure -> throw IllegalStateException(result.message)
+                is PollResult.InProgress -> {
+                    // continue
+                }
+            }
             delay(1000)
         }
         null
+    }
+
+    /** 轮询任务结果 */
+    private sealed class PollResult {
+        object InProgress : PollResult()
+        data class Success(val fid: String) : PollResult()
+        data class Failure(val message: String) : PollResult()
     }
     // ---------- 网盘空间详情 ----------
 

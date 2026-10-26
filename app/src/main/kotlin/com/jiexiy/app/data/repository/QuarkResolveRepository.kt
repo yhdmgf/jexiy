@@ -134,12 +134,18 @@ class QuarkResolveRepository(private val api: QuarkApi) : ShareResolveRepository
         val subDirFid = api.createFolder(subDirName, baseDir, cookie)
             ?: throw IllegalStateException("创建临时转存目录失败")
 
-        val savedFid = transferFileTo(session, file, subDirFid, cookie).getOrThrow()
-        val link = api.getDownloadLink(savedFid, cookie)
-            ?: throw IllegalStateException("获取下载链接失败")
+        try {
+            val savedFid = transferFileTo(session, file, subDirFid, cookie).getOrThrow()
+            val link = api.getDownloadLink(savedFid, cookie)
+                ?: throw IllegalStateException("获取下载链接失败")
 
-        // 不在此删除！下载完成后再删整个子目录（含文件）
-        link.copy(cleanupDirFid = subDirFid)
+            // 不在此删除！下载完成后再删整个子目录（含文件）
+            link.copy(cleanupDirFid = subDirFid)
+        } catch (e: Exception) {
+            // 失败时清理临时子目录（可能包含已转存的文件）
+            runCatching { api.deleteFile(subDirFid, cookie) }
+            throw e
+        }
     }.fold(
         onSuccess = { Result.success(it) },
         onFailure = { Result.failure(it) }
