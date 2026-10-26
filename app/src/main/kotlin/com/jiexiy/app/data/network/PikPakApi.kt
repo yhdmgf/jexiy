@@ -526,6 +526,7 @@ class PikPakApi(
             PikPakShareStatus.DELETED -> throw IllegalStateException("PikPak 分享已被删除")
             PikPakShareStatus.EXPIRED -> throw IllegalStateException("PikPak 分享已过期")
             PikPakShareStatus.NOT_FOUND -> throw IllegalStateException("PikPak 分享不存在")
+            PikPakShareStatus.UNKNOWN -> throw IllegalStateException("PikPak 分享状态未知")
         }
         val session = ShareSession(
             shareId = shareId,
@@ -776,7 +777,7 @@ class PikPakApi(
             )
         } catch (e: Exception) {
             // 上传失败时清理残留节点
-            runCatching { batchTrash(listOf(newFileId), accessToken, deviceId) }
+            runCatching { batchTrash(accessToken, deviceId, listOf(newFileId)) }
             throw e
         }
     }
