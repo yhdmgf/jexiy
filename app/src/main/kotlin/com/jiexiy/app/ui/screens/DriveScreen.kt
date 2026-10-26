@@ -545,7 +545,7 @@ fun DriveScreen(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
-                item(key = quark.id) {
+                item(key = "quark_${quark.id}") {
                     DriveAccountCard(
                         account = quark,
                         quota = driveQuotaViewModel.quarkQuota.collectAsState().value,
@@ -561,7 +561,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = uc.id) {
+                item(key = "uc_${uc.id}") {
                     DriveAccountCard(
                         account = uc,
                         quota = driveQuotaViewModel.ucQuota.collectAsState().value,
@@ -577,7 +577,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = xunlei.id) {
+                item(key = "xunlei_${xunlei.id}") {
                     DriveAccountCard(
                         account = xunlei,
                         quota = driveQuotaViewModel.xunleiQuota.collectAsState().value,
@@ -593,7 +593,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = baidu.id) {
+                item(key = "baidu_${baidu.id}") {
                     DriveAccountCard(
                         account = baidu,
                         quota = driveQuotaViewModel.baiduQuota.collectAsState().value,
@@ -609,7 +609,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = c139.id) {
+                item(key = "c139_${c139.id}") {
                     DriveAccountCard(
                         account = c139,
                         quota = driveQuotaViewModel.c139Quota.collectAsState().value,
@@ -625,7 +625,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = pan123.id) {
+                item(key = "pan123_${pan123.id}") {
                     DriveAccountCard(
                         account = pan123,
                         quota = driveQuotaViewModel.pan123Quota.collectAsState().value,
@@ -641,7 +641,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = pan115.id) {
+                item(key = "pan115_${pan115.id}") {
                     DriveAccountCard(
                         account = pan115,
                         quota = driveQuotaViewModel.pan115Quota.collectAsState().value,
@@ -657,7 +657,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = guangya.id) {
+                item(key = "guangya_${guangya.id}") {
                     DriveAccountCard(
                         account = guangya,
                         quota = driveQuotaViewModel.guangyaQuota.collectAsState().value,
@@ -673,7 +673,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = ilanzou.id) {
+                item(key = "ilanzou_${ilanzou.id}") {
                     DriveAccountCard(
                         account = ilanzou,
                         quota = driveQuotaViewModel.ilanzouQuota.collectAsState().value,
@@ -689,7 +689,7 @@ fun DriveScreen(
                         }
                     )
                 }
-                item(key = lanzou.id) {
+                item(key = "lanzou_${lanzou.id}") {
                     DriveAccountCard(
                         account = lanzou,
                         onClick = if (lanzou.isLoggedIn) {
@@ -751,7 +751,7 @@ fun DriveScreen(
                         onMoreClick = if (aliyunAccount != null) { { showAliyunSheet = true } } else null
                     )
                 }
-                item(key = github.id) {
+                item(key = "github_${github.id}") {
                     // GitHub：已配置 Token 点击主体进入「我的主页」；未配置打开 Token 弹窗；更多按钮在登录后显示
                     DriveAccountCard(
                         account = github,
@@ -759,7 +759,7 @@ fun DriveScreen(
                         onMoreClick = if (githubHasToken) { { showGitHubSheet = true } } else null
                     )
                 }
-                items(others, key = { it.id }) { account ->
+                items(others, key = { "${it.platform}_${it.id}" }) { account ->
                     DriveAccountCard(account = account)
                 }
                 // 视频解析：平台列表与登录态全部由 VideoAccountSection 自己呈现，这里只透传数据与回调
