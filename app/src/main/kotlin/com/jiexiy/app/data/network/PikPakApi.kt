@@ -129,12 +129,12 @@ class PikPakApi(
                 .build(),
             phase = "captcha init"
         )
-        val captchaToken = firstNonBlank(
+        val localCaptchaToken = firstNonBlank(
             captchaResp.optString("captcha_token"),
             captchaResp.optString("captchaToken"),
             captchaResp.optJSONObject("data")?.optString("captcha_token").orEmpty()
         )
-        this.captchaToken = captchaToken
+        this.captchaToken = localCaptchaToken
 
         // Step 2: signin
         val signinBody = JSONObject()
@@ -143,7 +143,7 @@ class PikPakApi(
             .put("grant_type", "password")
             .put("username", name)
             .put("password", password)
-            .put("captcha_token", captchaToken)
+            .put("captcha_token", localCaptchaToken)
         val signinResp = execJson(
             Request.Builder().url(PikPakConstants.SIGNIN)
                 .headers(authlessHeaders(deviceId))
