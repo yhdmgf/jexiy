@@ -32,41 +32,45 @@ fun AliyunCloudScreen(
     onUploadStarted: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val multiSelectMode by viewModel.multiSelectMode.collectAsState()
-    val selected by remember { mutableStateOf(viewModel.selected) }
-    val refreshing by viewModel.refreshing.collectAsState()
-    val cloudMessage by viewModel.cloudMessage.collectAsState()
-    val shareResult by viewModel.shareResult.collectAsState()
-    val actionFileState by viewModel.actionFile.collectAsState()
-
+    
+    var multiSelectMode by remember { mutableStateOf(false) }
+    var selectedFiles by remember { mutableStateOf(listOf<ShareFile>()) }
+    var cloudMessage by remember { mutableStateOf<String?>(null) }
+    var shareResult by remember { mutableStateOf<String?>(null) }
+    var actionFile by remember { mutableStateOf<ShareFile?>(null) }
+    
     var showDownloadDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showShareDialog by remember { mutableStateOf(false) }
-    var showUploadDialog by remember { mutableStateOf(false) }
     var showFolderDialog by remember { mutableStateOf(false) }
-
+    
     val snackbarHostState = remember { SnackbarHostState() }
+    val clipboardManager = LocalClipboardManager.current
+    
+    // 同步 ViewModel 的状态变化
+    LaunchedEffect(uiState) {
+        // 可以在这里同步一些状态
+    }
+    
     LaunchedEffect(cloudMessage) {
         cloudMessage?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.cloudMessage.value = null
+            cloudMessage = null
         }
     }
-
-    val clipboardManager = LocalClipboardManager.current
+    
     if (shareResult != null) {
         AlertDialog(
-            onDismissRequest = { viewModel.shareResult.value = null },
+            onDismissRequest = { shareResult = null },
             title = { Text("分享创建成功") },
             text = { Text(shareResult ?: "") },
             confirmButton = {
                 TextButton(onClick = {
                     clipboardManager.setText(AnnotatedString(shareResult ?: ""))
-                    viewModel.shareResult.value = null
+                    shareResult = null
                 }) { Text("复制链接") }
             },
-            dismissButton = { TextButton(onClick = { viewModel.shareResult.value = null }) { Text("关闭") } }
+            dismissButton = { TextButton(onClick = { shareResult = null }) { Text("关闭") } }
         )
     }
 
@@ -81,15 +85,11 @@ fun AliyunCloudScreen(
                 },
                 actions = {
                     if (!multiSelectMode) {
-                        IconButton(onClick = { showUploadDialog = true }) {
-                            Icon(imageVector = Icons.Outlined.InsertDriveFile, contentDescription = "上传")
-                        }
-                        IconButton(onClick = { viewModel.enterMultiSelect() }) {
+                        IconButton(onClick = { viewModel.enterMultiSelect(); multiSelectMode = true }) {
                             Icon(imageVector = Icons.Outlined.MoreVert, contentDescription = "更多")
                         }
                     } else {
-                        TextButton(onClick = { viewModel.exitMultiSelect() }) { Text("取消") }
-                        TextButton(onClick = { viewModel.selectAll() }) { Text("全选") }
+                        TextButton(onClick = { viewModel.exitMultiSelect(); multiSelectMode = false; selectedFiles = emptyList() }) { Text("取消") }
                     }
                 },
                 scrollBehavior = scrollBehavior
@@ -141,16 +141,25 @@ fun AliyunCloudScreen(
                         }
 
                         items(state.files, key = { it.fid }) { file ->
+                            val isSelected = selectedFiles.contains(file)
                             AliyunFileRow(
                                 file = file,
-                                selected = selected.contains(file),
+                                selected = isSelected,
                                 multiSelectMode = multiSelectMode,
                                 onClick = {
-                                    if (multiSelectMode) viewModel.toggleSelect(file)
-                                    else if (file.isdir) viewModel.openFolder(file)
-                                    else showDownloadDialog = true
+                                    if (multiSelectMode) {
+                                        selectedFiles = if (isSelected) selectedFiles.filter { it != file } else selectedFiles + file
+                                    } else if (file.isdir) {
+                                        viewModel.openFolder(file)
+                                    } else {
+                                        actionFile = file
+                                        showDownloadDialog = true
+                                    }
                                 },
-                                onLongClick = { viewModel.enterMultiSelect() }
+                                onLongClick = {
+                                    multiSelectMode = true
+                                    selectedFiles = if (isSelected) emptyList() else listOf(file)
+                                }
                             )
                         }
                     }
@@ -159,15 +168,17 @@ fun AliyunCloudScreen(
         }
     }
 
+    // 下载对话框
     if (showDownloadDialog && actionFile != null) {
+        val file = actionFile!!
         AlertDialog(
             onDismissRequest = { showDownloadDialog = false },
             title = { Text("下载") },
-            text = { Text("确定下载「${actionFileState?.fname}」吗？") },
+            text = { Text("确定下载「${file.fname}」吗？") },
             confirmButton = {
                 TextButton(onClick = {
                     showDownloadDialog = false
-                    actionFileState?.let { viewModel.startDownload(it) }
+                    viewModel.startDownload(file)
                     onDownloadStarted()
                 }) { Text("下载") }
             },
@@ -175,8 +186,10 @@ fun AliyunCloudScreen(
         )
     }
 
+    // 重命名对话框
     if (showRenameDialog && actionFile != null) {
-        var renameText by remember { mutableStateOf(actionFileState?.fname ?: "") }
+        val file = actionFile!!
+        var renameText by remember { mutableStateOf(file.fname) }
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
             title = { Text("重命名") },
@@ -184,34 +197,50 @@ fun AliyunCloudScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showRenameDialog = false
-                    actionFileState?.let { viewModel.rename(it, renameText) }
+                    viewModel.rename(file, renameText)
                 }) { Text("确定") }
             },
             dismissButton = { TextButton(onClick = { showRenameDialog = false }) { Text("取消") } }
         )
     }
 
+    // 删除对话框
     if (showDeleteDialog && actionFile != null) {
+        val file = actionFile!!
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("删除") },
-            text = { Text("确定删除「${actionFileState?.fname}」吗？") },
+            text = { Text("确定删除「${file.fname}」吗？") },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
-                    actionFileState?.let { viewModel.delete(it) }
+                    viewModel.delete(file)
                 }) { Text("删除") }
             },
             dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("取消") } }
         )
     }
 
-    if (multiSelectMode && selected.isNotEmpty()) {
+    // 多选操作栏
+    if (multiSelectMode && selectedFiles.isNotEmpty()) {
         BottomAppBar {
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = { viewModel.batchDelete(selected) }) { Text("删除 (${selected.size})") }
-            TextButton(onClick = { viewModel.batchMove(selected) }) { Text("移动") }
-            TextButton(onClick = { viewModel.createShare(selected, "阿里云盘分享", 7, null) }) { Text("分享") }
+            TextButton(onClick = {
+                viewModel.batchDelete(selectedFiles)
+                multiSelectMode = false
+                selectedFiles = emptyList()
+            }) { Text("删除 (${selectedFiles.size})") }
+            TextButton(onClick = {
+                viewModel.batchMove(selectedFiles)
+                multiSelectMode = false
+                selectedFiles = emptyList()
+            }) { Text("移动") }
+            TextButton(onClick = {
+                val shareUrl = viewModel.createShare(selectedFiles, "阿里云盘分享", 7, null)
+                shareResult = shareUrl
+                multiSelectMode = false
+                selectedFiles = emptyList()
+            }) { Text("分享") }
         }
     }
 }

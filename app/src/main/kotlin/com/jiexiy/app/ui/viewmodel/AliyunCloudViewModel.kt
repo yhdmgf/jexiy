@@ -217,16 +217,19 @@ class AliyunCloudViewModel(
         }
     }
 
-    fun createShare(files: List<ShareFile>, title: String, expireDays: Int, passcode: String?) {
+    fun createShare(files: List<ShareFile>, title: String, expireDays: Int, passcode: String?): String? {
+        var result: String? = null
         viewModelScope.launch {
             try {
                 val c = credential()
                 val (shareUrl, _) = api.createShare(c, files.map { it.fid }, title, passcode ?: "", expireDays)
+                result = shareUrl
                 shareResult.value = shareUrl
             } catch (e: Exception) {
                 cloudMessage.value = "创建分享失败：${e.message}"
             }
         }
+        return result
     }
 
     fun showMove(file: ShareFile) {
