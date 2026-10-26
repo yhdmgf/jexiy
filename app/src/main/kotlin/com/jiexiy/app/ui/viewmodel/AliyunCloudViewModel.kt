@@ -11,12 +11,8 @@ import com.jiexiy.app.data.download.DownloadManager
 import com.jiexiy.app.data.download.DownloadPlatform
 import com.jiexiy.app.data.network.AliyunApi
 import com.jiexiy.app.data.network.AliyunCredential
-import com.jiexiy.app.data.network.model.DownloadLink
 import com.jiexiy.app.data.network.model.ShareFile
-import com.jiexiy.app.data.network.model.ShareInfo
 import com.jiexiy.app.data.repository.AliyunAccountRepository
-import com.jiexiy.app.ui.preview.CloudPreview
-import com.jiexiy.app.ui.preview.PreviewTypes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,11 +23,7 @@ import kotlinx.coroutines.launch
 
 sealed interface AliyunCloudUiState {
     data object Loading : AliyunCloudUiState
-    data class Loaded(
-        val files: List<ShareFile>,
-        val pathNames: List<String>,
-        val dirId: String
-    ) : AliyunCloudUiState
+    data class Loaded(val files: List<ShareFile>, val pathNames: List<String>, val dirId: String) : AliyunCloudUiState
     data class Error(val message: String) : AliyunCloudUiState
 }
 
@@ -45,27 +37,15 @@ class AliyunCloudViewModel(
     private val _uiState = MutableStateFlow<AliyunCloudUiState>(AliyunCloudUiState.Loading)
     val uiState: StateFlow<AliyunCloudUiState> = _uiState.asStateFlow()
 
-    var actionFile by mutableStateOf<ShareFile?>(null)
-        private set
-    var cloudMessage by mutableStateOf<String?>(null)
-        private set
-    var isOperating by mutableStateOf(false)
-        private set
-    var folderProgress by mutableStateOf<String?>(null)
-        private set
-    var refreshing by mutableStateOf(false)
-        private set
-    var downloadTriggered by mutableStateOf(0)
-        private set
-    var shareResult by mutableStateOf<ShareInfo?>(null)
-        private set
-    var multiSelectMode by mutableStateOf(false)
-        private set
+    var actionFile = mutableStateOf<ShareFile?>(null)
+    var cloudMessage = mutableStateOf<String?>(null)
+    var isOperating = mutableStateOf(false)
+    var refreshing = mutableStateOf(false)
+    var downloadTriggered = mutableStateOf(0)
+    var shareResult = mutableStateOf<String?>(null)
+    var multiSelectMode = mutableStateOf(false)
     private val _selected = mutableStateListOf<ShareFile>()
     val selected: List<ShareFile> get() = _selected
-
-    var downloadLink by mutableStateOf<DownloadLink?>(null)
-        private set
 
     private val dirStack = ArrayDeque<String>()
     private val nameStack = ArrayDeque<String>()
@@ -78,10 +58,7 @@ class AliyunCloudViewModel(
     init {
         loadRoot()
         viewModelScope.launch {
-            loginState
-                .drop(1)
-                .distinctUntilChanged()
-                .collect { loggedIn -> if (loggedIn) loadRoot() }
+            loginState.drop(1).distinctUntilChanged().collect { loggedIn -> if (loggedIn) loadRoot() }
         }
     }
 
@@ -91,128 +68,96 @@ class AliyunCloudViewModel(
     fun loadRoot() {
         dirStack.clear()
         nameStack.clear()
-        load("", emptyList())
+        viewModelScope.launch {
+            try {
+                val c = credential()
+                val files = api.listPersonal(c, "")
+                _uiState.value = AliyunCloudUiState.Loaded(files, emptyList(), "")
+            } catch (e: Exception) {
+                _uiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
+            }
+        }
     }
 
     fun openFolder(file: ShareFile) {
         dirStack.addLast(file.fid)
         nameStack.addLast(file.fname)
-        load(file.fid, nameStack.toList())
+        viewModelScope.launch {
+            try {
+                val c = credential()
+                val files = api.listPersonal(c, file.fid)
+                _uiState.value = AliyunCloudUiState.Loaded(files, nameStack.toList(), file.fid)
+            } catch (e: Exception) {
+                _uiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
+            }
+        }
     }
 
     fun back() {
-        if (nameStack.isEmpty()) {
-            loadRoot()
-            return
-        }
+        if (nameStack.isEmpty()) { loadRoot(); return }
         dirStack.removeLast()
         nameStack.removeLast()
-        load(dirStack.lastOrNull() ?: "", nameStack.toList())
-    }
-
-    fun navigateToLevel(level: Int) {
-        while (nameStack.size > level) {
-            dirStack.removeLast()
-            nameStack.removeLast()
+        val dirId = dirStack.lastOrNull() ?: ""
+        viewModelScope.launch {
+            try {
+                val c = credential()
+                val files = api.listPersonal(c, dirId)
+                _uiState.value = AliyunCloudUiState.Loaded(files, nameStack.toList(), dirId)
+            } catch (e: Exception) {
+                _uiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
+            }
         }
-        load(dirStack.lastOrNull() ?: "", nameStack.toList())
     }
 
     fun toggleSelect(file: ShareFile) {
-        if (multiSelectMode) {
+        if (multiSelectMode.value) {
             if (_selected.contains(file)) _selected.remove(file) else _selected.add(file)
         } else {
-            actionFile = file
+            actionFile.value = file
         }
     }
 
-    fun enterMultiSelect() {
-        multiSelectMode = true
-    }
-
-    fun exitMultiSelect() {
-        multiSelectMode = false
-        _selected.clear()
-        actionFile = null
-    }
+    fun enterMultiSelect() { multiSelectMode.value = true }
+    fun exitMultiSelect() { multiSelectMode.value = false; _selected.clear(); actionFile.value = null }
 
     fun refresh() {
         viewModelScope.launch {
-            refreshing = true
+            refreshing.value = true
             val currentDir = dirStack.lastOrNull() ?: ""
             val names = nameStack.toList()
-            load(currentDir, names)
-            refreshing = false
+            try {
+                val c = credential()
+                val files = api.listPersonal(c, currentDir)
+                _uiState.value = AliyunCloudUiState.Loaded(files, names, currentDir)
+            } catch (e: Exception) {
+                _uiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
+            }
+            refreshing.value = false
         }
     }
 
     fun selectAll() {
         if (_uiState.value is AliyunCloudUiState.Loaded) {
-            val files = (_uiState.value as AliyunCloudUiState.Loaded).files
-            _selected.addAll(files)
+            _selected.addAll((_uiState.value as AliyunCloudUiState.Loaded).files)
         }
     }
 
-    fun clearSelection() {
-        _selected.clear()
-    }
-
-    fun showDownload(file: ShareFile) {
-        viewModelScope.launch {
-            try {
-                val c = credential()
-                val link = api.getDownloadUrl(c, file.fid)
-                downloadLink = DownloadLink(
-                    url = link,
-                    fileName = file.fname,
-                    fileSize = file.fsize,
-                    platform = DownloadPlatform.ALIYUN
-                )
-            } catch (e: Exception) {
-                cloudMessage = "获取下载链接失败：${e.message}"
-            }
-        }
-    }
+    fun clearSelection() { _selected.clear() }
 
     fun startDownload(file: ShareFile) {
         viewModelScope.launch {
             try {
                 val c = credential()
-                val link = api.getDownloadUrl(c, file.fid)
-                downloadManager.start(
-                    url = link,
-                    fileName = file.fname,
-                    platform = DownloadPlatform.ALIYUN,
-                    fileSize = file.fsize
+                val link = api.getDownloadUrl(c, file.fid, file.fname, file.fsize)
+                downloadManager.enqueue(
+                    url = link.downloadUrl,
+                    fileName = link.filename,
+                    size = link.size,
+                    platform = DownloadPlatform.ALIYUN
                 )
-                downloadTriggered++
+                downloadTriggered.value++
             } catch (e: Exception) {
-                cloudMessage = "下载失败：${e.message}"
-            }
-        }
-    }
-
-    fun startBatchDownload(files: List<ShareFile>) {
-        viewModelScope.launch {
-            try {
-                val c = credential()
-                for (file in files) {
-                    if (file.isdir) {
-                        cloudMessage = "不支持下载文件夹"
-                        return@launch
-                    }
-                    val link = api.getDownloadUrl(c, file.fid)
-                    downloadManager.start(
-                        url = link,
-                        fileName = file.fname,
-                        platform = DownloadPlatform.ALIYUN,
-                        fileSize = file.fsize
-                    )
-                }
-                downloadTriggered += files.size
-                exitMultiSelect()
-            } catch (e: Exception) {
-                cloudMessage = "批量下载失败：${e.message}"
+                cloudMessage.value = "下载失败：${e.message}"
             }
         }
     }
@@ -222,10 +167,10 @@ class AliyunCloudViewModel(
             try {
                 val c = credential()
                 api.rename(c, file.fid, newName)
-                cloudMessage = "重命名成功"
+                cloudMessage.value = "重命名成功"
                 refresh()
             } catch (e: Exception) {
-                cloudMessage = "重命名失败：${e.message}"
+                cloudMessage.value = "重命名失败：${e.message}"
             }
         }
     }
@@ -235,10 +180,10 @@ class AliyunCloudViewModel(
             try {
                 val c = credential()
                 api.delete(c, listOf(file.fid))
-                cloudMessage = "删除成功"
+                cloudMessage.value = "删除成功"
                 refresh()
             } catch (e: Exception) {
-                cloudMessage = "删除失败：${e.message}"
+                cloudMessage.value = "删除失败：${e.message}"
             }
         }
     }
@@ -247,13 +192,12 @@ class AliyunCloudViewModel(
         viewModelScope.launch {
             try {
                 val c = credential()
-                val fids = files.map { it.fid }
-                api.delete(c, fids)
-                cloudMessage = "删除成功"
+                api.delete(c, files.map { it.fid })
+                cloudMessage.value = "删除成功"
                 exitMultiSelect()
                 refresh()
             } catch (e: Exception) {
-                cloudMessage = "批量删除失败：${e.message}"
+                cloudMessage.value = "批量删除失败：${e.message}"
             }
         }
     }
@@ -264,10 +208,10 @@ class AliyunCloudViewModel(
                 val c = credential()
                 val dirId = dirStack.lastOrNull() ?: ""
                 api.mkdir(c, dirId, name)
-                cloudMessage = "文件夹创建成功"
+                cloudMessage.value = "文件夹创建成功"
                 refresh()
             } catch (e: Exception) {
-                cloudMessage = "创建文件夹失败：${e.message}"
+                cloudMessage.value = "创建文件夹失败：${e.message}"
             }
         }
     }
@@ -276,22 +220,16 @@ class AliyunCloudViewModel(
         viewModelScope.launch {
             try {
                 val c = credential()
-                val fids = files.map { it.fid }
-                val share = api.createShare(c, fids, title, expireDays, passcode)
-                shareResult = ShareInfo(
-                    id = share.shareId,
-                    link = share.shareUrl,
-                    title = title,
-                    password = passcode
-                )
+                val share = api.createShare(c, files.map { it.fid }, title, expireDays, passcode)
+                shareResult.value = share.shareUrl
             } catch (e: Exception) {
-                cloudMessage = "创建分享失败：${e.message}"
+                cloudMessage.value = "创建分享失败：${e.message}"
             }
         }
     }
 
     fun showMove(file: ShareFile) {
-        actionFile = file
+        actionFile.value = file
         moveDirStack.clear()
         moveNameStack.clear()
         loadMoveRoot()
@@ -307,7 +245,13 @@ class AliyunCloudViewModel(
 
     private fun loadMoveRoot() {
         viewModelScope.launch {
-            loadMove("", emptyList())
+            try {
+                val c = credential()
+                val files = api.listPersonal(c, "")
+                _moveUiState.value = AliyunCloudUiState.Loaded(files, emptyList(), "")
+            } catch (e: Exception) {
+                _moveUiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
+            }
         }
     }
 
@@ -315,19 +259,13 @@ class AliyunCloudViewModel(
         moveDirStack.addLast(file.fid)
         moveNameStack.addLast(file.fname)
         viewModelScope.launch {
-            loadMove(file.fid, moveNameStack.toList())
-        }
-    }
-
-    fun moveBack() {
-        if (moveNameStack.isEmpty()) {
-            loadMoveRoot()
-            return
-        }
-        moveDirStack.removeLast()
-        moveNameStack.removeLast()
-        viewModelScope.launch {
-            loadMove(moveDirStack.lastOrNull() ?: "", moveNameStack.toList())
+            try {
+                val c = credential()
+                val files = api.listPersonal(c, file.fid)
+                _moveUiState.value = AliyunCloudUiState.Loaded(files, moveNameStack.toList(), file.fid)
+            } catch (e: Exception) {
+                _moveUiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
+            }
         }
     }
 
@@ -336,17 +274,14 @@ class AliyunCloudViewModel(
             try {
                 val c = credential()
                 val destDir = moveDirStack.lastOrNull() ?: ""
-                val fids = if (_selected.isNotEmpty()) _selected.map { it.fid } else actionFile?.let { listOf(it.fid) } ?: emptyList()
-                if (fids.isEmpty()) {
-                    cloudMessage = "未选择文件"
-                    return@launch
-                }
+                val fids = if (_selected.isNotEmpty()) _selected.map { it.fid } else actionFile.value?.let { listOf(it.fid) } ?: emptyList()
+                if (fids.isEmpty()) { cloudMessage.value = "未选择文件"; return@launch }
                 api.move(c, fids, destDir)
-                cloudMessage = "移动成功"
+                cloudMessage.value = "移动成功"
                 exitMultiSelect()
                 refresh()
             } catch (e: Exception) {
-                cloudMessage = "移动失败：${e.message}"
+                cloudMessage.value = "移动失败：${e.message}"
             }
         }
     }
@@ -355,41 +290,7 @@ class AliyunCloudViewModel(
         moveDirStack.clear()
         moveNameStack.clear()
         _selected.clear()
-        actionFile = null
-    }
-
-    fun preview(file: ShareFile): CloudPreview {
-        return when (PreviewTypes.detect(file.fname)) {
-            PreviewTypes.IMAGE -> CloudPreview.Image(file)
-            PreviewTypes.VIDEO -> CloudPreview.Video(file)
-            PreviewTypes.AUDIO -> CloudPreview.Audio(file)
-            PreviewTypes.DOCUMENT -> CloudPreview.Document(file)
-            PreviewTypes.NONE -> CloudPreview.None(file)
-        }
-    }
-
-    private suspend fun load(dirId: String, pathNames: List<String>) {
-        viewModelScope.launch {
-            _uiState.value = AliyunCloudUiState.Loading
-            try {
-                val c = credential()
-                val files = api.listPersonal(c, dirId)
-                _uiState.value = AliyunCloudUiState.Loaded(files, pathNames, dirId)
-            } catch (e: Exception) {
-                _uiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
-            }
-        }
-    }
-
-    private suspend fun loadMove(dirId: String, pathNames: List<String>) {
-        _moveUiState.value = AliyunCloudUiState.Loading
-        try {
-            val c = credential()
-            val files = api.listPersonal(c, dirId)
-            _moveUiState.value = AliyunCloudUiState.Loaded(files, pathNames, dirId)
-        } catch (e: Exception) {
-            _moveUiState.value = AliyunCloudUiState.Error(e.message ?: "加载失败")
-        }
+        actionFile.value = null
     }
 
     class Factory(
