@@ -262,6 +262,7 @@ class QuarkApi(
         size: Int = 100
     ): List<ShareFile>? = withContext(Dispatchers.IO) {
         val all = mutableListOf<ShareFile>()
+        val seen = mutableSetOf<String>()
         var p = page
         while (true) {
             val url = buildString {
@@ -289,9 +290,13 @@ class QuarkApi(
                 buildList {
                     for (i in 0 until array.length()) {
                         val item = array.optJSONObject(i) ?: continue
+                        val fid = item.optString("fid")
+                        // 去重：跳过已见过的 fid
+                        if (fid.isEmpty() || seen.contains(fid)) continue
+                        seen.add(fid)
                         add(
                             ShareFile(
-                                fid = item.optString("fid"),
+                                fid = fid,
                                 fname = item.optString("file_name").ifEmpty { item.optString("fname") },
                                 fsize = item.optLong("size"),
                                 isdir = item.optBoolean("dir", false),
@@ -303,9 +308,10 @@ class QuarkApi(
                     }
                 }
             }
+            val added = files.size
             all += files
-            // 本页未满 size → 已是最后一页；封顶 100 页防止异常死循环
-            if (files.size < size || p >= 100) break
+            // 本页无新增（去重后）→ 已是最后一页；封顶 100 页防止异常死循环
+            if (added == 0 || files.size < size || p >= 100) break
             p++
         }
         all.ifEmpty { null }
