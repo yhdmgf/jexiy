@@ -774,7 +774,7 @@ fun DriveScreen(
                         onMoreClick = if (githubHasToken) { { showGitHubSheet = true } } else null
                     )
                 }
-                items(others, key = { "${it.platform}_${it.id}" }) { account ->
+                items(others, key = { it.id }) { account ->
                     DriveAccountCard(account = account)
                 }
                 // 视频解析：平台列表与登录态全部由 VideoAccountSection 自己呈现，这里只透传数据与回调

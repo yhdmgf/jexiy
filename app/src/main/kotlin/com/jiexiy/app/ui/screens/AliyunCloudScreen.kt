@@ -37,7 +37,7 @@ fun AliyunCloudScreen(
     val refreshing by viewModel.refreshing.collectAsState()
     val cloudMessage by viewModel.cloudMessage.collectAsState()
     val shareResult by viewModel.shareResult.collectAsState()
-    val actionFile by viewModel.actionFile.collectAsState()
+    val actionFileState by viewModel.actionFile.collectAsState()
 
     var showDownloadDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -163,11 +163,11 @@ fun AliyunCloudScreen(
         AlertDialog(
             onDismissRequest = { showDownloadDialog = false },
             title = { Text("下载") },
-            text = { Text("确定下载「${actionFile?.fname}」吗？") },
+            text = { Text("确定下载「${actionFileState?.fname}」吗？") },
             confirmButton = {
                 TextButton(onClick = {
                     showDownloadDialog = false
-                    actionFile?.let { viewModel.startDownload(it) }
+                    actionFileState?.let { viewModel.startDownload(it) }
                     onDownloadStarted()
                 }) { Text("下载") }
             },
@@ -176,7 +176,7 @@ fun AliyunCloudScreen(
     }
 
     if (showRenameDialog && actionFile != null) {
-        var renameText by remember { mutableStateOf(actionFile?.fname ?: "") }
+        var renameText by remember { mutableStateOf(actionFileState?.fname ?: "") }
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
             title = { Text("重命名") },
@@ -184,7 +184,7 @@ fun AliyunCloudScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showRenameDialog = false
-                    actionFile?.let { viewModel.rename(it, renameText) }
+                    actionFileState?.let { viewModel.rename(it, renameText) }
                 }) { Text("确定") }
             },
             dismissButton = { TextButton(onClick = { showRenameDialog = false }) { Text("取消") } }
@@ -195,11 +195,11 @@ fun AliyunCloudScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("删除") },
-            text = { Text("确定删除「${actionFile?.fname}」吗？") },
+            text = { Text("确定删除「${actionFileState?.fname}」吗？") },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
-                    actionFile?.let { viewModel.delete(it) }
+                    actionFileState?.let { viewModel.delete(it) }
                 }) { Text("删除") }
             },
             dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("取消") } }

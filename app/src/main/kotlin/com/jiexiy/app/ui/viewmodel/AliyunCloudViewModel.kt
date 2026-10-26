@@ -37,7 +37,8 @@ class AliyunCloudViewModel(
     private val _uiState = MutableStateFlow<AliyunCloudUiState>(AliyunCloudUiState.Loading)
     val uiState: StateFlow<AliyunCloudUiState> = _uiState.asStateFlow()
 
-    var actionFile = mutableStateOf<ShareFile?>(null)
+    private val _actionFile = MutableStateFlow<ShareFile?>(null)
+    val actionFile: StateFlow<ShareFile?> = _actionFile.asStateFlow()
     var cloudMessage = mutableStateOf<String?>(null)
     var isOperating = mutableStateOf(false)
     var refreshing = mutableStateOf(false)
@@ -113,12 +114,12 @@ class AliyunCloudViewModel(
         if (multiSelectMode.value) {
             if (_selected.contains(file)) _selected.remove(file) else _selected.add(file)
         } else {
-            actionFile.value = file
+            _actionFile.value = file
         }
     }
 
     fun enterMultiSelect() { multiSelectMode.value = true }
-    fun exitMultiSelect() { multiSelectMode.value = false; _selected.clear(); actionFile.value = null }
+    fun exitMultiSelect() { multiSelectMode.value = false; _selected.clear(); _actionFile.value = null }
 
     fun refresh() {
         viewModelScope.launch {
@@ -220,8 +221,8 @@ class AliyunCloudViewModel(
         viewModelScope.launch {
             try {
                 val c = credential()
-                val share = api.createShare(c, files.map { it.fid }, title, expireDays, passcode)
-                shareResult.value = share.shareUrl
+                val (shareUrl, _) = api.createShare(c, files.map { it.fid }, title, passcode ?: "", expireDays)
+                shareResult.value = shareUrl
             } catch (e: Exception) {
                 cloudMessage.value = "创建分享失败：${e.message}"
             }
@@ -229,7 +230,7 @@ class AliyunCloudViewModel(
     }
 
     fun showMove(file: ShareFile) {
-        actionFile.value = file
+        _actionFile.value = file
         moveDirStack.clear()
         moveNameStack.clear()
         loadMoveRoot()
@@ -274,7 +275,7 @@ class AliyunCloudViewModel(
             try {
                 val c = credential()
                 val destDir = moveDirStack.lastOrNull() ?: ""
-                val fids = if (_selected.isNotEmpty()) _selected.map { it.fid } else actionFile.value?.let { listOf(it.fid) } ?: emptyList()
+                val fids = if (_selected.isNotEmpty()) _selected.map { it.fid } else _actionFile.value?.let { listOf(it.fid) } ?: emptyList()
                 if (fids.isEmpty()) { cloudMessage.value = "未选择文件"; return@launch }
                 api.move(c, fids, destDir)
                 cloudMessage.value = "移动成功"
@@ -290,7 +291,7 @@ class AliyunCloudViewModel(
         moveDirStack.clear()
         moveNameStack.clear()
         _selected.clear()
-        actionFile.value = null
+        _actionFile.value = null
     }
 
     class Factory(
