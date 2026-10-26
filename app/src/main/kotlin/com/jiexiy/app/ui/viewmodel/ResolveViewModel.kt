@@ -212,8 +212,7 @@ class ResolveViewModel(
     var saveMessage by mutableStateOf<String?>(null)
         private set
 
-    /** 当前分享是否支持转存（夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭 / 小飞机）。
-     *  阿里云盘转存 API 已就绪，待 AliyunCloudScreen 目录选择器完成后启用。 */
+    /** 当前分享是否支持转存（夸克 / UC / 迅雷 / 百度 / 139 / 123 / 115 / 光鸭 / 小飞机 / 阿里云盘） */
     val canSave: Boolean
         get() = currentPlatform == SharePlatform.QUARK ||
             currentPlatform == SharePlatform.UC ||
@@ -223,7 +222,8 @@ class ResolveViewModel(
             currentPlatform == SharePlatform.PAN123 ||
             currentPlatform == SharePlatform.PAN115 ||
             currentPlatform == SharePlatform.GUANGYA ||
-            currentPlatform == SharePlatform.FEIJI
+            currentPlatform == SharePlatform.FEIJI ||
+            currentPlatform == SharePlatform.ALIYUN
 
     /** 当前分享是否为迅雷（UI 选择迅雷版转存目录选择器） */
     val isSaveXunlei: Boolean

@@ -61,6 +61,7 @@ fun AliyunAccountSheet(
     onRename: (String, String) -> Unit,
     onRemove: (String) -> Unit,
     onAddAccount: () -> Unit,
+    onLogout: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -254,6 +255,15 @@ fun AliyunAccountSheet(
                     // 添加账号按钮
                     TextButton(onClick = onAddAccount) {
                         Text("添加账号")
+                    }
+                    // 退出登录按钮
+                    TextButton(
+                        onClick = onLogout,
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("退出登录")
                     }
                 }
             }

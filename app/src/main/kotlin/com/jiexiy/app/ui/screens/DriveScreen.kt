@@ -79,6 +79,7 @@ import com.jiexiy.app.data.account.AccountStore
 import com.jiexiy.app.data.parse.FeijiAccountStore
 import com.jiexiy.app.data.network.FeijiApi
 import com.jiexiy.app.data.parse.ParseApi
+import com.jiexiy.app.ui.SnackbarController
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -747,6 +748,8 @@ fun DriveScreen(
                         account = aliyunAccount,
                         onClick = {
                             if (aliyunAccount == null) onAliyunLogin()
+                            // TODO: AliyunCloudScreen 完成后改为 { showAliyunCloud = true }
+                            else SnackbarController.show("云盘浏览即将上线")
                         },
                         onMoreClick = if (aliyunAccount != null) { { showAliyunSheet = true } } else null
                     )
