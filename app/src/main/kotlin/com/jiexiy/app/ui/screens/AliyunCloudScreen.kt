@@ -1,5 +1,9 @@
 package com.jiexiy.app.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.jiexiy.app.data.download.DownloadPlatform
+import com.jiexiy.app.data.upload.CloudUploadManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -46,6 +50,32 @@ fun AliyunCloudScreen(
     
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    
+    // 上传选择器
+    val uploadPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        var added = 0
+        uris.forEach { uri ->
+            val info = CloudUploadManager.describe(context, uri) ?: return@forEach
+            CloudUploadManager.enqueue(
+                context = context,
+                platform = DownloadPlatform.ALIYUN,
+                uri = uri,
+                fileName = info.name,
+                size = info.size,
+                mimeType = info.mimeType,
+                folderId = (uiState as? AliyunCloudUiState.Loaded)?.dirId ?: ""
+            )
+            added++
+        }
+        if (added > 0) {
+            cloudMessage = "已加入 ${added} 个上传任务"
+            onUploadStarted()
+        }
+    }
     
     // 同步 ViewModel 的状态变化
     LaunchedEffect(uiState) {
@@ -126,6 +156,18 @@ fun AliyunCloudScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         if (!multiSelectMode) {
+                            item {
+                                Card(modifier = Modifier.fillMaxWidth().clickable { uploadPicker.launch(arrayOf("*/*")) }) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Outlined.InsertDriveFile, contentDescription = null, modifier = Modifier.size(24.dp))
+                                        Spacer(Modifier.width(16.dp))
+                                        Text("上传文件", fontWeight = FontWeight.Medium)
+                                    }
+                                }
+                            }
                             item {
                                 Card(modifier = Modifier.fillMaxWidth().clickable { showFolderDialog = true }) {
                                     Row(
