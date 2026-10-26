@@ -72,6 +72,11 @@ object CloudUploadManager {
         // 从 DB 加载历史任务（已完成/失败/等待中的都保留，仅跳过已取消）
         scope.launch {
             val history = runCatching { db.uploadTaskDao().listRecent() }.getOrDefault(emptyList())
+            // 更新 nextId 为 DB 中最大 id + 1，避免与新任务 id 冲突
+            if (history.isNotEmpty()) {
+                val maxId = history.maxOfOrNull { it.id } ?: 0L
+                nextId.set(maxId + 1)
+            }
             _tasks.value = history.map { it.toUploadTask() }
         }
         register(DownloadPlatform.FEIJI) { FeijiUploader(app) }
