@@ -91,7 +91,6 @@ class PikPakApi(
 
     private val EMPTY_BODY: RequestBody = ByteArray(0).toRequestBody()
 
-    @Volatile
     private var captchaToken: String = ""
 
     // ==================== 认证 ====================
