@@ -547,7 +547,7 @@ class AliyunApi(
         val requestBuilder = Request.Builder()
             .url(presignUrl)
             .method("PUT", object : RequestBody() {
-                override fun contentType() = okhttp3.MediaType.parse("application/octet-stream")
+                override fun contentType() = "application/octet-stream".toMediaType()
                 override fun contentLength() = size
                 override fun writeTo(sink: okio.BufferedSink) {
                     var read = inputStream.read(buffer)
