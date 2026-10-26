@@ -31,7 +31,7 @@ import com.jiexiy.app.util.DiagnosticLog
 
 @Database(
     entities = [QuarkAccountEntity::class, DownloadTaskEntity::class, UCAccountEntity::class, XunleiAccountEntity::class, BaiduAccountEntity::class, C139AccountEntity::class, Pan123AccountEntity::class, Pan115AccountEntity::class, GuangYaAccountEntity::class, ILanzouAccountEntity::class, LanzouAccountEntity::class, FeijiAccountEntity::class, AliyunAccountEntity::class, BookmarkEntity::class, VideoAccountEntity::class, PikPakAccountEntity::class, UploadTaskEntity::class],
-    version = 27,
+    version = 28,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -117,7 +117,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_23_24,
                         MIGRATION_24_25,
                         MIGRATION_25_26,
-                        MIGRATION_26_27
+                        MIGRATION_26_27,
+                        MIGRATION_27_28
                     )
                     // 早期开发版（1-8）无可靠 schema；从 v9 起必须保留凭证和下载任务
                     .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7, 8)
@@ -448,6 +449,13 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_26_27 = object : Migration(26, 27) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE aliyun_account ADD COLUMN expires_at_ms INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        /** v28：PikPak 账号添加 captchaToken 字段。 */
+        private val MIGRATION_27_28 = object : Migration(27, 28) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE pikpak_account ADD COLUMN captchaToken TEXT NOT NULL DEFAULT ''")
             }
         }
     }
