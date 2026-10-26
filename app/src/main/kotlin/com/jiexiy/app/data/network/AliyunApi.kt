@@ -540,15 +540,25 @@ class AliyunApi(
         val presignUrl = urlData.optString("presigned_url")
         if (presignUrl.isBlank()) throw IllegalStateException("阿里云盘未返回上传地址")
 
-        // 直传 OSS
-        val bytes = input().readBytes()
-        val put = client.newCall(
-            Request.Builder()
-                .url(presignUrl)
-                .method("PUT", bytes.toRequestBody())
-                .build()
-        ).execute()
-        put.use {
+        // 直传 OSS（流式上传，避免 OOM）
+        val buffer = ByteArray(8192)
+        val inputStream = input()
+        val requestBuilder = Request.Builder()
+            .url(presignUrl)
+            .method("PUT", object : RequestBody() {
+                override fun contentType() = okhttp3.MediaType.parse("application/octet-stream")
+                override fun contentLength() = size
+                override fun writeTo(sink: okio.BufferedSink) {
+                    var read = inputStream.read(buffer)
+                    while (read != -1) {
+                        sink.write(buffer, 0, read)
+                        sink.flush()
+                        read = inputStream.read(buffer)
+                    }
+                }
+            })
+            .build()
+        client.newCall(requestBuilder).execute().use {
             if (!it.isSuccessful) throw IllegalStateException("阿里云盘直传失败（HTTP ${it.code}）")
         }
 
