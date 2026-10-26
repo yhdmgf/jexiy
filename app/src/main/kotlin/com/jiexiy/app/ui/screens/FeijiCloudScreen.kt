@@ -519,7 +519,7 @@ fun FeijiCloudScreen(
                     }
                 }
 
-                itemsIndexed(displayFiles, key = { _, f -> f.id }) { index, file ->
+                itemsIndexed(displayFiles, key = { _, f -> f.fid }) { index, file ->
                     ShareFileRow(
                         file = file.toShareFile(),
                         shape = listGroupShape(index, displayFiles.size),
@@ -908,7 +908,7 @@ private fun FeijiMoveStep(
                             modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp),
                             verticalArrangement = Arrangement.spacedBy(ListGroupGap)
                         ) {
-                            itemsIndexed(dirs, key = { _, d -> d.id }) { index, dir ->
+                            itemsIndexed(dirs, key = { _, d -> d.fid }) { index, dir ->
                                 ShareFileRow(
                                     file = dir.toShareFile(),
                                     onClick = {
