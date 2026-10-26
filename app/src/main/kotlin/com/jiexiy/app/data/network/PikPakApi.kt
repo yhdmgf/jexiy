@@ -510,12 +510,26 @@ class PikPakApi(
             requireSuccess = false
         )
         val status = parseShareStatus(json.optString("share_status"))
+        val passCodeToken = firstNonBlank(
+            json.optString("pass_code_token"),
+            json.optString("passCodeToken")
+        )
+        // 校验分享状态和 passCodeToken
+        when (status) {
+            PikPakShareStatus.OK -> {
+                if (passCodeToken.isEmpty()) {
+                    throw IllegalStateException("PikPak 未返回分享访问凭据")
+                }
+            }
+            PikPakShareStatus.PASS_CODE_EMPTY -> throw IllegalStateException("PikPak 分享需要提取码")
+            PikPakShareStatus.PASS_CODE_ERROR -> throw IllegalStateException("PikPak 提取码错误")
+            PikPakShareStatus.DELETED -> throw IllegalStateException("PikPak 分享已被删除")
+            PikPakShareStatus.EXPIRED -> throw IllegalStateException("PikPak 分享已过期")
+            PikPakShareStatus.NOT_FOUND -> throw IllegalStateException("PikPak 分享不存在")
+        }
         val session = ShareSession(
             shareId = shareId,
-            passCodeToken = firstNonBlank(
-                json.optString("pass_code_token"),
-                json.optString("passCodeToken")
-            ),
+            passCodeToken = passCodeToken,
             title = firstNonBlank(json.optString("title"), "PikPak 分享"),
             status = status
         )
@@ -716,44 +730,55 @@ class PikPakApi(
         }
 
         // Step 2: OSS 分片上传（阿里云 OSS V1 签名）
-        ossMultipartUpload(
-            endpoint = endpoint,
-            bucket = bucket,
-            key = key,
-            accessKeyId = accessKeyId,
-            accessKeySecret = accessKeySecret,
-            securityToken = securityToken,
-            size = size,
-            partSize = partSize,
-            open = open,
-            onProgress = onProgress
-        )
+        try {
+            ossMultipartUpload(
+                endpoint = endpoint,
+                bucket = bucket,
+                key = key,
+                accessKeyId = accessKeyId,
+                accessKeySecret = accessKeySecret,
+                securityToken = securityToken,
+                size = size,
+                partSize = partSize,
+                open = open,
+                onProgress = onProgress
+            )
 
-        // Step 3: 轮询 file detail 直到 phase == PHASE_TYPE_COMPLETE 且 size 匹配
-        var lastDetail = JSONObject()
-        repeat(PikPakConstants.UPLOAD_POLL_MAX) {
-            lastDetail = fileDetail(accessToken, deviceId, newFileId)
-            val phase = lastDetail.optString("phase")
-            when (phase) {
-                "PHASE_TYPE_COMPLETE" -> {
-                    if (lastDetail.optLong("size", 0L) == size || lastDetail.optLong("size", -1L) <= 0) {
-                        return@withContext UploadResult(newFileId, size)
+            // Step 3: 轮询 file detail 直到 phase == PHASE_TYPE_COMPLETE 且 size 匹配
+            var lastDetail = JSONObject()
+            repeat(PikPakConstants.UPLOAD_POLL_MAX) {
+                lastDetail = fileDetail(accessToken, deviceId, newFileId)
+                val phase = lastDetail.optString("phase")
+                when (phase) {
+                    "PHASE_TYPE_COMPLETE" -> {
+                        val uploadedSize = lastDetail.optLong("size", 0L)
+                        if (uploadedSize == size) {
+                            return@withContext UploadResult(newFileId, size)
+                        }
+                        // size 不匹配，视为失败
+                        throw IllegalStateException(
+                            "PikPak 上传后的文件大小不一致 ($uploadedSize/$size)"
+                        )
                     }
+                    "PHASE_TYPE_ERROR" -> {
+                        val msg = lastDetail.optString("message")
+                        throw IllegalStateException(
+                            if (msg.isEmpty()) "PikPak 上传失败" else "PikPak 上传失败：$msg"
+                        )
+                    }
+                    else -> Unit
                 }
-                "PHASE_TYPE_ERROR" -> {
-                    val msg = lastDetail.optString("message")
-                    throw IllegalStateException(
-                        if (msg.isEmpty()) "PikPak 上传失败" else "PikPak 上传失败：$msg"
-                    )
-                }
-                else -> Unit
+                delay(1000)
             }
-            delay(1000)
+            // 轮询上限到了但 phase 仍未完成：给一个可诊断的错误
+            throw IllegalStateException(
+                "PikPak 上传处理超时（phase=${lastDetail.optString("phase")}, size=${lastDetail.optLong("size", 0L)}/${size}）"
+            )
+        } catch (e: Exception) {
+            // 上传失败时清理残留节点
+            runCatching { batchTrash(listOf(newFileId), accessToken, deviceId) }
+            throw e
         }
-        // 轮询上限到了但 phase 仍未完成：给一个可诊断的错误
-        throw IllegalStateException(
-            "PikPak 上传处理超时（phase=${lastDetail.optString("phase")}, size=${lastDetail.optLong("size", 0L)}/${size}）"
-        )
     }
 
     /**
